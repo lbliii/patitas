@@ -92,41 +92,30 @@ def parse_nested_list_inline(
     line: str,
     token_location: object,
     parser: ParserProtocol,
-    directive_registry: object | None,
-    strict_contracts: bool,
-    tables_enabled: bool,
-    strikethrough_enabled: bool,
-    task_lists_enabled: bool,
 ) -> list[Block]:
     """Parse a nested list from inline content.
 
     Used when a paragraph line turns out to be a nested list marker.
+    Configuration is automatically inherited via ContextVar—no copying needed!
 
     Args:
         line: The content line that is a list marker
         token_location: Location of the token
         parser: The parser instance
-        directive_registry: Registry for directives
-        strict_contracts: Whether to enforce strict contracts
-        tables_enabled: Whether tables are enabled
-        strikethrough_enabled: Whether strikethrough is enabled
-        task_lists_enabled: Whether task lists are enabled
 
     Returns:
         List of parsed blocks
+
+    Thread Safety:
+        Nested parser reads config from the same ContextVar as parent,
+        ensuring consistent configuration without manual copying.
 
     """
     # Import here to avoid circular dependency
     from patitas.parser import Parser
 
-    nested_parser = Parser(
-        line + "\n",
-        directive_registry=directive_registry,
-        strict_contracts=strict_contracts,
-    )
-    nested_parser._tables_enabled = tables_enabled
-    nested_parser._strikethrough_enabled = strikethrough_enabled
-    nested_parser._task_lists_enabled = task_lists_enabled
+    # Config is inherited automatically via ContextVar!
+    nested_parser = Parser(line + "\n")
     return list(nested_parser.parse())
 
 

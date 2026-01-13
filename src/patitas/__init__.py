@@ -32,6 +32,13 @@ Installation:
 
 from __future__ import annotations
 
+from patitas.config import (
+    ParseConfig,
+    get_parse_config,
+    parse_config_context,
+    reset_parse_config,
+    set_parse_config,
+)
 from patitas.directives.registry import (
     DirectiveRegistry,
     DirectiveRegistryBuilder,
@@ -108,17 +115,25 @@ def parse(
         >>> doc = parse(source, directive_registry=builder.build())
     """
     registry = directive_registry or create_default_registry()
-    parser = Parser(source, source_file=source_file, directive_registry=registry)
-    blocks = parser.parse()
-    # Wrap blocks in a Document
-    loc = SourceLocation(
-        lineno=1,
-        col_offset=1,
-        offset=0,
-        end_offset=len(source),
-        source_file=source_file,
-    )
-    return Document(location=loc, children=tuple(blocks))
+
+    # Build config and set via ContextVar for thread-safety
+    config = ParseConfig(directive_registry=registry)
+    set_parse_config(config)
+
+    try:
+        parser = Parser(source, source_file=source_file)
+        blocks = parser.parse()
+        # Wrap blocks in a Document
+        loc = SourceLocation(
+            lineno=1,
+            col_offset=1,
+            offset=0,
+            end_offset=len(source),
+            source_file=source_file,
+        )
+        return Document(location=loc, children=tuple(blocks))
+    finally:
+        reset_parse_config()
 
 
 def render(
@@ -168,7 +183,14 @@ class Markdown:
         >>> builder = DirectiveRegistryBuilder()
         >>> builder.register(MyDirective())
         >>> md = Markdown(directive_registry=builder.build())
+
+    Thread Safety:
+        Uses ContextVar for thread-local configuration. Safe to use multiple
+        Markdown instances concurrently from different threads.
+
     """
+
+    __slots__ = ("_highlight", "_plugins", "_directive_registry", "_config")
 
     def __init__(
         self,
@@ -188,6 +210,17 @@ class Markdown:
         self._plugins = plugins or []
         self._directive_registry = directive_registry or create_default_registry()
 
+        # Build immutable config once (thread-safe, reused across calls)
+        self._config = ParseConfig(
+            tables_enabled="tables" in self._plugins,
+            strikethrough_enabled="strikethrough" in self._plugins,
+            task_lists_enabled="task_lists" in self._plugins,
+            footnotes_enabled="footnotes" in self._plugins,
+            math_enabled="math" in self._plugins,
+            autolinks_enabled="autolinks" in self._plugins,
+            directive_registry=self._directive_registry,
+        )
+
     def __call__(self, source: str) -> str:
         """Parse and render Markdown in one call.
 
@@ -196,8 +229,12 @@ class Markdown:
 
         Returns:
             HTML string
+
+        Thread Safety:
+            Sets config via ContextVar (thread-local). Safe for concurrent use.
+
         """
-        doc = self.parse(source)
+        doc = self.parse(source)  # parse() handles ContextVar set/reset
         renderer = HtmlRenderer(
             source=source,
             highlight=self._highlight,
@@ -214,22 +251,29 @@ class Markdown:
 
         Returns:
             Document AST root node
+
+        Thread Safety:
+            Sets config via ContextVar (thread-local). Safe for concurrent use.
+
         """
-        parser = Parser(
-            source,
-            source_file=source_file,
-            directive_registry=self._directive_registry,
-        )
-        blocks = parser.parse()
-        # Wrap blocks in a Document
-        loc = SourceLocation(
-            lineno=1,
-            col_offset=1,
-            offset=0,
-            end_offset=len(source),
-            source_file=source_file,
-        )
-        return Document(location=loc, children=tuple(blocks))
+        # Set config for this parse (thread-local via ContextVar)
+        set_parse_config(self._config)
+
+        try:
+            parser = Parser(source, source_file=source_file)
+            blocks = parser.parse()
+            # Wrap blocks in a Document
+            loc = SourceLocation(
+                lineno=1,
+                col_offset=1,
+                offset=0,
+                end_offset=len(source),
+                source_file=source_file,
+            )
+            return Document(location=loc, children=tuple(blocks))
+        finally:
+            # Reset to default (reuses module-level singleton, no allocation)
+            reset_parse_config()
 
     def render(self, doc: Document, *, source: str = "") -> str:
         """Render AST to HTML.
@@ -260,6 +304,12 @@ __all__ = [
     "Parser",
     "Lexer",
     "HtmlRenderer",
+    # Configuration (ContextVar-based)
+    "ParseConfig",
+    "get_parse_config",
+    "set_parse_config",
+    "reset_parse_config",
+    "parse_config_context",
     # Directive extensibility
     "DirectiveRegistry",
     "DirectiveRegistryBuilder",

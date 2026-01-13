@@ -459,15 +459,11 @@ class ListParsingMixin:
                         else content_indent
                     )
                     if detect_nested_block_in_content(line, tok.line_indent, check_indent):
+                        # Config inherited automatically via ContextVar!
                         blocks = parse_nested_list_inline(
                             line + "\n",
                             tok.location,
                             self,
-                            getattr(self, "_directive_registry", None),
-                            getattr(self, "_strict_contracts", False),
-                            getattr(self, "_tables_enabled", False),
-                            getattr(self, "_strikethrough_enabled", False),
-                            getattr(self, "_task_lists_enabled", False),
                         )
                         item_children.extend(blocks)
                         self._advance()

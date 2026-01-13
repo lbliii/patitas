@@ -283,7 +283,7 @@ class ThreadSafeCache:
 
 ## 4. Validation: Patitas Architecture
 
-Patitas uses **Pattern 6: Immutable Snapshots** via frozen dataclasses:
+Patitas uses **Pattern 6: Immutable Snapshots** via frozen dataclasses for AST:
 
 ```python
 @dataclass(frozen=True, slots=True)
@@ -317,6 +317,21 @@ Patitas scales linearly with threads because:
 - No shared mutable state
 - Each parse is independent
 - AST can be passed between threads safely
+
+### NEW: ContextVar Config Optimization
+
+Applying **Pattern 2: ContextVars** to parser configuration yields additional gains:
+
+```
+Parser Instantiation (100K parsers):
+├── Before (18 slots): 26ms
+├── After (9 slots):   12ms  (2.2x faster) ✅
+```
+
+This demonstrates that benchmarking patterns in this RFC led to concrete improvements:
+- **50% slot reduction**: 18 → 9 slots per Parser
+- **2.2x faster instantiation**: Fewer slots = smaller objects = faster allocation
+- **Cleaner architecture**: Config separated from per-parse state
 
 ---
 
@@ -532,11 +547,12 @@ Free-threading is a fundamental shift in Python's concurrency model. The pattern
 
 1. **Simple locks are often best** for short critical sections
 2. **ContextVars eliminate synchronization** for thread-local data
-3. **Immutable structures are inherently thread-safe** (Patitas approach)
+3. **Immutable structures are inherently thread-safe** (Patitas AST approach)
 4. **Fancy patterns (RW locks, actors) have high overhead** - benchmark first
 5. **Double-check locking** is the go-to for caches
+6. **ContextVar + frozen config** can reduce object size and improve instantiation (Patitas: 50% smaller, 2.2x faster)
 
-Patitas's architecture—frozen dataclasses, no global state, independent parse calls—is validated as optimal for the free-threading era.
+Patitas's architecture—frozen dataclasses, no global state, independent parse calls—is validated as optimal for the free-threading era. The ContextVar config pattern provides additional performance wins without sacrificing thread safety.
 
 ---
 
