@@ -1,0 +1,25 @@
+# External References Configuration
+# ==================================
+
+external_refs:
+  # Links to related projects
+  bengal:
+    url: "https://lbliii.github.io/bengal"
+    description: "Bengal static site generator"
+  
+  kida:
+    url: "https://lbliii.github.io/kida"
+    description: "Kida template engine"
+  
+  rosettes:
+    url: "https://lbliii.github.io/rosettes"
+    description: "Rosettes syntax highlighter"
+
+  # External documentation
+  commonmark:
+    url: "https://spec.commonmark.org/0.31.2/"
+    description: "CommonMark specification"
+
+  myst:
+    url: "https://myst-parser.readthedocs.io/"
+    description: "MyST Markdown specification"

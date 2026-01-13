@@ -1,0 +1,12 @@
+# Patitas Documentation Site Configuration
+# ==========================================
+
+site:
+  title: "Patitas"
+  # baseurl set in environments/production.yaml for GitHub Pages
+  logo_text: "ฅᨐฅ"
+  description: "Modern Markdown parser for Python 3.14t"
+  language: "en"
+
+# Template Engine
+template_engine: kida

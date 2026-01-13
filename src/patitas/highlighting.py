@@ -3,6 +3,12 @@
 Provides optional syntax highlighting for code blocks.
 When patitas[syntax] is installed, Rosettes is used automatically.
 
+Protocol Alignment:
+    The Highlighter protocol is aligned with Bengal's HighlightService
+    for seamless integration. Both interfaces support:
+    - highlight(code, language, hl_lines, show_linenos) -> str
+    - supports_language(language) -> bool
+
 Usage:
     # Automatic with patitas[syntax]
     from patitas import Markdown
@@ -25,33 +31,72 @@ from typing import Callable, Protocol
 class Highlighter(Protocol):
     """Protocol for syntax highlighters.
     
+    Aligned with Bengal's HighlightService for seamless integration.
     Highlighters take code and language and return HTML markup
     with syntax highlighting applied.
+    
+    Thread Safety:
+        Implementations must be thread-safe. The highlight() method
+        may be called concurrently from multiple render threads.
     """
 
-    def __call__(self, code: str, language: str) -> str:
+    def highlight(
+        self,
+        code: str,
+        language: str,
+        *,
+        hl_lines: list[int] | None = None,
+        show_linenos: bool = False,
+    ) -> str:
         """Highlight code with syntax colors.
         
         Args:
             code: Source code to highlight
             language: Language identifier (e.g., "python", "javascript")
+            hl_lines: 1-indexed line numbers to emphasize (optional)
+            show_linenos: Include line numbers in output
             
         Returns:
             HTML markup with highlighting
+        
+        Contract:
+            - MUST return valid HTML (never raise for bad input)
+            - MUST escape HTML entities in code
+            - MUST use CSS classes (not inline styles)
+            - SHOULD fall back to plain text for unknown languages
+        """
+        ...
+
+    def supports_language(self, language: str) -> bool:
+        """Check if highlighter supports the given language.
+        
+        Args:
+            language: Language identifier or alias
+            
+        Returns:
+            True if highlighting is available
+            
+        Contract:
+            - MUST NOT raise exceptions
+            - SHOULD handle common aliases (js -> javascript)
         """
         ...
 
 
+# Support for simple callable-based highlighters
+SimpleHighlighter = Callable[[str, str], str]
+
 # Global highlighter
-_highlighter: Callable[[str, str], str] | None = None
+_highlighter: Highlighter | SimpleHighlighter | None = None
 _tried_rosettes: bool = False
 
 
-def set_highlighter(highlighter: Callable[[str, str], str] | None) -> None:
+def set_highlighter(highlighter: Highlighter | SimpleHighlighter | None) -> None:
     """Set the global syntax highlighter.
     
     Args:
-        highlighter: Function that takes (code, language) and returns HTML.
+        highlighter: A Highlighter protocol implementation, or a simple
+            function that takes (code, language) and returns HTML.
             Pass None to clear the highlighter.
     """
     global _highlighter
@@ -68,19 +113,48 @@ def _try_import_rosettes() -> bool:
     _tried_rosettes = True
     
     try:
-        from rosettes import highlight as rosettes_highlight
+        import rosettes
         
-        def rosettes_highlighter(code: str, language: str) -> str:
-            """Rosettes-based syntax highlighter."""
-            return rosettes_highlight(code, language=language)
+        class RosettesHighlighter:
+            """Rosettes-based syntax highlighter implementing Highlighter protocol."""
+            
+            def highlight(
+                self,
+                code: str,
+                language: str,
+                *,
+                hl_lines: list[int] | None = None,
+                show_linenos: bool = False,
+            ) -> str:
+                """Highlight code using Rosettes."""
+                hl_set = set(hl_lines) if hl_lines else None
+                return rosettes.highlight(
+                    code,
+                    language=language,
+                    hl_lines=hl_set,
+                    show_linenos=show_linenos,
+                )
+            
+            def supports_language(self, language: str) -> bool:
+                """Check if Rosettes supports the language."""
+                try:
+                    return rosettes.supports_language(language)
+                except Exception:
+                    return False
         
-        _highlighter = rosettes_highlighter
+        _highlighter = RosettesHighlighter()
         return True
     except ImportError:
         return False
 
 
-def highlight(code: str, language: str) -> str:
+def highlight(
+    code: str,
+    language: str,
+    *,
+    hl_lines: list[int] | None = None,
+    show_linenos: bool = False,
+) -> str:
     """Highlight code using the configured highlighter.
     
     Falls back to plain code block if no highlighter is available.
@@ -89,6 +163,8 @@ def highlight(code: str, language: str) -> str:
     Args:
         code: Source code to highlight
         language: Language identifier
+        hl_lines: 1-indexed line numbers to emphasize (optional)
+        show_linenos: Include line numbers in output
         
     Returns:
         HTML markup (highlighted if available, plain otherwise)
@@ -98,7 +174,14 @@ def highlight(code: str, language: str) -> str:
         _try_import_rosettes()
     
     if _highlighter is not None:
-        return _highlighter(code, language)
+        # Check if it's the full protocol or a simple callable
+        if hasattr(_highlighter, 'highlight') and callable(_highlighter.highlight):
+            return _highlighter.highlight(
+                code, language, hl_lines=hl_lines, show_linenos=show_linenos
+            )
+        elif callable(_highlighter):
+            # Simple callable - just pass code and language
+            return _highlighter(code, language)
     
     # Fallback: plain code block with language class
     from html import escape
@@ -112,3 +195,15 @@ def has_highlighter() -> bool:
     if _highlighter is not None:
         return True
     return _try_import_rosettes()
+
+
+def get_highlighter() -> Highlighter | SimpleHighlighter | None:
+    """Get the current highlighter instance.
+    
+    Returns:
+        The configured highlighter, or None if not set.
+        Automatically tries to load Rosettes if not already configured.
+    """
+    if _highlighter is None:
+        _try_import_rosettes()
+    return _highlighter
