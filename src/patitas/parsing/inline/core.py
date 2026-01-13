@@ -490,29 +490,34 @@ class InlineParsingCoreMixin:
         tokens: list[InlineToken],
         registry: MatchRegistry,
         location: SourceLocation,
-        base_idx: int = 0,
+        start: int = 0,
+        end: int | None = None,
     ) -> tuple[Inline, ...]:
         """Build AST from processed tokens using match registry.
 
         Uses pattern matching for type-safe token dispatch.
+        Uses index bounds instead of list slicing to avoid allocations.
 
         Args:
             tokens: List of InlineToken NamedTuples from _tokenize_inline().
             registry: MatchRegistry containing delimiter matches.
             location: Source location for node creation.
-            base_idx: Offset to add to local indices when looking up registry.
-                      Used for recursive calls on token slices.
+            start: Start index in tokens (inclusive). Default 0.
+            end: End index in tokens (exclusive). Default len(tokens).
 
         Returns:
             Tuple of Inline nodes.
         """
-        result: list[Inline] = []
-        idx = 0
+        if end is None:
+            end = len(tokens)
 
-        while idx < len(tokens):
+        result: list[Inline] = []
+        idx = start
+
+        while idx < end:
             token = tokens[idx]
-            # Registry uses original indices, so add base_idx
-            registry_idx = base_idx + idx
+            # Registry uses original indices (same as token list indices)
+            registry_idx = idx
 
             match token:
                 case TextToken(content=content):
@@ -562,26 +567,26 @@ class InlineParsingCoreMixin:
 
                         if len(unique_closers) == 1:
                             # All matches share the same closer (e.g., ***text***)
-                            closer_registry_idx = sorted_matches[0].closer_idx
-                            closer_local_idx = closer_registry_idx - base_idx
+                            closer_idx_in_tokens = sorted_matches[0].closer_idx
 
                             # Get closer remaining - use registry to check TOTAL consumption
                             # A closer may be shared by multiple openers (e.g., *foo *bar**)
                             closer_remaining = 0
-                            if closer_local_idx < len(tokens):
-                                closer_token = tokens[closer_local_idx]
+                            if closer_idx_in_tokens < end:
+                                closer_token = tokens[closer_idx_in_tokens]
                                 if isinstance(closer_token, DelimiterToken):
                                     # Use registry's remaining_count which tracks total consumption
                                     closer_remaining = registry.remaining_count(
-                                        closer_registry_idx, closer_token.run_length
+                                        closer_idx_in_tokens, closer_token.run_length
                                     )
 
-                            # Build children between opener and closer
+                            # Build children between opener and closer (no slicing!)
                             children = self._build_inline_ast(
-                                tokens[idx + 1 : closer_local_idx],
+                                tokens,
                                 registry,
                                 location,
-                                base_idx=base_idx + idx + 1,
+                                start=idx + 1,
+                                end=closer_idx_in_tokens,
                             )
 
                             # Wrap from innermost to outermost
@@ -604,20 +609,19 @@ class InlineParsingCoreMixin:
                                     Text(location=location, content=delim_char * closer_remaining)
                                 )
 
-                            idx = closer_local_idx + 1
+                            idx = closer_idx_in_tokens + 1
                         else:
                             # Multiple different closers (e.g., __foo_ bar_)
                             # Process from innermost (closest) to outermost (farthest)
                             # Each match wraps progressively more content
 
                             # Find the outermost closer for skipping past at the end
-                            outermost_closer_registry_idx = sorted_matches[-1].closer_idx
-                            outermost_closer_local_idx = outermost_closer_registry_idx - base_idx
+                            outermost_closer_idx = sorted_matches[-1].closer_idx
 
                             # Get outermost closer remaining
                             outermost_closer_remaining = 0
-                            if outermost_closer_local_idx < len(tokens):
-                                closer_token = tokens[outermost_closer_local_idx]
+                            if outermost_closer_idx < end:
+                                closer_token = tokens[outermost_closer_idx]
                                 if isinstance(closer_token, DelimiterToken):
                                     # Each match uses delimiters from both opener and closer
                                     # But closers are different, so only the last match uses
@@ -632,20 +636,20 @@ class InlineParsingCoreMixin:
                             # etc., wrapping each segment with the appropriate emphasis
 
                             accumulated_children: tuple[Inline, ...] = ()
-                            prev_boundary_local = idx + 1  # Start right after opener
+                            prev_boundary = idx + 1  # Start right after opener
 
                             for match_info in sorted_matches:
-                                closer_registry_idx = match_info.closer_idx
-                                closer_local_idx = closer_registry_idx - base_idx
+                                closer_idx_in_tokens = match_info.closer_idx
                                 match_count = match_info.match_count
 
-                                # Build content from prev_boundary to this closer
-                                if prev_boundary_local < closer_local_idx:
+                                # Build content from prev_boundary to this closer (no slicing!)
+                                if prev_boundary < closer_idx_in_tokens:
                                     segment_children = self._build_inline_ast(
-                                        tokens[prev_boundary_local:closer_local_idx],
+                                        tokens,
                                         registry,
                                         location,
-                                        base_idx=base_idx + prev_boundary_local,
+                                        start=prev_boundary,
+                                        end=closer_idx_in_tokens,
                                     )
                                 else:
                                     segment_children = ()
@@ -667,7 +671,7 @@ class InlineParsingCoreMixin:
                                 accumulated_children = (node,)
 
                                 # Next segment starts after this closer
-                                prev_boundary_local = closer_local_idx + 1
+                                prev_boundary = closer_idx_in_tokens + 1
 
                             # Add the final wrapped result
                             result.append(accumulated_children[0])
@@ -680,7 +684,7 @@ class InlineParsingCoreMixin:
                                     )
                                 )
 
-                            idx = outermost_closer_local_idx + 1
+                            idx = outermost_closer_idx + 1
                     else:
                         # Unmatched delimiter - emit as text
                         remaining = registry.remaining_count(registry_idx, original_count)
