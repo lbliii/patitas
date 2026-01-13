@@ -1,48 +1,73 @@
 # RFC: Patitas Performance Optimization
 
-**Status**: Draft  
+**Status**: In Progress  
 **Created**: 2026-01-12  
-**Updated**: 2026-01-12  
+**Updated**: 2026-01-13  
 **Author**: Performance Analysis  
 
 ---
 
 ## Executive Summary
 
-Profiling reveals Patitas is ~60% slower than mistune on the CommonMark corpus. This RFC proposes targeted optimizations to close the gap while preserving Patitas's core value: typed AST, O(n) guarantees, and thread safety.
+Profiling reveals Patitas is ~65% slower than mistune on the CommonMark corpus. This RFC proposes targeted optimizations to close the gap while preserving Patitas's core value: typed AST, O(n) guarantees, and thread safety.
 
-**Current State (Python 3.14t, 652 CommonMark examples):**
+**Current State (Python 3.14.2t free-threading, 652 CommonMark examples, 10 iterations):**
 
-| Parser | Single Thread | vs. mistune |
-|--------|---------------|-------------|
-| mistune | 11ms | baseline |
-| Patitas | 17ms | +60% slower |
-| markdown-it-py | 20ms | +80% slower |
+| Parser | Single Thread | Multi-Thread (4x) | vs. mistune |
+|--------|---------------|-------------------|-------------|
+| mistune | 10.6ms | 4.0ms | baseline |
+| Patitas | 17.5ms | 7.3ms | +65% slower |
+| markdown-it-py | 17.9ms | CRASH | +69% slower |
 
 **Target**: Reduce gap to <30% slower while maintaining all safety guarantees.
 
-**Key Insight**: The parser phase (56% of time) is the main bottleneck, not the lexer or renderer. Optimizations should focus on inline parsing, emphasis matching, and AST construction.
+**Key Insight**: After implementing ContextVar configuration (RFC-contextvar-config), the overhead is only ~2.8%. The main bottlenecks remain: block scanning (6.5%), inline tokenization (4.1%), and paragraph parsing (3.9%).
+
+**Completed Optimizations**:
+- ✅ 2.1 - `_peek()`/`_advance()` now use cached `_source_len`
+- ✅ 2.3 - `SourceLocation.unknown()` is now a singleton
+- ✅ ContextVar configuration (separate RFC) - 2.8% overhead, 50% memory reduction
 
 ---
 
 ## 1. Profiling Data
 
-### 1.1 Time Breakdown
+### 1.1 Time Breakdown (Post-ContextVar, 2026-01-13)
 
 ```
-Patitas Pipeline (17ms total):
-├── Lexer:      4.4ms (26%)
-├── Parser:     9.6ms (56%)  ← Main bottleneck
-└── Renderer:   2.0ms (12%)  ← Already fast
+Patitas Pipeline (461ms for 6520 parses = 70.7µs/doc):
+├── Block scanning:     30ms (6.5%)  ← Main bottleneck
+├── Parser dispatch:    21ms (4.6%)
+├── Inline tokenize:    19ms (4.1%)
+├── Paragraph parsing:  18ms (3.9%)
+├── AST construction:   16ms (3.5%)
+├── List parsing:       12ms (2.6%)
+├── ContextVar config:  13ms (2.8%)  ← NEW: acceptable overhead
+├── Token location:     11ms (2.4%)  ← NEW: property access
+├── Emphasis matching:  11ms (2.4%)
+└── Rendering:          71ms (15%)
 ```
 
-### 1.2 Function Call Analysis
+### 1.2 Function Call Analysis (Updated)
 
-| Metric | Patitas | mistune | Delta |
-|--------|---------|---------|-------|
-| Total calls | 782K | 629K | +24% |
-| `len()` calls | 114K | — | Hot path |
-| `isinstance()` | ~50K | — | Type checking |
+| Metric | Patitas | Previous | Delta |
+|--------|---------|----------|-------|
+| Total calls | 1.60M | 782K | +2x (more iterations) |
+| `len()` calls | 181K | 114K | +59% |
+| `list.append()` | 144K | — | Hot path |
+| ContextVar `.get()` | 14K | — | NEW |
+| ContextVar `.set()` | 13K | — | NEW |
+
+### 1.3 ContextVar Overhead (NEW)
+
+| Function | Calls | Time | % of Total |
+|----------|-------|------|------------|
+| `_config` property | 14K | 3ms | 0.7% |
+| `get_parse_config()` | 14K | 3ms | 0.7% |
+| `set/reset_parse_config()` | 13K | 5ms | 1.1% |
+| **Total ContextVar** | — | **13ms** | **2.8%** |
+
+**Verdict**: ContextVar overhead is acceptable. The 2.8% cost is offset by 50% memory reduction and cleaner sub-parser creation.
 
 ### 1.3 Slowest CommonMark Sections
 
@@ -54,15 +79,19 @@ Patitas Pipeline (17ms total):
 | Link ref defs | 29 | 1.4x | Multi-line parsing |
 | Average | 21 | 1.0x | — |
 
-### 1.4 Top Functions by Self-Time
+### 1.4 Top Functions by Self-Time (Updated 2026-01-13)
 
 ```
-_scan_block()         17ms (8.8%)  - Block lexer scanning
-_tokenize_inline()    10ms (5.2%)  - Inline tokenization
-_build_inline_ast()    9ms (4.6%)  - AST construction ← Underestimated bottleneck
-_parse_paragraph()     8ms (4.1%)  - Paragraph handling
-len()                  7ms (3.6%)  - Length checks (114K calls!)
-_process_emphasis()    7ms (3.6%)  - Emphasis matching
+_scan_block()         30ms (6.5%)  - Block lexer scanning
+parser.parse()        21ms (4.6%)  - Main parse loop
+_tokenize_inline()    19ms (4.1%)  - Inline tokenization
+_parse_paragraph()    18ms (3.9%)  - Paragraph handling
+_build_inline_ast()   16ms (3.5%)  - AST construction
+_parse_list_item()    12ms (2.6%)  - List item handling
+list.append()         11ms (2.4%)  - Collection building (144K calls)
+len()                 11ms (2.4%)  - Length checks (181K calls)
+_process_emphasis()   11ms (2.4%)  - Emphasis matching
+tokens.location       11ms (2.4%)  - Token location property (28K calls) ← NEW
 ```
 
 ### 1.5 Code Audit Findings
@@ -84,39 +113,22 @@ _process_emphasis()    7ms (3.6%)  - Emphasis matching
 
 ### Phase 1: Low-Hanging Fruit (Est. 10-15% improvement)
 
-#### 2.1 Fix `_peek()` and `_advance()` to Use Cached Length
+#### 2.1 Fix `_peek()` and `_advance()` to Use Cached Length ✅ DONE
+
+**Status**: ✅ **Implemented** (verified 2026-01-13)
 
 **Problem**: These methods call `len(self._source)` despite `_source_len` being cached.
 
-**Current Code** (`lexer/core.py:289-301`):
+**Solution**: Already implemented in `lexer/core.py:288-300`. Both methods now use `self._source_len`.
+
 ```python
 def _peek(self) -> str:
-    if self._pos >= len(self._source):  # ← Should use self._source_len
+    if self._pos >= self._source_len:  # ✅ Uses cached length
         return ""
     return self._source[self._pos]
-
-def _advance(self) -> str:
-    if self._pos >= len(self._source):  # ← Should use self._source_len
-        return ""
-    ...
 ```
 
-**Solution**:
-```python
-def _peek(self) -> str:
-    if self._pos >= self._source_len:
-        return ""
-    return self._source[self._pos]
-
-def _advance(self) -> str:
-    if self._pos >= self._source_len:
-        return ""
-    ...
-```
-
-**Files**: `lexer/core.py`  
-**Effort**: Trivial  
-**Impact**: ~1-2%
+**Impact**: ~1-2% (already captured in baseline)
 
 #### 2.2 Cache `len()` in Remaining Hot Loops
 
@@ -126,20 +138,15 @@ def _advance(self) -> str:
 **Effort**: Low  
 **Impact**: ~1-2%
 
-#### 2.3 Singleton `SourceLocation.unknown()`
+#### 2.3 Singleton `SourceLocation.unknown()` ✅ DONE
+
+**Status**: ✅ **Implemented** (verified 2026-01-13)
 
 **Problem**: `SourceLocation.unknown()` creates new object each call.
 
-**Current Code** (`location.py:83-89`):
-```python
-@classmethod
-def unknown(cls) -> SourceLocation:
-    return cls(lineno=0, col_offset=0)  # New allocation every call
-```
+**Solution**: Already implemented in `location.py:60-69`. Uses module-level singleton pattern.
 
-**Solution**: Module-level singleton (thread-safe since SourceLocation is frozen):
 ```python
-# Module-level singleton (created once at import)
 _UNKNOWN_LOCATION: SourceLocation | None = None
 
 @classmethod
@@ -150,10 +157,9 @@ def unknown(cls) -> SourceLocation:
     return _UNKNOWN_LOCATION
 ```
 
-**Thread Safety**: SourceLocation is `frozen=True`, so sharing the singleton is safe. The lazy initialization has a benign race condition (worst case: two identical objects created, one discarded).
+**Thread Safety**: SourceLocation is `frozen=True`, so sharing the singleton is safe.
 
-**Effort**: Trivial  
-**Impact**: ~1% (depends on usage frequency)
+**Impact**: ~1% (already captured in baseline)
 
 #### 2.4 Local Variable Caching in Tight Loops
 
@@ -432,44 +438,50 @@ md = Markdown(track_locations=True)   # Full mode (default)
 
 ## 3. Implementation Plan
 
-### 3.1 Priority Matrix
+### 3.1 Priority Matrix (Updated 2026-01-13)
 
-| Optimization | Effort | Impact | Priority | Risk |
-|--------------|--------|--------|----------|------|
-| 2.1 Fix `_peek()`/`_advance()` | Trivial | 1-2% | **P0** | None |
-| 2.2 Audit remaining `len()` calls | Low | 1-2% | **P0** | None |
-| 2.3 Singleton `unknown()` | Trivial | 1% | **P0** | None |
-| 2.4 Local var caching | Low | 2-3% | **P0** | None |
-| 2.5 Type tags for `isinstance()` | Medium | 2-3% | **P1** | Low |
-| 2.6 Lazy SourceLocation | Medium | 5-8% | **P1** | Low |
-| 2.7 List fast path | Medium | 5-8% | **P1** | Medium |
-| 2.8 Emphasis pre-indexing | Medium | 2-5% | **P1** | Low |
-| 2.9 Block quote fast path | Medium | 3-5% | **P2** | Medium |
-| 2.10 Inline token stream | High | 10-15% | **P2** | Medium |
-| 2.11 Token pooling | High | 5-10% | **P3** | High |
-| 2.13 Optional locations | High | 10-15% | **v2.0** | Medium |
+| Optimization | Effort | Impact | Priority | Status |
+|--------------|--------|--------|----------|--------|
+| 2.1 Fix `_peek()`/`_advance()` | Trivial | 1-2% | P0 | ✅ **Done** |
+| 2.2 Audit remaining `len()` calls | Low | 1-2% | **P0** | Pending |
+| 2.3 Singleton `unknown()` | Trivial | 1% | P0 | ✅ **Done** |
+| 2.4 Local var caching | Low | 2-3% | **P0** | Partial |
+| 2.5 Type tags for `isinstance()` | Medium | 2-3% | **P1** | Pending |
+| 2.6 Lazy SourceLocation | Medium | 5-8% | **P1** | Pending |
+| 2.7 List fast path | Medium | 5-8% | **P1** | Pending |
+| 2.8 Emphasis pre-indexing | Medium | 2-5% | **P1** | Pending |
+| 2.9 Block quote fast path | Medium | 3-5% | **P2** | Pending |
+| 2.10 Inline token stream | High | 10-15% | **P2** | Pending |
+| 2.11 Token pooling | High | 5-10% | **P3** | Deferred |
+| 2.13 Optional locations | High | 10-15% | **v2.0** | Deferred |
+| ContextVar config | Medium | -2.8% | — | ✅ **Done** (separate RFC) |
 
-### 3.2 Milestones
+### 3.2 Milestones (Updated 2026-01-13)
 
-**Milestone 1 (P0)**: +5-8% improvement
-- Fix `_peek()` and `_advance()` to use `_source_len`
-- Audit and fix remaining `len()` calls
-- Implement `SourceLocation.unknown()` singleton
-- Add local variable caching in hot paths
+**Milestone 0 (Complete)**: Baseline established
+- ✅ Fixed `_peek()` and `_advance()` to use `_source_len`
+- ✅ Implemented `SourceLocation.unknown()` singleton
+- ✅ Implemented ContextVar configuration (separate RFC)
+- **Result**: Baseline is now 17.5ms (1.65x vs mistune)
+
+**Milestone 1 (P0)**: Target +3-5% improvement → ~16.5ms (1.56x)
+- [ ] Audit and fix remaining `len()` calls (181K → target <100K)
+- [ ] Add local variable caching in remaining hot paths
+- [ ] Cache ContextVar config at Parser init (2.8% → 1.5%)
 - **Timeline**: 1-2 days
 - **Deliverable**: PR with benchmarks before/after
 
-**Milestone 2 (P1)**: +12-20% improvement (cumulative)
-- Add type tags for inline tokens
-- Implement lazy SourceLocation
-- Add list parsing fast path
-- Optimize emphasis algorithm with pre-indexing
+**Milestone 2 (P1)**: Target +15-20% improvement → ~14ms (1.32x)
+- [ ] Add type tags for inline tokens
+- [ ] Implement lazy SourceLocation (tokens.location = 2.4%)
+- [ ] Add list parsing fast path
+- [ ] Optimize emphasis algorithm with pre-indexing
 - **Timeline**: 1 week
 - **Deliverable**: PR per optimization with benchmarks
 
-**Milestone 3 (P2)**: +20-30% improvement (cumulative)
-- Add block quote fast path
-- Implement inline token stream (profile first!)
+**Milestone 3 (P2)**: Target +25-35% improvement → ~11-12ms (~1.1x)
+- [ ] Add block quote fast path
+- [ ] Implement inline token stream (profile first!)
 - **Timeline**: 2-3 weeks
 - **Deliverable**: PR with memory profiling
 
@@ -605,11 +617,15 @@ The following are explicitly **not** goals of this optimization effort:
 | 2026-01-12 | Added type tag optimization | Addresses 50K isinstance() calls |
 | 2026-01-12 | Specified simple list criteria | Enables safe fast path implementation |
 | 2026-01-12 | Lazy SourceLocation design revised | Original incompatible with frozen dataclass |
+| 2026-01-13 | ContextVar config implemented | RFC-contextvar-config: 2.8% overhead, 50% memory savings |
+| 2026-01-13 | Marked 2.1, 2.3 as complete | Already implemented in codebase |
+| 2026-01-13 | Re-profiled with ContextVar | len() calls 181K (up from 114K), tokens.location now visible |
 
 ---
 
 ## Appendix A: Raw Profiling Data
 
+### Original Baseline (2026-01-12)
 ```
 Python 3.14.0 (free-threading)
 652 CommonMark examples, 5 iterations
@@ -621,6 +637,25 @@ Patitas total:       17.1ms
 mistune total:       11.0ms
 
 Patitas overhead:     4.1ms (37% slower than mistune total)
+```
+
+### Post-ContextVar (2026-01-13)
+```
+Python 3.14.2 (free-threading)
+652 CommonMark examples, 10 iterations
+
+Single-threaded:
+  mistune:         10.59ms (baseline)
+  Patitas:         17.48ms (1.65x slower)
+  markdown-it-py:  17.86ms (1.69x slower)
+
+Multi-threaded (4 threads):
+  mistune:          4.02ms (2.6x speedup)
+  Patitas:          7.27ms (2.4x speedup)
+  markdown-it-py:   CRASH (not thread-safe)
+
+ContextVar overhead: ~2.8% (13ms / 461ms total)
+Memory reduction:    50% (18 → 9 Parser slots)
 ```
 
 ## Appendix B: Section Timing Details
