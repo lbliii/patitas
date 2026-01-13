@@ -19,7 +19,6 @@ Example:
     ...         sb.append('<div class="admonition note">')
     ...         sb.append(rendered_children)
     ...         sb.append('</div>')
-
 """
 
 from __future__ import annotations
@@ -54,19 +53,6 @@ class DirectiveHandler(Protocol):
         Handlers must be stateless. All mutable state must be in the AST
         node (which is immutable) or passed as arguments. Multiple threads
         may call the same handler instance concurrently.
-    
-    Example:
-            >>> class VideoDirective:
-            ...     names = ("video",)
-            ...     token_type = "video"
-            ...     options_class = VideoOptions
-            ...
-            ...     def parse(self, name, title, options, content, children, location):
-            ...         return Directive(location, name, title, options, children)
-            ...
-            ...     def render(self, node, rendered_children, sb):
-            ...         sb.append(f'<video src="{node.title}"></video>')
-        
     """
 
     # Class-level attributes
@@ -149,7 +135,6 @@ class DirectiveParseOnly(Protocol):
     
     Use this when default rendering is acceptable but you need
     custom AST construction.
-        
     """
 
     names: ClassVar[tuple[str, ...]]
@@ -176,7 +161,6 @@ class DirectiveRenderOnly(Protocol):
     
     Use this when default parsing is acceptable but you need
     custom HTML output.
-        
     """
 
     names: ClassVar[tuple[str, ...]]

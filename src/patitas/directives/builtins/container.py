@@ -4,7 +4,7 @@ Provides a generic wrapper div with custom CSS classes.
 Similar to Sphinx/MyST container directive.
 
 Use cases:
-- Wrapping content with semantic styling (api-attributes, api-signatures)
+- Wrapping content with semantic styling
 - Creating styled blocks without affecting heading hierarchy
 - Grouping related content with a common class
 
@@ -17,19 +17,12 @@ Content here
 
 Thread Safety:
 Stateless handler. Safe for concurrent use across threads.
-
-HTML Output:
-Matches Bengal's container directive exactly:
-<div class="class-names">
-{content}
-</div>
-
 """
 
 from __future__ import annotations
 
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from html import escape as html_escape
 from typing import TYPE_CHECKING, ClassVar
 
@@ -49,7 +42,6 @@ class ContainerOptions(StyledOptions):
     
     The :class: option adds additional CSS classes beyond
     those specified in the title.
-        
     """
 
     pass  # Uses class_ from StyledOptions
@@ -63,13 +55,13 @@ class ContainerDirective:
     
     Thread Safety:
         Stateless handler. Safe for concurrent use.
-        
     """
 
     names: ClassVar[tuple[str, ...]] = ("container", "div")
     token_type: ClassVar[str] = "container"
     contract: ClassVar[DirectiveContract | None] = None
     options_class: ClassVar[type[ContainerOptions]] = ContainerOptions
+    preserves_raw_content: ClassVar[bool] = False
 
     def parse(
         self,
@@ -94,15 +86,13 @@ class ContainerDirective:
             classes = f"{classes} {extra_class}" if classes else extra_class
 
         # Create options with merged classes
-        from dataclasses import replace
-
         merged_opts = replace(options, class_=classes)
 
         return Directive(
             location=location,
             name=name,
             title=None,  # Title is used as classes, not displayed
-            options=merged_opts,  # Pass typed options directly
+            options=merged_opts,
             children=tuple(children),
         )
 
@@ -115,11 +105,10 @@ class ContainerDirective:
         """Render container to HTML.
 
         Produces a div with the specified classes.
-        The title is used as class name(s), merged with :class: option.
         """
-        opts = node.options  # Direct typed access!
+        opts = node.options
 
-        # Title contains class name(s) - but we merged them in parse()
+        # Get merged classes from options
         classes = opts.class_ or ""
 
         if classes:

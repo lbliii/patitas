@@ -1,18 +1,63 @@
 """Directive system for Patitas.
 
-Provides MyST-style fenced directives: :::{name} title
+Provides extensible block-level markup through the directive syntax:
 
-This module is part of the core package and provides the base
-infrastructure for directive parsing and options handling.
+:::{directive-name} optional title
+:option-key: option value
 
-Usage:
-    from patitas.directives import DirectiveOptions
+Content goes here.
+:::
 
-See patitas[directives] extra for portable built-in directives.
+Key components:
+- DirectiveHandler: Protocol for custom directive implementations
+- DirectiveOptions: Base class for typed option parsing
+- DirectiveContract: Nesting validation rules
+- DirectiveRegistry: Handler lookup and registration
+
+Thread Safety:
+All components are designed for thread-safety:
+- Options are frozen dataclasses
+- Contracts are frozen dataclasses
+- Registry is immutable after creation
+- Handlers must be stateless
+
+Example:
+    >>> from patitas.directives import DirectiveHandler, DirectiveOptions
+    >>>
+    >>> @dataclass(frozen=True, slots=True)
+    ... class VideoOptions(DirectiveOptions):
+    ...     width: int | None = None
+    ...     autoplay: bool = False
+    ...
+    >>> class VideoDirective:
+    ...     names = ("video",)
+    ...     token_type = "video"
+    ...     options_class = VideoOptions
+    ...
+    ...     def parse(self, name, title, options, content, children, location):
+    ...         return Directive(location, name, title, options, children)
+    ...
+    ...     def render(self, node, rendered_children, sb):
+    ...         sb.append(f'<video src="{node.title}"></video>')
 """
 
 from __future__ import annotations
 
+from patitas.directives.contracts import (
+    CARDS_CONTRACT,
+    CARD_CONTRACT,
+    DEFINITION_CONTRACT,
+    DEFINITION_LIST_CONTRACT,
+    DROPDOWN_CONTRACT,
+    GRID_CONTRACT,
+    GRID_ITEM_CONTRACT,
+    STEP_CONTRACT,
+    STEPS_CONTRACT,
+    TAB_ITEM_CONTRACT,
+    TAB_SET_CONTRACT,
+    ContractViolation,
+    DirectiveContract,
+)
 from patitas.directives.options import (
     AdmonitionOptions,
     CodeBlockOptions,
@@ -23,8 +68,23 @@ from patitas.directives.options import (
     TabItemOptions,
     TabSetOptions,
 )
+from patitas.directives.protocol import (
+    DirectiveHandler,
+    DirectiveParseOnly,
+    DirectiveRenderOnly,
+)
+from patitas.directives.registry import (
+    DirectiveRegistry,
+    DirectiveRegistryBuilder,
+    create_default_registry,
+)
 
 __all__ = [
+    # Protocol
+    "DirectiveHandler",
+    "DirectiveParseOnly",
+    "DirectiveRenderOnly",
+    # Options
     "DirectiveOptions",
     "StyledOptions",
     "AdmonitionOptions",
@@ -33,4 +93,23 @@ __all__ = [
     "FigureOptions",
     "TabSetOptions",
     "TabItemOptions",
+    # Contracts
+    "DirectiveContract",
+    "ContractViolation",
+    # Pre-defined contracts
+    "STEPS_CONTRACT",
+    "STEP_CONTRACT",
+    "TAB_SET_CONTRACT",
+    "TAB_ITEM_CONTRACT",
+    "DROPDOWN_CONTRACT",
+    "GRID_CONTRACT",
+    "GRID_ITEM_CONTRACT",
+    "CARDS_CONTRACT",
+    "CARD_CONTRACT",
+    "DEFINITION_LIST_CONTRACT",
+    "DEFINITION_CONTRACT",
+    # Registry
+    "DirectiveRegistry",
+    "DirectiveRegistryBuilder",
+    "create_default_registry",
 ]

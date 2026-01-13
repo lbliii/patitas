@@ -14,7 +14,6 @@ Example:
     >>> STEP_CONTRACT = DirectiveContract(
     ...     requires_parent=("steps",),
     ... )
-
 """
 
 from __future__ import annotations
@@ -44,19 +43,6 @@ class DirectiveContract:
         allows_children: Only these child directive types are allowed.
         max_children: Maximum number of children allowed.
         forbids_children: These directive types are forbidden as children.
-    
-    Example:
-            >>> # tab-item must be inside tab-set
-            >>> TAB_ITEM_CONTRACT = DirectiveContract(
-            ...     requires_parent=("tab-set",),
-            ... )
-            >>>
-            >>> # tab-set must contain tab-item children
-            >>> TAB_SET_CONTRACT = DirectiveContract(
-            ...     requires_children=("tab-item",),
-            ...     allows_children=("tab-item",),
-            ... )
-        
     """
 
     requires_parent: tuple[str, ...] | None = None
@@ -222,7 +208,6 @@ class ContractViolation:
     """Record of a contract violation.
     
     Contains information about what went wrong and suggestions for fixes.
-        
     """
 
     directive: str
@@ -292,13 +277,11 @@ GRID_ITEM_CONTRACT = DirectiveContract(
 
 # Cards grid container
 CARDS_CONTRACT = DirectiveContract(
-    # Cards can contain card children (but not required - could be empty)
     allows_children=("card",),
 )
 
 # Individual card
 CARD_CONTRACT = DirectiveContract(
-    # Card can be inside cards grid, but also allowed standalone
     requires_parent=None,
 )
 

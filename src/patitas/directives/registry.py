@@ -13,7 +13,6 @@ Example:
     >>> builder.register(WarningDirective())
     >>> registry = builder.build()
     >>> handler = registry.get("note")
-
 """
 
 from __future__ import annotations
@@ -32,7 +31,6 @@ class DirectiveRegistry:
     
     Thread Safety:
         Immutable after creation. Safe to share across threads.
-        
     """
 
     __slots__ = ("_handlers", "_by_name", "_by_token_type")
@@ -103,11 +101,10 @@ class DirectiveRegistryBuilder:
     an immutable registry.
     
     Example:
-            >>> builder = DirectiveRegistryBuilder()
-            >>> builder.register(NoteDirective())
-            >>> builder.register(WarningDirective())
-            >>> registry = builder.build()
-        
+        >>> builder = DirectiveRegistryBuilder()
+        >>> builder.register(NoteDirective())
+        >>> builder.register(WarningDirective())
+        >>> registry = builder.build()
     """
 
     __slots__ = ("_handlers", "_by_name", "_by_token_type")
@@ -186,90 +183,23 @@ class DirectiveRegistryBuilder:
 
 
 def create_default_registry() -> DirectiveRegistry:
-    """Create registry with all built-in directives.
+    """Create registry with portable built-in directives.
     
     Returns:
-        Registry with all Bengal directives:
+        Registry with portable directives:
         - Admonitions: note, warning, tip, danger, etc.
         - Tabs: tab-set, tab-item
         - Dropdown: collapsible content
         - Container: generic wrapper
-        - Steps: step-by-step guides
-        - Cards: card grids
-        - Checklist: progress tracking
-        - Media: figure, audio, gallery
-        - Tables: list-table, data-table
-        - Video: youtube, vimeo, tiktok, video
-        - Embed: gist, codepen, codesandbox, stackblitz, spotify, soundcloud
-        - Versioning: since, deprecated, changed
-        - Navigation: breadcrumbs, siblings, prev-next, related
-        - Inline: badge, button, icon, rubric, target
-        - File I/O: include, literalinclude
-        - Misc: example-label, build, asciinema
-        - Code: code-tabs
-        
+    
+    Note:
+        Bengal-specific directives (cards, code-tabs, navigation, etc.)
+        are registered separately via patitas[bengal].
     """
-    from patitas.directives.builtins import (
-        # Core
-        AdmonitionDirective,
-        AsciinemaDirective,
-        # Media
-        AudioDirective,
-        # Inline
-        BadgeDirective,
-        # Navigation
-        BreadcrumbsDirective,
-        BuildDirective,
-        ButtonDirective,
-        # Cards
-        CardDirective,
-        CardsDirective,
-        ChangedDirective,
-        # Lists
-        ChecklistDirective,
-        ChildCardsDirective,
-        CodePenDirective,
-        CodeSandboxDirective,
-        # Code
-        CodeTabsDirective,
-        ContainerDirective,
-        DataTableDirective,
-        DeprecatedDirective,
-        DropdownDirective,
-        # Misc
-        ExampleLabelDirective,
-        FigureDirective,
-        GalleryDirective,
-        # Developer embeds
-        GistDirective,
-        IconDirective,
-        # File I/O
-        IncludeDirective,
-        # Tables
-        ListTableDirective,
-        LiteralIncludeDirective,
-        PrevNextDirective,
-        RelatedDirective,
-        RubricDirective,
-        SelfHostedVideoDirective,
-        SiblingsDirective,
-        # Versioning
-        SinceDirective,
-        SoundCloudDirective,
-        SpotifyDirective,
-        StackBlitzDirective,
-        # Steps
-        StepDirective,
-        StepsDirective,
-        # Tabs
-        TabItemDirective,
-        TabSetDirective,
-        TargetDirective,
-        TikTokDirective,
-        VimeoDirective,
-        # Video embeds
-        YouTubeDirective,
-    )
+    from patitas.directives.builtins.admonition import AdmonitionDirective
+    from patitas.directives.builtins.container import ContainerDirective
+    from patitas.directives.builtins.dropdown import DropdownDirective
+    from patitas.directives.builtins.tabs import TabItemDirective, TabSetDirective
 
     builder = DirectiveRegistryBuilder()
 
@@ -281,70 +211,5 @@ def create_default_registry() -> DirectiveRegistry:
     # Tabs
     builder.register(TabSetDirective())
     builder.register(TabItemDirective())
-
-    # Steps
-    builder.register(StepsDirective())
-    builder.register(StepDirective())
-
-    # Cards
-    builder.register(CardsDirective())
-    builder.register(CardDirective())
-    builder.register(ChildCardsDirective())
-
-    # Lists
-    builder.register(ChecklistDirective())
-
-    # Media
-    builder.register(AudioDirective())
-    builder.register(FigureDirective())
-    builder.register(GalleryDirective())
-
-    # Tables
-    builder.register(ListTableDirective())
-    builder.register(DataTableDirective())
-
-    # Video embeds
-    builder.register(YouTubeDirective())
-    builder.register(VimeoDirective())
-    builder.register(TikTokDirective())
-    builder.register(SelfHostedVideoDirective())
-
-    # Developer embeds
-    builder.register(GistDirective())
-    builder.register(CodePenDirective())
-    builder.register(CodeSandboxDirective())
-    builder.register(StackBlitzDirective())
-    builder.register(SpotifyDirective())
-    builder.register(SoundCloudDirective())
-
-    # Versioning
-    builder.register(SinceDirective())
-    builder.register(DeprecatedDirective())
-    builder.register(ChangedDirective())
-
-    # Navigation
-    builder.register(BreadcrumbsDirective())
-    builder.register(SiblingsDirective())
-    builder.register(PrevNextDirective())
-    builder.register(RelatedDirective())
-
-    # Inline
-    builder.register(BadgeDirective())
-    builder.register(ButtonDirective())
-    builder.register(IconDirective())
-    builder.register(RubricDirective())
-    builder.register(TargetDirective())
-
-    # File I/O
-    builder.register(IncludeDirective())
-    builder.register(LiteralIncludeDirective())
-
-    # Misc
-    builder.register(ExampleLabelDirective())
-    builder.register(BuildDirective())
-    builder.register(AsciinemaDirective())
-
-    # Code
-    builder.register(CodeTabsDirective())
 
     return builder.build()
