@@ -541,7 +541,10 @@ class BlockParsingCoreMixin:
         flush_current_line()
 
         # Parse content as blocks using recursive sub-parser
+        # CommonMark: ensure content ends with newline for proper block parsing
         content = "\n".join(content_lines)
+        if content and not content.endswith("\n"):
+            content += "\n"
         if content.strip() or any(line == "" for line in content_lines):
             # Use sub-parser to parse nested block content
             children = self._parse_nested_content(

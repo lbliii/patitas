@@ -164,7 +164,7 @@ class TestHtmlRenderer:
         html = renderer.render(doc)
 
         assert 'class="language-python"' in html
-        assert "print(&#x27;hello&#x27;)" in html  # Escaped
+        assert "print('hello')" in html  # Single quotes not escaped per CommonMark
 
     def test_render_list(self) -> None:
         """Test list rendering."""

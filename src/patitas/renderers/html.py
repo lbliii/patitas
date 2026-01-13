@@ -13,10 +13,21 @@ regex-based post-processing. TOC data is collected during rendering.
 
 from __future__ import annotations
 
+import html
+import re
 from collections.abc import Callable
 from dataclasses import dataclass
-from html import escape as html_escape
 from typing import TYPE_CHECKING, Any
+from urllib.parse import quote as url_quote
+
+
+def html_escape(s: str) -> str:
+    """Escape HTML special characters.
+    
+    CommonMark-compliant: escapes <, >, &, " but NOT single quotes.
+    Python's html.escape() escapes ' to &#x27; which CommonMark doesn't require.
+    """
+    return html.escape(s, quote=False).replace('"', "&quot;")
 
 from patitas.nodes import (
     Block,
@@ -57,6 +68,22 @@ from patitas.utils.text import slugify as default_slugify
 if TYPE_CHECKING:
     from patitas.directives.registry import DirectiveRegistry
     from patitas.roles.registry import RoleRegistry
+
+
+def _encode_url(url: str) -> str:
+    """Encode URL for CommonMark compliance.
+    
+    CommonMark requires:
+    1. Decode HTML entities (e.g., &auml; → ä)
+    2. Percent-encode special characters (spaces, backslashes, non-ASCII)
+    
+    Returns URL safe for href attribute (still needs html_escape for quotes).
+    """
+    # First decode HTML entities
+    decoded = html.unescape(url)
+    # Then percent-encode, preserving already-encoded sequences and common URL chars
+    # safe= characters that don't need encoding (per RFC 3986 + common URL chars)
+    return url_quote(decoded, safe="/:?#[]@!$&'()*+,;=-_.~%")
 
 
 @dataclass(frozen=True, slots=True)
@@ -199,7 +226,9 @@ class HtmlRenderer:
             case ThematicBreak():
                 sb.append("<hr />\n")
             case HtmlBlock():
-                sb.append(block.html).append("\n")
+                # CommonMark: HTML blocks end with exactly one newline
+                html = block.html.rstrip("\n")
+                sb.append(html).append("\n")
             case Table():
                 self._render_table(block, sb)
             case MathBlock():
@@ -251,8 +280,9 @@ class HtmlRenderer:
     def _render_fenced_code(self, code: FencedCode, sb: StringBuilder) -> None:
         """Render fenced code block."""
         content = code.get_code(self._source)
-        # CommonMark: only the first word of the info string is the language
-        lang = code.info.split()[0] if code.info else None
+        # CommonMark: decode HTML entities in info string, then take first word as language
+        info = html.unescape(code.info) if code.info else None
+        lang = info.split()[0] if info else None
         lang_class = f' class="language-{html_escape(lang)}"' if lang else ""
 
         if self._highlight and lang:
@@ -291,14 +321,19 @@ class HtmlRenderer:
             sb.append("<ul>\n")
 
         for item in lst.items:
-            self._render_list_item(item, sb, lst.ordered, lst.start)
+            self._render_list_item(item, sb, lst.tight)
 
         sb.append("</ol>\n" if lst.ordered else "</ul>\n")
 
     def _render_list_item(
-        self, item: ListItem, sb: StringBuilder, ordered: bool, start: int
+        self, item: ListItem, sb: StringBuilder, tight: bool
     ) -> None:
-        """Render list item."""
+        """Render list item.
+        
+        CommonMark:
+        - Tight lists: Single paragraph items render as text (no <p> tags)
+        - Loose lists: All paragraphs wrapped in <p> tags
+        """
         # Task list checkbox
         checkbox = ""
         if item.checked is not None:
@@ -309,19 +344,41 @@ class HtmlRenderer:
         if checkbox:
             sb.append(checkbox)
 
-        # For tight lists, render inline content directly
-        # For loose lists, render block content
-        for i, child in enumerate(item.children):
-            if isinstance(child, Paragraph) and len(item.children) == 1:
-                # Single paragraph in tight list: render inline without <p>
-                self._render_inlines(child.children, sb)
-            else:
-                if i == 0 and isinstance(child, Paragraph):
-                    # First paragraph: render inline
-                    self._render_inlines(child.children, sb)
-                    sb.append("\n")
-                else:
+        # CommonMark tight/loose list rendering rules:
+        # - Tight list, single paragraph: <li>text</li> (no <p>, no newlines)
+        # - Tight list, first is paragraph: <li>text\n...rest</li>
+        # - Tight list, first is non-paragraph: <li>\n<block>...</li>
+        # - Tight list, heading + paragraph: paragraphs render as text (no <p>)
+        # - Loose list: <li>\n<p>text</p>\n...rest</li>
+        if not item.children:
+            # Empty item
+            pass
+        elif tight and len(item.children) == 1 and isinstance(item.children[0], Paragraph):
+            # Single paragraph in tight list: render inline without <p>
+            self._render_inlines(item.children[0].children, sb)
+        elif tight:
+            # Tight list with multiple blocks or non-paragraph first child
+            first = item.children[0]
+            if isinstance(first, Paragraph):
+                # First is paragraph: render as text
+                self._render_inlines(first.children, sb)
+                sb.append("\n")
+                for child in item.children[1:]:
                     self._render_block(child, sb)
+            else:
+                # First is non-paragraph (heading, blockquote, code, etc.): add newline
+                sb.append("\n")
+                for i, child in enumerate(item.children):
+                    if isinstance(child, Paragraph):
+                        # In tight list after heading, paragraphs render as text
+                        self._render_inlines(child.children, sb)
+                    else:
+                        self._render_block(child, sb)
+        else:
+            # Loose list: all blocks render normally with <p> tags
+            sb.append("\n")
+            for child in item.children:
+                self._render_block(child, sb)
 
         sb.append("</li>\n")
 
@@ -424,15 +481,19 @@ class HtmlRenderer:
                 self._render_inlines(inline.children, sb)
                 sb.append("</del>")
             case Link():
-                href = html_escape(inline.url)
-                title = f' title="{html_escape(inline.title)}"' if inline.title else ""
+                href = html_escape(_encode_url(inline.url))
+                # CommonMark: decode HTML entities in title, then re-escape
+                title_text = html.unescape(inline.title) if inline.title else None
+                title = f' title="{html_escape(title_text)}"' if title_text else ""
                 sb.append(f'<a href="{href}"{title}>')
                 self._render_inlines(inline.children, sb)
                 sb.append("</a>")
             case Image():
-                src = html_escape(inline.url)
+                src = html_escape(_encode_url(inline.url))
                 alt = html_escape(inline.alt)
-                title = f' title="{html_escape(inline.title)}"' if inline.title else ""
+                # CommonMark: decode HTML entities in title, then re-escape
+                title_text = html.unescape(inline.title) if inline.title else None
+                title = f' title="{html_escape(title_text)}"' if title_text else ""
                 sb.append(f'<img src="{src}" alt="{alt}"{title} />')
             case CodeSpan():
                 sb.append("<code>")
