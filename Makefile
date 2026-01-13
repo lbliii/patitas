@@ -1,7 +1,7 @@
 # Patitas Development Makefile
 # =============================================================================
 
-.PHONY: help install dev test lint typecheck format clean build docs benchmark
+.PHONY: help install dev test lint typecheck format clean build docs benchmark publish release
 
 # Default target
 help:
@@ -24,8 +24,10 @@ help:
 	@echo "  make format      Format code with ruff"
 	@echo "  make check       Run all checks (lint + typecheck)"
 	@echo ""
-	@echo "Build:"
+	@echo "Build & Release:"
 	@echo "  make build       Build distribution packages"
+	@echo "  make publish     Publish to PyPI (uses .env for token)"
+	@echo "  make release     Build and publish in one step"
 	@echo "  make clean       Remove build artifacts"
 	@echo ""
 	@echo "Benchmarks:"
@@ -74,11 +76,27 @@ format:
 check: lint typecheck
 
 # =============================================================================
-# Build
+# Build & Release
 # =============================================================================
 
-build: clean
+build:
+	@echo "Building distribution packages..."
+	rm -rf dist/
 	uv build
+	@echo "✓ Built:"
+	@ls -la dist/
+
+publish:
+	@echo "Publishing to PyPI..."
+	@if [ -f .env ]; then \
+		export $$(cat .env | xargs) && uv publish; \
+	else \
+		echo "Warning: No .env file found, trying without token..."; \
+		uv publish; \
+	fi
+
+release: build publish
+	@echo "✓ Release complete"
 
 clean:
 	rm -rf build/ dist/ *.egg-info src/*.egg-info
