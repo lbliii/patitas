@@ -1,0 +1,110 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "patitas"
+version = "0.1.0"
+description = "Modern Markdown parser for Python 3.14t — CommonMark compliant, free-threading ready, 40-50% faster than mistune"
+readme = "README.md"
+requires-python = ">=3.14"
+license = "MIT"
+keywords = [
+    "markdown",
+    "parser",
+    "commonmark",
+    "free-threading",
+    "ast",
+    "myst",
+    "directives",
+]
+authors = [{ name = "Bengal Contributors" }]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Text Processing :: Markup :: Markdown",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+dependencies = []  # Pure Python, zero runtime dependencies
+
+[project.optional-dependencies]
+# Portable directives (admonition, dropdown, container, tabs)
+# No external deps - just enables the directive subsystem
+directives = []
+
+# Syntax highlighting for code blocks
+syntax = ["rosettes>=0.1.0"]
+
+# Full Bengal integration (cards, code-tabs, navigation, versioning)
+bengal = ["bengal>=0.1.8"]
+
+# Everything except Bengal
+all = ["rosettes>=0.1.0"]
+
+[project.urls]
+Homepage = "https://github.com/lbliii/patitas"
+Documentation = "https://github.com/lbliii/patitas"
+Repository = "https://github.com/lbliii/patitas"
+Changelog = "https://github.com/lbliii/patitas/blob/main/CHANGELOG.md"
+
+[project.entry-points."patitas.directives"]
+# Entry points allow Bengal to register its directives
+# bengal = "bengal.patitas:register_directives"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+patitas = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = ["-ra", "-q", "--strict-markers"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "commonmark: CommonMark spec compliance tests",
+    "property: property-based tests (may take longer)",
+]
+
+[tool.pyright]
+include = ["src"]
+pythonVersion = "3.14"
+typeCheckingMode = "strict"
+reportMissingTypeStubs = false
+
+[tool.ruff]
+target-version = "py314"
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "UP",  # pyupgrade - Python modernization
+    "B",   # flake8-bugbear - common bugs
+    "SIM", # flake8-simplify - simplify code
+    "I",   # isort - import sorting
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]   # Allow unused imports in __init__ files
+"tests/**/*.py" = ["S101"] # Allow assert in tests
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+    "pytest-cov>=6.0.0",
+    "pytest-benchmark>=4.0.0",
+    "pytest-timeout>=2.3.0",
+    "ruff>=0.14.0",
+    "pre-commit>=4.0.0",
+    "hypothesis>=6.100.0",
+]
+docs = ["bengal>=0.1.8"]

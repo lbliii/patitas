@@ -1,0 +1,1 @@
+"""Patitas test suite."""
