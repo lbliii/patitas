@@ -239,17 +239,18 @@ def _parse_inline_link(text: str, pos: int) -> tuple[str, str | None, int] | Non
         (url, title, end_pos) or None if invalid
 
     """
-    if pos >= len(text) or text[pos] != "(":
+    text_len = len(text)  # Cache length for hot loop
+    if pos >= text_len or text[pos] != "(":
         return None
 
     pos += 1  # Skip opening (
 
     # Skip leading whitespace
-    while pos < len(text) and text[pos] in " \t\n\r":
+    while pos < text_len and text[pos] in " \t\n\r":
         pos += 1
 
     # Check for empty destination immediately closed
-    if pos < len(text) and text[pos] == ")":
+    if pos < text_len and text[pos] == ")":
         return "", None, pos + 1
 
     # Parse destination
@@ -260,10 +261,10 @@ def _parse_inline_link(text: str, pos: int) -> tuple[str, str | None, int] | Non
     url, pos = dest_result
 
     # Skip whitespace between destination and title (or closing paren)
-    while pos < len(text) and text[pos] in " \t\n\r":
+    while pos < text_len and text[pos] in " \t\n\r":
         pos += 1
 
-    if pos >= len(text):
+    if pos >= text_len:
         return None
 
     # Check for closing paren (no title)
@@ -274,10 +275,10 @@ def _parse_inline_link(text: str, pos: int) -> tuple[str, str | None, int] | Non
     title, pos = _parse_link_title(text, pos)
 
     # Skip whitespace after title
-    while pos < len(text) and text[pos] in " \t\n\r":
+    while pos < text_len and text[pos] in " \t\n\r":
         pos += 1
 
-    if pos >= len(text) or text[pos] != ")":
+    if pos >= text_len or text[pos] != ")":
         return None
 
     return url, title, pos + 1

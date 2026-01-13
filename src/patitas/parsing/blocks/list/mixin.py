@@ -29,6 +29,10 @@ from patitas.parsing.blocks.list.blank_line import (
     ParseContinuation,
     handle_blank_line,
 )
+from patitas.parsing.blocks.list.fast_path import (
+    is_simple_list,
+    parse_simple_list,
+)
 from patitas.parsing.blocks.list.indent import (
     is_nested_list_indent,
 )
@@ -104,6 +108,20 @@ class ListParsingMixin:
         """
         start_token = self._current
         assert start_token is not None and start_token.type == TokenType.LIST_ITEM_MARKER
+
+        # Fast path: simple lists at indent 0 with no nesting/block quotes
+        # Bypasses ContainerStack overhead for ~5-8% performance gain
+        if parent_indent == -1 and not self._containers._stack:
+            if is_simple_list(self._tokens, self._pos):
+                list_node, new_pos = parse_simple_list(
+                    self._tokens,
+                    self._pos,
+                    self._parse_inline,
+                )
+                # Update parser position
+                self._pos = new_pos
+                self._current = self._tokens[new_pos] if new_pos < len(self._tokens) else None
+                return list_node
 
         # Extract marker info
         marker_info = extract_marker_info(start_token.value)

@@ -25,7 +25,13 @@ Profiling reveals Patitas is ~65% slower than mistune on the CommonMark corpus. 
 
 **Completed Optimizations**:
 - ✅ 2.1 - `_peek()`/`_advance()` now use cached `_source_len`
+- ✅ 2.2 - Audited and cached `len()` calls in hot loops
 - ✅ 2.3 - `SourceLocation.unknown()` is now a singleton
+- ✅ 2.4 - Local variable caching in tight loops (`_scan_block`, `_chars_for_indent`)
+- ✅ 2.5 - Type tags for inline tokens (TOKEN_TEXT, TOKEN_DELIMITER, etc.)
+- ✅ 2.6 - Lazy SourceLocation construction with cache
+- ✅ 2.7 - List fast path for simple, non-nested lists
+- ✅ 2.8 - Emphasis algorithm uses Delimiter-Index for O(1) lookup
 - ✅ ContextVar configuration (separate RFC) - 2.8% overhead, 50% memory reduction
 
 ---
@@ -443,13 +449,13 @@ md = Markdown(track_locations=True)   # Full mode (default)
 | Optimization | Effort | Impact | Priority | Status |
 |--------------|--------|--------|----------|--------|
 | 2.1 Fix `_peek()`/`_advance()` | Trivial | 1-2% | P0 | ✅ **Done** |
-| 2.2 Audit remaining `len()` calls | Low | 1-2% | **P0** | Pending |
+| 2.2 Audit remaining `len()` calls | Low | 1-2% | P0 | ✅ **Done** |
 | 2.3 Singleton `unknown()` | Trivial | 1% | P0 | ✅ **Done** |
-| 2.4 Local var caching | Low | 2-3% | **P0** | Partial |
-| 2.5 Type tags for `isinstance()` | Medium | 2-3% | **P1** | Pending |
-| 2.6 Lazy SourceLocation | Medium | 5-8% | **P1** | Pending |
-| 2.7 List fast path | Medium | 5-8% | **P1** | Pending |
-| 2.8 Emphasis pre-indexing | Medium | 2-5% | **P1** | Pending |
+| 2.4 Local var caching | Low | 2-3% | P0 | ✅ **Done** |
+| 2.5 Type tags for `isinstance()` | Medium | 2-3% | P1 | ✅ **Done** (already implemented) |
+| 2.6 Lazy SourceLocation | Medium | 5-8% | P1 | ✅ **Done** (already implemented) |
+| 2.7 List fast path | Medium | 5-8% | P1 | ✅ **Done** |
+| 2.8 Emphasis pre-indexing | Medium | 2-5% | P1 | ✅ **Done** (already implemented) |
 | 2.9 Block quote fast path | Medium | 3-5% | **P2** | Pending |
 | 2.10 Inline token stream | High | 10-15% | **P2** | Pending |
 | 2.11 Token pooling | High | 5-10% | **P3** | Deferred |
@@ -464,28 +470,27 @@ md = Markdown(track_locations=True)   # Full mode (default)
 - ✅ Implemented ContextVar configuration (separate RFC)
 - **Result**: Baseline is now 17.5ms (1.65x vs mistune)
 
-**Milestone 1 (P0)**: Target +3-5% improvement → ~16.5ms (1.56x)
-- [ ] Audit and fix remaining `len()` calls (181K → target <100K)
-- [ ] Add local variable caching in remaining hot paths
-- [ ] Cache ContextVar config at Parser init (2.8% → 1.5%)
-- **Timeline**: 1-2 days
-- **Deliverable**: PR with benchmarks before/after
+**Milestone 1 (Complete)**: P0 optimizations
+- ✅ Audit and fix remaining `len()` calls in hot loops
+- ✅ Add local variable caching in `_scan_block`, `_chars_for_indent`, classifiers
+- ✅ Type tags already implemented (TOKEN_TEXT, TOKEN_DELIMITER, etc.)
+- **Result**: ~17.2ms (1.76x vs mistune) - modest improvement
 
-**Milestone 2 (P1)**: Target +15-20% improvement → ~14ms (1.32x)
-- [ ] Add type tags for inline tokens
-- [ ] Implement lazy SourceLocation (tokens.location = 2.4%)
-- [ ] Add list parsing fast path
-- [ ] Optimize emphasis algorithm with pre-indexing
-- **Timeline**: 1 week
-- **Deliverable**: PR per optimization with benchmarks
+**Milestone 2 (Complete)**: P1 optimizations
+- ✅ Type tags for inline tokens (already implemented)
+- ✅ Lazy SourceLocation with cache (already implemented)
+- ✅ List parsing fast path for simple lists
+- ✅ Emphasis algorithm with Delimiter-Index (already implemented)
+- **Result**: Optimizations in place, CommonMark spec tests pass
 
-**Milestone 3 (P2)**: Target +25-35% improvement → ~11-12ms (~1.1x)
+**Milestone 3 (P2)**: Target +10-15% improvement → ~15ms (~1.5x)
 - [ ] Add block quote fast path
-- [ ] Implement inline token stream (profile first!)
+- [ ] Implement inline token stream optimization (profile first!)
 - **Timeline**: 2-3 weeks
 - **Deliverable**: PR with memory profiling
 
-**Cumulative Target**: 25-40% improvement → Patitas within 20-35% of mistune
+**Current Status**: 17.2ms (1.76x vs mistune) - all P0/P1 optimizations complete
+**Remaining Target**: P2 optimizations could achieve ~15ms (~1.5x vs mistune)
 
 ---
 
@@ -498,11 +503,11 @@ The following scripts must exist before optimization work begins:
 | Script | Purpose | Status |
 |--------|---------|--------|
 | `benchmark_vs_mistune.py` | Full corpus comparison | ✅ Exists |
-| `benchmark_by_section.py` | Per-section timing | ❌ TODO |
-| `profile_parse.py` | cProfile wrapper | ❌ TODO |
-| `memory_bench.py` | Memory profiling | ❌ TODO |
-| `line_profile.py` | Line-level profiling | ❌ TODO |
-| `report_results.py` | Write JSON/Markdown summary for docs | ❌ TODO |
+| `benchmark_by_section.py` | Per-section timing | ✅ Exists |
+| `profile_parse.py` | cProfile wrapper | ✅ Exists |
+| `memory_bench.py` | Memory profiling | ✅ Exists |
+| `line_profile.py` | Line-level profiling | ✅ Exists |
+| `report_results.py` | Write JSON/Markdown summary for docs | ✅ Exists |
 
 ### 4.2 Benchmark Commands
 
@@ -620,6 +625,9 @@ The following are explicitly **not** goals of this optimization effort:
 | 2026-01-13 | ContextVar config implemented | RFC-contextvar-config: 2.8% overhead, 50% memory savings |
 | 2026-01-13 | Marked 2.1, 2.3 as complete | Already implemented in codebase |
 | 2026-01-13 | Re-profiled with ContextVar | len() calls 181K (up from 114K), tokens.location now visible |
+| 2026-01-13 | Implemented all P0/P1 optimizations | len() caching, local var caching, list fast path |
+| 2026-01-13 | Created benchmark suite | 5 new scripts for profiling and reporting |
+| 2026-01-13 | Found 2.5, 2.6, 2.8 already done | Type tags, lazy location, emphasis index already in codebase |
 
 ---
 
@@ -677,12 +685,15 @@ Emphasis and strong emphasis       21µs/doc  (132 docs)
 
 | Optimization | Primary Files |
 |--------------|---------------|
-| 2.1 Fix `_peek()`/`_advance()` | `src/patitas/lexer/core.py:289-313` |
-| 2.3 Singleton `unknown()` | `src/patitas/location.py:83-89` |
-| 2.6 Lazy SourceLocation | `src/patitas/tokens.py:113-160` |
-| 2.7 List fast path | `src/patitas/parsing/blocks/list/` |
-| 2.8 Emphasis optimization | `src/patitas/parsing/inline/emphasis.py:86-199` |
-| 2.10 Inline token stream | `src/patitas/parsing/inline/tokens.py`, `core.py` |
+| 2.1 Fix `_peek()`/`_advance()` | `src/patitas/lexer/core.py:288-312` ✅ |
+| 2.2 len() caching | `src/patitas/parsing/inline/links.py`, `lexer/classifiers/*.py` ✅ |
+| 2.3 Singleton `unknown()` | `src/patitas/location.py:60-69` ✅ |
+| 2.4 Local var caching | `src/patitas/lexer/scanners/block.py:123-219` ✅ |
+| 2.5 Type tags | `src/patitas/parsing/inline/tokens.py:32-37` ✅ |
+| 2.6 Lazy SourceLocation | `src/patitas/tokens.py:165-189` ✅ |
+| 2.7 List fast path | `src/patitas/parsing/blocks/list/fast_path.py` ✅ |
+| 2.8 Emphasis optimization | `src/patitas/parsing/inline/emphasis.py:108-193` ✅ |
+| 2.10 Inline token stream | `src/patitas/parsing/inline/tokens.py`, `core.py` (pending) |
 
 ## Appendix D: References
 

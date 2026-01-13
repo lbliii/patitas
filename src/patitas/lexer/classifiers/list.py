@@ -58,14 +58,15 @@ class ListClassifierMixin:
 
         # Ordered: 1. or 1)
         if content[0].isdigit():
+            content_len = len(content)  # Cache length
             pos = 0
-            while pos < len(content) and content[pos].isdigit():
+            while pos < content_len and content[pos].isdigit():
                 pos += 1
             if pos > 9:
                 return None
-            if pos < len(content) and content[pos] in ".)":
+            if pos < content_len and content[pos] in ".)":
                 marker = content[: pos + 1]
-                if pos + 1 == len(content):
+                if pos + 1 == content_len:
                     return self._yield_list_marker_and_content(marker, "", line_start, indent)
                 if content[pos + 1] == " ":
                     return self._yield_list_marker_and_content(

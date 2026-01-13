@@ -173,17 +173,18 @@ class HtmlClassifierMixin:
         if not content or content[0] != "<":
             return None
 
+        content_len = len(content)  # Cache length
         pos = 1
         # Handle closing tag </
-        if pos < len(content) and content[pos] == "/":
+        if pos < content_len and content[pos] == "/":
             pos += 1
 
         # Tag name must start with letter
-        if pos >= len(content) or not content[pos].isalpha():
+        if pos >= content_len or not content[pos].isalpha():
             return None
 
         start = pos
-        while pos < len(content) and (content[pos].isalnum() or content[pos] == "-"):
+        while pos < content_len and (content[pos].isalnum() or content[pos] == "-"):
             pos += 1
 
         return content[start:pos] if pos > start else None
@@ -216,8 +217,10 @@ class HtmlClassifierMixin:
         if not content.endswith(">"):
             return False
 
+        content_len = len(content)  # Cache length for hot path
+
         # Must have at least <x> (3 chars)
-        if len(content) < 3:
+        if content_len < 3:
             return False
 
         # Exclude autolinks: URIs contain "://" or ":" followed by path, emails contain "@"
@@ -229,13 +232,14 @@ class HtmlClassifierMixin:
         # Check for closing tag </x>
         if content[1] == "/":
             # Closing tag: must have letter after /
-            if len(content) < 4:
+            if content_len < 4:
                 return False
             if not content[2].isalpha():
                 return False
             # Extract tag name
             pos = 2
-            while pos < len(content) - 1 and (content[pos].isalnum() or content[pos] == "-"):
+            content_end = content_len - 1  # Cache end position
+            while pos < content_end and (content[pos].isalnum() or content[pos] == "-"):
                 pos += 1
             tag_name = content[2:pos].lower()
             # Closing tags for type1 elements should not start a new HTML block line
@@ -254,7 +258,7 @@ class HtmlClassifierMixin:
 
         # Extract tag name - must be followed by whitespace, /, or >
         pos = 1
-        while pos < len(content) and (content[pos].isalnum() or content[pos] == "-"):
+        while pos < content_len and (content[pos].isalnum() or content[pos] == "-"):
             pos += 1
         tag_name = content[1:pos].lower()
 
@@ -298,7 +302,7 @@ class HtmlClassifierMixin:
 
         # Check tag name was followed by valid delimiter (not just more characters)
         # E.g., <localhost:5001> has tag_name="localhost" but then ":5001>" which isn't valid
-        if pos < len(content) - 1:
+        if pos < content_len - 1:
             next_char = content[pos]
             if next_char not in " \t/>":
                 return False

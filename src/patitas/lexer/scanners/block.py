@@ -43,7 +43,8 @@ class BlockScannerMixin:
         """Calculate how many characters to skip to consume target_indent spaces."""
         col = 0
         pos = 0
-        while pos < len(line) and col < target_indent:
+        line_len = len(line)  # Cache length
+        while pos < line_len and col < target_indent:
             char = line[pos]
             if char == " ":
                 col += 1
@@ -125,7 +126,8 @@ class BlockScannerMixin:
         self._save_location()
         line_start = self._pos
         line_end = self._find_line_end()
-        line = self._source[line_start:line_end]
+        source = self._source  # Cache source reference
+        line = source[line_start:line_end]
 
         indent, content_start = self._calc_indent(line)
         content = line[content_start:]
@@ -152,32 +154,35 @@ class BlockScannerMixin:
             self._previous_line_blank = False
             return
 
-        if content[0] in FENCE_CHARS:
+        # Cache first character for faster dispatch
+        first_char = content[0]
+
+        if first_char in FENCE_CHARS:
             token = self._try_classify_fence_start(content, line_start, indent)
             if token:
                 self._previous_line_blank = False
                 yield token
                 return
 
-        if content[0] == "<":
+        if first_char == "<":
             html_result = self._try_classify_html_block_start(content, line_start, line, indent)
             if html_result:
                 self._previous_line_blank = False
                 yield from html_result
                 return
 
-        if content.startswith("#"):
+        if first_char == "#":
             token = self._try_classify_atx_heading(content, line_start, indent)
             if token:
                 self._previous_line_blank = False
                 yield token
                 return
 
-        if content.startswith(">"):
+        if first_char == ">":
             yield from self._classify_block_quote(content, line_start, indent)
             return
 
-        if content[0] in THEMATIC_BREAK_CHARS:
+        if first_char in THEMATIC_BREAK_CHARS:
             token = self._try_classify_thematic_break(content, line_start, indent)
             if token:
                 yield token
@@ -195,14 +200,14 @@ class BlockScannerMixin:
             yield footnote_token
             return
 
-        if content.startswith("[") and not content.startswith("[^"):
+        if first_char == "[" and not content.startswith("[^"):
             link_ref_token = self._try_classify_link_reference_def(content, line_start, indent)
             if link_ref_token is not None:
                 self._previous_line_blank = False
                 yield link_ref_token
                 return
 
-        if content.startswith(":"):
+        if first_char == ":":
             directive_tokens = self._try_classify_directive_start(content, line_start, indent)
             if directive_tokens is not None:
                 self._previous_line_blank = False
