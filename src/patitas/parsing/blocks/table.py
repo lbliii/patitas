@@ -7,7 +7,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from patitas.nodes import Table, TableCell, TableRow
+from patitas.nodes import Inline, Table, TableCell, TableRow
+
+from typing import Literal
 
 if TYPE_CHECKING:
     from patitas.location import SourceLocation
@@ -22,6 +24,10 @@ class TableParsingMixin:
         - _parse_inline(text, location) -> tuple[Inline, ...]
 
     """
+
+    def _parse_inline(self, text: str, location: SourceLocation) -> tuple[Inline, ...]:
+        """Parse inline content. Implemented by InlineParsingCoreMixin."""
+        raise NotImplementedError
 
     def _try_parse_table(self, lines: list[str], location: SourceLocation) -> Table | None:
         """Try to parse lines as a GFM table.
@@ -131,7 +137,7 @@ class TableParsingMixin:
 
     def _parse_table_delimiter(
         self, line: str, expected_cols: int
-    ) -> tuple[str | None, ...] | None:
+    ) -> tuple[Literal["left", "center", "right"] | None, ...] | None:
         """Parse table delimiter row and extract alignments.
 
         Delimiter format: |:---|:---:|---:|
@@ -150,7 +156,7 @@ class TableParsingMixin:
         if not parts:
             return None
 
-        alignments: list[str | None] = []
+        alignments: list[Literal["left", "center", "right"] | None] = []
         for part in parts:
             part = part.strip()
             if not part:

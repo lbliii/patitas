@@ -105,14 +105,19 @@ class PatitasPlugin(Protocol):
 BUILTIN_PLUGINS: dict[str, type[PatitasPlugin]] = {}
 
 
-def register_plugin(name: str) -> type[PatitasPlugin]:
+from typing import Callable
+
+
+def register_plugin(
+    name: str,
+) -> Callable[[type[PatitasPlugin]], type[PatitasPlugin]]:
     """Decorator to register a plugin.
 
     Args:
         name: Plugin name for lookup
 
     Returns:
-        The decorated class
+        Decorator function that registers and returns the class
 
     Usage:
         @register_plugin("table")

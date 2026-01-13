@@ -2,21 +2,23 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from patitas.tokens import Token, TokenType
-
-if TYPE_CHECKING:
-    from patitas.location import SourceLocation
 
 
 class ThematicClassifierMixin:
     """Mixin providing thematic break classification."""
 
-    def _location_from(
-        self, start_pos: int, start_col: int | None = None, end_pos: int | None = None
-    ) -> SourceLocation:
-        """Get source location from saved position. Implemented by Lexer."""
+    def _make_token(
+        self,
+        token_type: TokenType,
+        value: str,
+        start_pos: int,
+        *,
+        start_col: int | None = None,
+        end_pos: int | None = None,
+        line_indent: int = -1,
+    ) -> Token:
+        """Create token with raw coordinates. Implemented by Lexer."""
         raise NotImplementedError
 
     def _try_classify_thematic_break(
@@ -56,10 +58,10 @@ class ThematicClassifierMixin:
         if count >= 3:
             # Preserve original content so parser can distinguish setext underlines
             # A pure sequence like "---" can become setext h2, but "--- -" cannot
-            return Token(
+            return self._make_token(
                 TokenType.THEMATIC_BREAK,
                 content.rstrip("\n"),
-                self._location_from(line_start),
+                line_start,
                 line_indent=indent,
             )
 

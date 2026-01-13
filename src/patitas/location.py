@@ -13,36 +13,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 
+# Module-level singleton (created once at import or on first use)
+_UNKNOWN_LOCATION: SourceLocation | None = None
+
+
 @dataclass(frozen=True, slots=True)
 class SourceLocation:
-    """Source location for error messages and debugging.
-
-    Tracks both position in source and optionally the source file path
-    for multi-file documentation builds.
-
-    All positions are 1-indexed (lineno and col_offset start at 1).
-
-    Attributes:
-        lineno: Starting line number (1-indexed)
-        col_offset: Starting column offset (1-indexed)
-        end_lineno: Ending line number (optional)
-        end_col_offset: Ending column offset (optional)
-        source_file: Source file path (optional, for multi-file builds)
-
-    Examples:
-            >>> loc = SourceLocation(lineno=1, col_offset=1)
-            >>> loc
-        SourceLocation(lineno=1, col_offset=1, end_lineno=None, ...)
-
-            >>> loc = SourceLocation(1, 1, 1, 10, "docs/guide.md")
-            >>> f"{loc.source_file}:{loc.lineno}:{loc.col_offset}"
-            'docs/guide.md:1:1'
-
-    Thread Safety:
-        Frozen dataclass ensures immutability for safe sharing.
-
-    """
-
+    # ... (existing attributes) ...
     lineno: int
     col_offset: int
     offset: int = 0  # NEW: Absolute start offset in source buffer
@@ -86,4 +63,7 @@ class SourceLocation:
 
         Use for AST nodes created synthetically or when location is unavailable.
         """
-        return cls(lineno=0, col_offset=0)
+        global _UNKNOWN_LOCATION
+        if _UNKNOWN_LOCATION is None:
+            _UNKNOWN_LOCATION = cls(lineno=0, col_offset=0)
+        return _UNKNOWN_LOCATION

@@ -15,6 +15,7 @@ from patitas.nodes import (
     Heading,
     HtmlBlock,
     IndentedCode,
+    Inline,
     Paragraph,
     Table,
     ThematicBreak,
@@ -68,7 +69,8 @@ def _extract_explicit_id(content: str) -> tuple[str, str | None]:
 
     # Extract the ID (between {# and })
     id_start = brace_pos + 2
-    id_end = len(content) - 1
+    content_len = len(content)
+    id_end = content_len - 1
     explicit_id = content[id_start:id_end]
 
     # Validate ID: must start with letter, contain only valid chars
@@ -188,13 +190,14 @@ class BlockParsingCoreMixin:
         value = token.value
         level = 0
         pos = 0
+        value_len = len(value)
 
-        while pos < len(value) and value[pos] == "#" and level < 6:
+        while pos < value_len and value[pos] == "#" and level < 6:
             level += 1
             pos += 1
 
         # Skip space after #
-        if pos < len(value) and value[pos] == " ":
+        if pos < value_len and value[pos] == " ":
             pos += 1
 
         # CommonMark: leading and trailing spaces are stripped from heading content
@@ -246,7 +249,8 @@ class BlockParsingCoreMixin:
 
         # Count marker chars
         marker_count = 0
-        while marker_count < len(value) and value[marker_count] == marker:
+        value_len = len(value)
+        while marker_count < value_len and value[marker_count] == marker:
             marker_count += 1
 
         # Rest is info string
@@ -579,18 +583,25 @@ class BlockParsingCoreMixin:
                 # Look ahead past ALL blank lines to find INDENTED_CODE.
                 blank_lines: list[str] = []
                 next_pos = self._pos
-                while next_pos < len(self._tokens):
-                    next_token = self._tokens[next_pos]
+                tokens = self._tokens
+                tokens_len = len(tokens)
+                source = self._source
+                source_len = len(source)
+
+                while next_pos < tokens_len:
+                    next_token = tokens[next_pos]
                     if next_token.type == TokenType.BLANK_LINE:
                         # Get original line content to preserve whitespace
                         # (blank lines with 4+ spaces should keep excess spaces)
-                        line_start = self._source.rfind("\n", 0, next_token.location.offset) + 1
-                        line_end = self._source.find("\n", next_token.location.offset)
+                        offset = next_token.location.offset
+                        line_start = source.rfind("\n", 0, offset) + 1
+                        line_end = source.find("\n", offset)
                         if line_end == -1:
-                            line_end = len(self._source)
-                        original_line = self._source[line_start:line_end]
+                            line_end = source_len
+                        original_line = source[line_start:line_end]
                         # If line has 4+ spaces, preserve the excess
-                        if len(original_line) >= 4 and original_line.startswith("    "):
+                        orig_len = len(original_line)
+                        if orig_len >= 4 and original_line.startswith("    "):
                             blank_lines.append(original_line[4:] + "\n")
                         else:
                             blank_lines.append("\n")
@@ -609,8 +620,8 @@ class BlockParsingCoreMixin:
                     break
                 # If we didn't find more INDENTED_CODE, exit
                 if (
-                    next_pos >= len(self._tokens)
-                    or self._tokens[next_pos].type != TokenType.INDENTED_CODE
+                    next_pos >= tokens_len
+                    or tokens[next_pos].type != TokenType.INDENTED_CODE
                 ):
                     break
             else:
@@ -673,6 +684,8 @@ class BlockParsingCoreMixin:
                 # have content. Check if the next token is paragraph content.
                 saved_pos = self._pos
                 self._advance()
+                tokens = self._tokens
+                tokens_len = len(tokens)
                 has_content = (
                     not self._at_end()
                     and self._current is not None
@@ -680,7 +693,7 @@ class BlockParsingCoreMixin:
                 )
                 # Restore position for further checks
                 self._pos = saved_pos
-                self._current = self._tokens[self._pos] if self._pos < len(self._tokens) else None
+                self._current = tokens[self._pos] if self._pos < tokens_len else None
 
                 if not has_content:
                     # Empty list item cannot interrupt paragraph - treat marker as text
@@ -805,7 +818,9 @@ class BlockParsingCoreMixin:
         """
         # Strip leading spaces (up to 3)
         stripped = line.lstrip()
-        if len(line) - len(stripped) > 3:
+        line_len = len(line)
+        stripped_len = len(stripped)
+        if line_len - stripped_len > 3:
             return False
         if not stripped:
             return False

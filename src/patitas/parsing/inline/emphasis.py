@@ -21,6 +21,7 @@ from patitas.parsing.inline.match_registry import (
     MatchRegistry,
 )
 from patitas.parsing.inline.tokens import (
+    TOKEN_DELIMITER,
     DelimiterToken,
     InlineToken,
 )
@@ -91,7 +92,7 @@ class EmphasisMixin:
         """Process delimiter stack to match emphasis openers/closers.
 
         Implements CommonMark emphasis algorithm using external match tracking.
-        Tokens are immutable; all state is tracked in the registry.
+        Uses a Delimiter-Index to achieve O(n) average performance.
 
         Args:
             tokens: List of InlineToken NamedTuples from _tokenize_inline().
@@ -103,97 +104,90 @@ class EmphasisMixin:
         if registry is None:
             registry = MatchRegistry()
 
+        # Delimiter-Index for O(1) opener lookup: char -> stack of active opener indices
+        delim_index: dict[str, list[int]] = {"*": [], "_": [], "~": []}
+
         closer_idx = 0
-        while closer_idx < len(tokens):
+        tokens_len = len(tokens)
+        while closer_idx < tokens_len:
             closer = tokens[closer_idx]
 
             # Skip non-delimiter tokens
-            if not isinstance(closer, DelimiterToken):
+            if closer.tag != TOKEN_DELIMITER:
                 closer_idx += 1
                 continue
 
-            # Skip if can't close or already deactivated
-            if not closer.can_close or not registry.is_active(closer_idx):
+            # If it can close, try to find an opener
+            if closer.can_close and registry.is_active(closer_idx):
+                stack = delim_index.get(closer.char, [])
+                found_opener = False
+
+                # Search backwards in the stack for a valid opener
+                for i in range(len(stack) - 1, -1, -1):
+                    opener_idx = stack[i]
+                    opener = tokens[opener_idx]
+
+                    if not registry.is_active(opener_idx):
+                        continue
+
+                    # opener.char is guaranteed to be closer.char due to index structure
+                    opener_remaining = registry.remaining_count(opener_idx, opener.run_length)
+                    closer_remaining = registry.remaining_count(closer_idx, closer.run_length)
+
+                    # CommonMark "sum of delimiters" rule (Rule 3)
+                    both_can_open_close = (opener.can_open and opener.can_close) or (
+                        closer.can_open and closer.can_close
+                    )
+                    if both_can_open_close and (opener_remaining + closer_remaining) % 3 == 0:
+                        if opener_remaining % 3 != 0 or closer_remaining % 3 != 0:
+                            continue  # Rule 3 fail
+
+                    # Match found!
+                    found_opener = True
+                    use_count = 2 if (opener_remaining >= 2 and closer_remaining >= 2) else 1
+                    registry.record_match(opener_idx, closer_idx, use_count)
+
+                    # Deactivate intermediate delimiters in both registry and index stacks
+                    for mid_idx in range(opener_idx + 1, closer_idx):
+                        if tokens[mid_idx].tag == TOKEN_DELIMITER:
+                            registry.deactivate(mid_idx)
+
+                    # Clean up all stacks of intermediate delimiters (including other chars)
+                    for d_char in delim_index:
+                        d_stack = delim_index[d_char]
+                        while d_stack and d_stack[-1] > opener_idx:
+                            d_stack.pop()
+
+                    # Update current opener status in registry and potentially remove from stack
+                    if registry.remaining_count(opener_idx, opener.run_length) == 0:
+                        registry.deactivate(opener_idx)
+                        if stack and stack[-1] == opener_idx:
+                            stack.pop()
+                    
+                    if registry.remaining_count(closer_idx, closer.run_length) == 0:
+                        registry.deactivate(closer_idx)
+                    
+                    break  # Match made for this closer (at least one segment)
+
+                if not found_opener:
+                    # No opener found, deactivate closer if it can't also open
+                    if not closer.can_open:
+                        registry.deactivate(closer_idx)
+                    else:
+                        # Closer can't match now, but it's also an opener - add to index
+                        stack.append(closer_idx)
+                    closer_idx += 1
+                elif registry.remaining_count(closer_idx, closer.run_length) > 0:
+                    # Closer still has delimiters, continue from same position
+                    pass
+                else:
+                    closer_idx += 1
+            elif closer.can_open:
+                # Delimiter can open but not close, add to index
+                delim_index.get(closer.char, []).append(closer_idx)
                 closer_idx += 1
-                continue
-
-            # Check remaining count
-            closer_remaining = registry.remaining_count(closer_idx, closer.count)
-            if closer_remaining == 0:
-                closer_idx += 1
-                continue
-
-            # Look backwards for matching opener
-            opener_idx = closer_idx - 1
-            found_opener = False
-
-            while opener_idx >= 0:
-                opener = tokens[opener_idx]
-
-                # Skip non-delimiter tokens
-                if not isinstance(opener, DelimiterToken):
-                    opener_idx -= 1
-                    continue
-
-                # Skip if can't open or already deactivated
-                if not opener.can_open or not registry.is_active(opener_idx):
-                    opener_idx -= 1
-                    continue
-
-                # Must be same delimiter character
-                if opener.char != closer.char:
-                    opener_idx -= 1
-                    continue
-
-                # Check remaining count
-                opener_remaining = registry.remaining_count(opener_idx, opener.count)
-                if opener_remaining == 0:
-                    opener_idx -= 1
-                    continue
-
-                # CommonMark "sum of delimiters" rule
-                # If either opener or closer can both open and close,
-                # the sum of delimiter counts must not be multiple of 3
-                both_can_open_close = (opener.can_open and opener.can_close) or (
-                    closer.can_open and closer.can_close
-                )
-                sum_is_multiple_of_3 = (opener_remaining + closer_remaining) % 3 == 0
-                neither_is_multiple_of_3 = opener_remaining % 3 != 0 or closer_remaining % 3 != 0
-                if both_can_open_close and sum_is_multiple_of_3 and neither_is_multiple_of_3:
-                    opener_idx -= 1
-                    continue
-
-                # Found matching opener
-                found_opener = True
-
-                # Determine how many delimiters to use
-                use_count = 2 if (opener_remaining >= 2 and closer_remaining >= 2) else 1
-
-                # Record match in registry (tokens are immutable)
-                registry.record_match(opener_idx, closer_idx, use_count)
-
-                # Deactivate if exhausted
-                if registry.remaining_count(opener_idx, opener.count) == 0:
-                    registry.deactivate(opener_idx)
-                if registry.remaining_count(closer_idx, closer.count) == 0:
-                    registry.deactivate(closer_idx)
-
-                # Deactivate unmatched delimiters between opener and closer
-                for i in range(opener_idx + 1, closer_idx):
-                    if isinstance(tokens[i], DelimiterToken) and registry.is_active(i):
-                        registry.deactivate(i)
-
-                break
-
-            if not found_opener:
-                # No opener found, deactivate closer if it can't open
-                if not closer.can_open:
-                    registry.deactivate(closer_idx)
-                closer_idx += 1
-            elif registry.remaining_count(closer_idx, closer.count) > 0:
-                # Closer still has delimiters, continue from same position
-                pass
             else:
+                # Delimiter can neither open nor close (should be rare/impossible per CM flanking rules)
                 closer_idx += 1
 
         return registry

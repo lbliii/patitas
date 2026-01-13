@@ -28,6 +28,14 @@ from __future__ import annotations
 
 from typing import Literal, NamedTuple
 
+# Inline token type tags for O(1) dispatch
+TOKEN_TEXT = 0
+TOKEN_DELIMITER = 1
+TOKEN_CODE_SPAN = 2
+TOKEN_NODE = 3
+TOKEN_HARD_BREAK = 4
+TOKEN_SOFT_BREAK = 5
+
 # PEP 695 type alias for delimiter characters
 type DelimiterChar = Literal["*", "_", "~"]
 
@@ -35,26 +43,19 @@ type DelimiterChar = Literal["*", "_", "~"]
 class DelimiterToken(NamedTuple):
     """Delimiter token for emphasis/strikethrough processing.
 
-    Immutable by design — match state tracked externally in MatchRegistry.
-
-    NamedTuple chosen over dataclass for:
-    - Immutability by default (required for external match tracking)
-    - Tuple unpacking support
-    - Lower memory footprint (~80 bytes vs ~200 for dict)
-    - Faster attribute access (tuple index vs hash lookup)
-
     Attributes:
-        char: The delimiter character ("*", "_", or "~").
-        count: Number of consecutive delimiter characters.
-        can_open: Whether this delimiter can open emphasis.
-        can_close: Whether this delimiter can close emphasis.
-
+        char: DelimiterChar
+        run_length: int
+        can_open: bool
+        can_close: bool
+        tag: int = TOKEN_DELIMITER
     """
 
     char: DelimiterChar
-    count: int
+    run_length: int
     can_open: bool
     can_close: bool
+    tag: int = TOKEN_DELIMITER
 
     @property
     def type(self) -> Literal["delimiter"]:
@@ -63,19 +64,15 @@ class DelimiterToken(NamedTuple):
 
     @property
     def original_count(self) -> int:
-        """Original count (same as count for immutable tokens)."""
-        return self.count
+        """Original count (same as run_length for immutable tokens)."""
+        return self.run_length
 
 
 class TextToken(NamedTuple):
-    """Plain text token.
-
-    Attributes:
-        content: The text content.
-
-    """
+    """Plain text token."""
 
     content: str
+    tag: int = TOKEN_TEXT
 
     @property
     def type(self) -> Literal["text"]:
@@ -84,14 +81,10 @@ class TextToken(NamedTuple):
 
 
 class CodeSpanToken(NamedTuple):
-    """Inline code span token.
-
-    Attributes:
-        code: The code content (already processed per CommonMark rules).
-
-    """
+    """Inline code span token."""
 
     code: str
+    tag: int = TOKEN_CODE_SPAN
 
     @property
     def type(self) -> Literal["code_span"]:
@@ -100,17 +93,10 @@ class CodeSpanToken(NamedTuple):
 
 
 class NodeToken(NamedTuple):
-    """Pre-parsed AST node token (links, images, etc.).
-
-    Used when inline content is parsed directly into an AST node
-    (e.g., links, images, autolinks, roles, math).
-
-    Attributes:
-        node: The pre-parsed inline AST node.
-
-    """
+    """Pre-parsed AST node token (links, images, etc.)."""
 
     node: object  # Inline node type
+    tag: int = TOKEN_NODE
 
     @property
     def type(self) -> Literal["node"]:
@@ -119,11 +105,9 @@ class NodeToken(NamedTuple):
 
 
 class HardBreakToken(NamedTuple):
-    """Hard line break token.
+    """Hard line break token."""
 
-    Represents a hard line break (backslash + newline or two trailing spaces).
-
-    """
+    tag: int = TOKEN_HARD_BREAK
 
     @property
     def type(self) -> Literal["hard_break"]:
@@ -132,12 +116,9 @@ class HardBreakToken(NamedTuple):
 
 
 class SoftBreakToken(NamedTuple):
-    """Soft line break token.
+    """Soft line break token."""
 
-    Represents a soft line break (single newline in paragraph).
-    Typically rendered as a space or newline depending on settings.
-
-    """
+    tag: int = TOKEN_SOFT_BREAK
 
     @property
     def type(self) -> Literal["soft_break"]:

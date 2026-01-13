@@ -20,12 +20,14 @@ class TokenNavigationMixin:
         - _tokens: Sequence[Token]
         - _pos: int
         - _current: Token | None
+        - _source: str
 
     """
 
     _tokens: Sequence[Token]
     _pos: int
     _current: Token | None
+    _source: str
 
     def _at_end(self) -> bool:
         """Check if at end of token stream."""

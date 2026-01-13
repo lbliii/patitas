@@ -3,16 +3,12 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
-from typing import TYPE_CHECKING
 
 from patitas.lexer.modes import (
     HTML_BLOCK_TYPE1_TAGS,
     LexerMode,
 )
-from patitas.tokens import Token
-
-if TYPE_CHECKING:
-    from patitas.location import SourceLocation
+from patitas.tokens import Token, TokenType
 
 
 class HtmlScannerMixin:
@@ -45,8 +41,17 @@ class HtmlScannerMixin:
         """Commit position to line_end."""
         raise NotImplementedError
 
-    def _location_from(self, start_pos: int) -> SourceLocation:
-        """Get source location from saved position."""
+    def _make_token(
+        self,
+        token_type: TokenType,
+        value: str,
+        start_pos: int,
+        *,
+        start_col: int | None = None,
+        end_pos: int | None = None,
+        line_indent: int = -1,
+    ) -> Token:
+        """Create token with raw coordinates. Implemented by Lexer."""
         raise NotImplementedError
 
     def _emit_html_block(self) -> Iterator[Token]:

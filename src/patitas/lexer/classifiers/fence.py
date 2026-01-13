@@ -2,13 +2,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from patitas.lexer.modes import LexerMode
 from patitas.tokens import Token, TokenType
-
-if TYPE_CHECKING:
-    from patitas.location import SourceLocation
 
 
 class FenceClassifierMixin:
@@ -21,10 +16,17 @@ class FenceClassifierMixin:
     _fence_indent: int
     _mode: LexerMode
 
-    def _location_from(
-        self, start_pos: int, start_col: int | None = None, end_pos: int | None = None
-    ) -> SourceLocation:
-        """Get source location from saved position. Implemented by Lexer."""
+    def _make_token(
+        self,
+        token_type: TokenType,
+        value: str,
+        start_pos: int,
+        *,
+        start_col: int | None = None,
+        end_pos: int | None = None,
+        line_indent: int = -1,
+    ) -> Token:
+        """Create token with raw coordinates. Implemented by Lexer."""
         raise NotImplementedError
 
     def _try_classify_fence_start(
@@ -81,8 +83,8 @@ class FenceClassifierMixin:
         # Encode indent in token value: "I{indent}:{fence}{info}"
         # Parser will extract this to set fence_indent on FencedCode node
         value = f"I{indent}:" + fence_char * count + (info if info else "")
-        return Token(
-            TokenType.FENCED_CODE_START, value, self._location_from(line_start), line_indent=indent
+        return self._make_token(
+            TokenType.FENCED_CODE_START, value, line_start, line_indent=indent
         )
 
     def _is_closing_fence(self, line: str) -> bool:

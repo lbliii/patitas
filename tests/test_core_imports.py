@@ -14,17 +14,27 @@ def test_import_location() -> None:
 
 
 def test_import_tokens() -> None:
-    """Test Token and TokenType imports."""
-    from patitas.location import SourceLocation
+    """Test Token and TokenType imports with lazy SourceLocation."""
     from patitas.tokens import Token, TokenType
 
+    # Token now stores raw coordinates and lazily creates SourceLocation
     tok = Token(
         type=TokenType.ATX_HEADING,
         value="# Hello",
-        location=SourceLocation(1, 1),
+        _lineno=1,
+        _col=1,
+        _start_offset=0,
+        _end_offset=7,
     )
     assert tok.type == TokenType.ATX_HEADING
     assert tok.value == "# Hello"
+    assert tok.lineno == 1
+    assert tok.col == 1
+    # Test lazy location creation
+    assert tok.location.lineno == 1
+    assert tok.location.col_offset == 1
+    # Test caching - same object returned
+    assert tok.location is tok.location
 
 
 def test_import_nodes() -> None:

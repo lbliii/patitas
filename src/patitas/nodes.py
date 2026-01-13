@@ -542,7 +542,7 @@ type Block = (
     | ListItem
     | ThematicBreak
     | HtmlBlock
-    | Directive
+    | Directive[DirectiveOptions]
     | Table
     | MathBlock
     | FootnoteDef

@@ -7,14 +7,21 @@ Thread Safety:
 Token is frozen (immutable) and safe to share across threads.
 TokenType is an enum (inherently immutable).
 
+Performance Note:
+Token stores raw coordinates and lazily creates SourceLocation on demand.
+This avoids allocating SourceLocation objects for tokens whose location
+is never accessed (most tokens during parsing).
+
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum, auto
+from typing import TYPE_CHECKING
 
-from patitas.location import SourceLocation
+if TYPE_CHECKING:
+    from patitas.location import SourceLocation
 
 
 class TokenType(Enum):
@@ -115,45 +122,85 @@ class Token:
     """A token produced by the lexer.
 
     Tokens are the atomic units passed from lexer to parser.
-    Each token has a type, string value, and source location.
+    Each token has a type, string value, and source location (lazy).
 
     Attributes:
         type: The token type (from TokenType enum)
         value: The raw string value from source
-        location: Source location for error messages
+        _lineno: Start line number (1-indexed)
+        _col: Start column offset (1-indexed)
+        _start_offset: Absolute start position in source
+        _end_offset: Absolute end position in source
         line_indent: Pre-computed indent level of the line (spaces, tabs expand to 4).
             Set by lexer at token creation; -1 if not computed.
+        _end_lineno: End line number (for multi-line tokens)
+        _end_col: End column offset
+        _source_file: Optional source file path
 
-    Examples:
-            >>> tok = Token(TokenType.ATX_HEADING, "## Hello", SourceLocation(1, 1))
-            >>> tok.type
-        <TokenType.ATX_HEADING: ...>
-            >>> tok.value
-            '## Hello'
+    Performance:
+        SourceLocation is created lazily on first access to `.location`.
+        This avoids allocation overhead for tokens whose location is never read.
 
     Thread Safety:
         Frozen dataclass ensures immutability for safe sharing.
+        The lazy cache uses idempotent write (safe for concurrent access).
 
     """
 
     type: TokenType
     value: str
-    location: SourceLocation
+    _lineno: int
+    _col: int
+    _start_offset: int
+    _end_offset: int
     line_indent: int = -1  # Pre-computed by lexer; -1 = not computed
+    _end_lineno: int | None = None
+    _end_col: int | None = None
+    _source_file: str | None = None
+    # Cache field - excluded from repr and comparison
+    _location_cache: SourceLocation | None = field(
+        default=None, repr=False, compare=False, hash=False
+    )
+
+    @property
+    def location(self) -> SourceLocation:
+        """Get source location (lazily created and cached).
+
+        Returns:
+            SourceLocation object for this token.
+        """
+        if self._location_cache is not None:
+            return self._location_cache
+
+        # Import here to avoid circular import at module load
+        from patitas.location import SourceLocation
+
+        loc = SourceLocation(
+            lineno=self._lineno,
+            col_offset=self._col,
+            offset=self._start_offset,
+            end_offset=self._end_offset,
+            end_lineno=self._end_lineno,
+            end_col_offset=self._end_col,
+            source_file=self._source_file,
+        )
+        # Safe mutation of frozen dataclass cache field (idempotent write)
+        object.__setattr__(self, "_location_cache", loc)
+        return loc
 
     def __repr__(self) -> str:
         """Compact repr for debugging."""
         val = self.value
         if len(val) > 20:
             val = val[:17] + "..."
-        return f"Token({self.type.name}, {val!r}, {self.location})"
+        return f"Token({self.type.name}, {val!r}, {self._lineno}:{self._col})"
 
     @property
     def lineno(self) -> int:
         """Line number (convenience accessor)."""
-        return self.location.lineno
+        return self._lineno
 
     @property
     def col(self) -> int:
         """Column offset (convenience accessor)."""
-        return self.location.col_offset
+        return self._col

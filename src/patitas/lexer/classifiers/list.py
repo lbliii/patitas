@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
-from typing import TYPE_CHECKING
 
 from patitas.parsing.charsets import (
     FENCE_CHARS,
@@ -12,17 +11,21 @@ from patitas.parsing.charsets import (
 )
 from patitas.tokens import Token, TokenType
 
-if TYPE_CHECKING:
-    from patitas.location import SourceLocation
-
 
 class ListClassifierMixin:
     """Mixin providing list marker classification."""
 
-    def _location_from(
-        self, start_pos: int, start_col: int | None = None, end_pos: int | None = None
-    ) -> SourceLocation:
-        """Get source location from saved position. Implemented by Lexer."""
+    def _make_token(
+        self,
+        token_type: TokenType,
+        value: str,
+        start_pos: int,
+        *,
+        start_col: int | None = None,
+        end_pos: int | None = None,
+        line_indent: int = -1,
+    ) -> Token:
+        """Create token with raw coordinates. Implemented by Lexer."""
         raise NotImplementedError
 
     def _calc_indent(self, line: str) -> tuple[int, int]:
@@ -92,12 +95,12 @@ class ListClassifierMixin:
         marker_offset = line_start + indent
 
         indented_marker = " " * indent + marker
-        yield Token(
+        yield self._make_token(
             TokenType.LIST_ITEM_MARKER,
             indented_marker,
-            self._location_from(
-                marker_offset, start_col=indent + 1, end_pos=marker_offset + len(marker)
-            ),
+            marker_offset,
+            start_col=indent + 1,
+            end_pos=marker_offset + len(marker),
             line_indent=indent,
         )
         remaining = remaining.rstrip("\n")
@@ -149,10 +152,11 @@ class ListClassifierMixin:
         # Calculate actual indentation of this line
         actual_indent, _ = self._calc_indent(indented_content)
 
-        yield Token(
+        yield self._make_token(
             TokenType.PARAGRAPH_LINE,
             indented_content,
+            content_offset,
             # Paragraph line spans to end of line
-            self._location_from(content_offset, start_col=indent + len(marker) + 1),
+            start_col=indent + len(marker) + 1,
             line_indent=actual_indent,
         )

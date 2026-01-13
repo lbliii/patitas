@@ -3,13 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
-from typing import TYPE_CHECKING
 
 from patitas.lexer.modes import LexerMode
 from patitas.tokens import Token, TokenType
-
-if TYPE_CHECKING:
-    from patitas.location import SourceLocation
 
 
 class DirectiveClassifierMixin:
@@ -23,10 +19,17 @@ class DirectiveClassifierMixin:
     _mode: LexerMode
     _directive_stack: list[tuple[int, str]]
 
-    def _location_from(
-        self, start_pos: int, start_col: int | None = None, end_pos: int | None = None
-    ) -> SourceLocation:
-        """Get source location from saved position. Implemented by Lexer."""
+    def _make_token(
+        self,
+        token_type: TokenType,
+        value: str,
+        start_pos: int,
+        *,
+        start_col: int | None = None,
+        end_pos: int | None = None,
+        line_indent: int = -1,
+    ) -> Token:
+        """Create token with raw coordinates. Implemented by Lexer."""
         raise NotImplementedError
 
     def _try_classify_directive_start(
@@ -113,11 +116,11 @@ class DirectiveClassifierMixin:
         Yields:
             DIRECTIVE_OPEN/CLOSE, DIRECTIVE_NAME, and optionally DIRECTIVE_TITLE tokens.
         """
-        location = self._location_from(line_start)
-
         if is_closer:
             # Named closer: :::{/name}
-            yield Token(TokenType.DIRECTIVE_CLOSE, f":::{{{name}}}", location, line_indent=indent)
+            yield self._make_token(
+                TokenType.DIRECTIVE_CLOSE, f":::{{{name}}}", line_start, line_indent=indent
+            )
 
             # Pop from directive stack if matching
             if self._directive_stack:
@@ -128,10 +131,16 @@ class DirectiveClassifierMixin:
                         self._mode = LexerMode.BLOCK
         else:
             # Directive open
-            yield Token(TokenType.DIRECTIVE_OPEN, ":" * colon_count, location, line_indent=indent)
-            yield Token(TokenType.DIRECTIVE_NAME, name, location, line_indent=indent)
+            yield self._make_token(
+                TokenType.DIRECTIVE_OPEN, ":" * colon_count, line_start, line_indent=indent
+            )
+            yield self._make_token(
+                TokenType.DIRECTIVE_NAME, name, line_start, line_indent=indent
+            )
             if title:
-                yield Token(TokenType.DIRECTIVE_TITLE, title, location, line_indent=indent)
+                yield self._make_token(
+                    TokenType.DIRECTIVE_TITLE, title, line_start, line_indent=indent
+                )
 
             # Push to directive stack and switch mode
             self._directive_stack.append((colon_count, name))
@@ -201,11 +210,11 @@ class DirectiveClassifierMixin:
         Yields:
             DIRECTIVE_CLOSE token(s), or PARAGRAPH_LINE if not a valid close.
         """
-        location = self._location_from(line_start)
-
         if not self._directive_stack:
             # No open directive, emit as plain text
-            yield Token(TokenType.PARAGRAPH_LINE, ":" * colon_count, location, line_indent=indent)
+            yield self._make_token(
+                TokenType.PARAGRAPH_LINE, ":" * colon_count, line_start, line_indent=indent
+            )
             return
 
         stack_count, stack_name = self._directive_stack[-1]
@@ -232,15 +241,18 @@ class DirectiveClassifierMixin:
                     # OR just use simple colons for all to be consistent.
                     # The parser only cares about the token type to break the loop.
                     if popped_count == 1:
-                        yield Token(
+                        yield self._make_token(
                             TokenType.DIRECTIVE_CLOSE,
                             f":::{{{name}}}",
-                            location,
+                            line_start,
                             line_indent=indent,
                         )
                     else:
-                        yield Token(
-                            TokenType.DIRECTIVE_CLOSE, ":" * s_count, location, line_indent=indent
+                        yield self._make_token(
+                            TokenType.DIRECTIVE_CLOSE,
+                            ":" * s_count,
+                            line_start,
+                            line_indent=indent,
                         )
 
                 if not self._directive_stack:
@@ -250,8 +262,11 @@ class DirectiveClassifierMixin:
             # Simple close: closes the top directive
             if colon_count >= stack_count:
                 self._directive_stack.pop()
-                yield Token(
-                    TokenType.DIRECTIVE_CLOSE, ":" * colon_count, location, line_indent=indent
+                yield self._make_token(
+                    TokenType.DIRECTIVE_CLOSE,
+                    ":" * colon_count,
+                    line_start,
+                    line_indent=indent,
                 )
 
                 if not self._directive_stack:
@@ -259,7 +274,9 @@ class DirectiveClassifierMixin:
                 return
 
         # Not a valid close for current directive, emit as content
-        yield Token(TokenType.PARAGRAPH_LINE, ":" * colon_count, location, line_indent=indent)
+        yield self._make_token(
+            TokenType.PARAGRAPH_LINE, ":" * colon_count, line_start, line_indent=indent
+        )
 
     def _try_classify_directive_option(
         self, content: str, line_start: int, indent: int = 0
@@ -291,9 +308,9 @@ class DirectiveClassifierMixin:
         if not key or not all(c.isalnum() or c in "-_" for c in key):
             return None
 
-        return Token(
+        return self._make_token(
             TokenType.DIRECTIVE_OPTION,
             f"{key}:{value}",
-            self._location_from(line_start),
+            line_start,
             line_indent=indent,
         )

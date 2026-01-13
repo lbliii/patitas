@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from patitas.nodes import Block, FootnoteDef, Paragraph
+from patitas.nodes import Block, FootnoteDef, Inline, Paragraph
 from patitas.tokens import TokenType
 
 if TYPE_CHECKING:
@@ -28,6 +28,18 @@ class FootnoteParsingMixin:
     """
 
     _current: Token | None
+
+    def _at_end(self) -> bool:
+        """Check if at end of token stream. Implemented by TokenNavigationMixin."""
+        raise NotImplementedError
+
+    def _advance(self) -> Token | None:
+        """Advance to next token. Implemented by TokenNavigationMixin."""
+        raise NotImplementedError
+
+    def _parse_inline(self, text: str, location: object) -> tuple[Inline, ...]:
+        """Parse inline content. Implemented by InlineParser."""
+        raise NotImplementedError
 
     def _parse_footnote_def(self) -> FootnoteDef:
         """Parse footnote definition.

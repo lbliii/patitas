@@ -3,16 +3,12 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
-from typing import TYPE_CHECKING
 
 from patitas.parsing.charsets import (
     FENCE_CHARS,
     THEMATIC_BREAK_CHARS,
 )
 from patitas.tokens import Token, TokenType
-
-if TYPE_CHECKING:
-    from patitas.location import SourceLocation
 
 
 class DirectiveScannerMixin:
@@ -47,8 +43,17 @@ class DirectiveScannerMixin:
         """Commit position to line_end."""
         raise NotImplementedError
 
-    def _location_from(self, start_pos: int) -> SourceLocation:
-        """Get source location from saved position."""
+    def _make_token(
+        self,
+        token_type: TokenType,
+        value: str,
+        start_pos: int,
+        *,
+        start_col: int | None = None,
+        end_pos: int | None = None,
+        line_indent: int = -1,
+    ) -> Token:
+        """Create token with raw coordinates. Implemented by Lexer."""
         raise NotImplementedError
 
     # Classifier methods (provided by classifier mixins)
@@ -121,7 +126,7 @@ class DirectiveScannerMixin:
 
         # Empty line
         if not content or content.isspace():
-            yield Token(TokenType.BLANK_LINE, "", self._location_from(line_start), line_indent=0)
+            yield self._make_token(TokenType.BLANK_LINE, "", line_start, line_indent=0)
             return
 
         # Check for directive close (matching colon count or higher)
@@ -179,9 +184,9 @@ class DirectiveScannerMixin:
             return
 
         # Regular paragraph content
-        yield Token(
+        yield self._make_token(
             TokenType.PARAGRAPH_LINE,
             content.rstrip("\n"),
-            self._location_from(line_start),
+            line_start,
             line_indent=indent,
         )

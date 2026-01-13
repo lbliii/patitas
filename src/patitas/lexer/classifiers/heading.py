@@ -2,21 +2,23 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from patitas.tokens import Token, TokenType
-
-if TYPE_CHECKING:
-    from patitas.location import SourceLocation
 
 
 class HeadingClassifierMixin:
     """Mixin providing ATX heading classification."""
 
-    def _location_from(
-        self, start_pos: int, start_col: int | None = None, end_pos: int | None = None
-    ) -> SourceLocation:
-        """Get source location from saved position. Implemented by Lexer."""
+    def _make_token(
+        self,
+        token_type: TokenType,
+        value: str,
+        start_pos: int,
+        *,
+        start_col: int | None = None,
+        end_pos: int | None = None,
+        line_indent: int = -1,
+    ) -> Token:
+        """Create token with raw coordinates. Implemented by Lexer."""
         raise NotImplementedError
 
     def _try_classify_atx_heading(
@@ -70,6 +72,4 @@ class HeadingClassifierMixin:
                 heading_content = ""
 
         value = "#" * level + (" " + heading_content if heading_content else "")
-        return Token(
-            TokenType.ATX_HEADING, value, self._location_from(line_start), line_indent=indent
-        )
+        return self._make_token(TokenType.ATX_HEADING, value, line_start, line_indent=indent)

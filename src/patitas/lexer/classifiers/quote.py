@@ -3,21 +3,24 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
-from typing import TYPE_CHECKING
 
 from patitas.tokens import Token, TokenType
-
-if TYPE_CHECKING:
-    from patitas.location import SourceLocation
 
 
 class QuoteClassifierMixin:
     """Mixin providing block quote classification."""
 
-    def _location_from(
-        self, start_pos: int, start_col: int | None = None, end_pos: int | None = None
-    ) -> SourceLocation:
-        """Get source location from saved position. Implemented by Lexer."""
+    def _make_token(
+        self,
+        token_type: TokenType,
+        value: str,
+        start_pos: int,
+        *,
+        start_col: int | None = None,
+        end_pos: int | None = None,
+        line_indent: int = -1,
+    ) -> Token:
+        """Create token with raw coordinates. Implemented by Lexer."""
         raise NotImplementedError
 
     def _expand_tabs(self, text: str, start_col: int = 1) -> str:
@@ -38,10 +41,12 @@ class QuoteClassifierMixin:
         marker_offset = line_start + indent
 
         # Yield the > marker
-        yield Token(
+        yield self._make_token(
             TokenType.BLOCK_QUOTE_MARKER,
             ">",
-            self._location_from(marker_offset, start_col=indent + 1, end_pos=marker_offset + 1),
+            marker_offset,
+            start_col=indent + 1,
+            end_pos=marker_offset + 1,
             line_indent=indent,
         )
 
@@ -124,9 +129,10 @@ class QuoteClassifierMixin:
                 # The actual indentation is tracked via line_indent.
                 content_offset = line_start + sub_indent
 
-                yield Token(
+                yield self._make_token(
                     TokenType.PARAGRAPH_LINE,
                     remaining,
-                    self._location_from(content_offset, start_col=sub_indent + 1),
+                    content_offset,
+                    start_col=sub_indent + 1,
                     line_indent=leading_spaces,  # Track actual leading spaces in content
                 )

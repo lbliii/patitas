@@ -161,7 +161,7 @@ class InlineParsingCoreMixin:
                 tokens_append(
                     DelimiterToken(
                         char=delim_char,  # type: ignore[arg-type]
-                        count=count,
+                        run_length=count,
                         can_open=can_open,
                         can_close=can_close,
                     )
@@ -327,7 +327,7 @@ class InlineParsingCoreMixin:
                     tokens_append(
                         DelimiterToken(
                             char="~",
-                            count=2,
+                            run_length=2,
                             can_open=left_flanking,
                             can_close=right_flanking,
                         )
@@ -535,7 +535,7 @@ class InlineParsingCoreMixin:
                     result.append(SoftBreak(location=location))
                     idx += 1
 
-                case DelimiterToken(char=delim_char, count=original_count):
+                case DelimiterToken(char=delim_char, run_length=original_count):
                     # Check if this delimiter is an opener with matches
                     # Use registry_idx for lookup since registry uses original indices
                     all_matches = registry.get_matches_for_opener(registry_idx)
@@ -573,7 +573,7 @@ class InlineParsingCoreMixin:
                                 if isinstance(closer_token, DelimiterToken):
                                     # Use registry's remaining_count which tracks total consumption
                                     closer_remaining = registry.remaining_count(
-                                        closer_registry_idx, closer_token.count
+                                        closer_registry_idx, closer_token.run_length
                                     )
 
                             # Build children between opener and closer
@@ -623,7 +623,7 @@ class InlineParsingCoreMixin:
                                     # But closers are different, so only the last match uses
                                     # the outermost closer
                                     outermost_closer_remaining = (
-                                        closer_token.count - sorted_matches[-1].match_count
+                                        closer_token.run_length - sorted_matches[-1].match_count
                                     )
 
                             # Build content progressively

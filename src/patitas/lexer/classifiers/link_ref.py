@@ -7,12 +7,8 @@ according to CommonMark 0.31.2 spec.
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING
 
 from patitas.tokens import Token, TokenType
-
-if TYPE_CHECKING:
-    from patitas.location import SourceLocation
 
 
 class LinkRefClassifierMixin:
@@ -24,10 +20,17 @@ class LinkRefClassifierMixin:
     _lineno: int
     _col: int
 
-    def _location_from(
-        self, start_pos: int, start_col: int | None = None, end_pos: int | None = None
-    ) -> SourceLocation:
-        """Get source location from saved position. Implemented by Lexer."""
+    def _make_token(
+        self,
+        token_type: TokenType,
+        value: str,
+        start_pos: int,
+        *,
+        start_col: int | None = None,
+        end_pos: int | None = None,
+        line_indent: int = -1,
+    ) -> Token:
+        """Create token with raw coordinates. Implemented by Lexer."""
         raise NotImplementedError
 
     def _find_line_end(self) -> int:
@@ -120,8 +123,8 @@ class LinkRefClassifierMixin:
 
         # Value format: label|url|title
         value = f"{label_content}|{url}|{title}"
-        return Token(
-            TokenType.LINK_REFERENCE_DEF, value, self._location_from(line_start), line_indent=indent
+        return self._make_token(
+            TokenType.LINK_REFERENCE_DEF, value, line_start, line_indent=indent
         )
 
     def _parse_label_multiline(self, first_line: str, line_start: int) -> tuple[str, int, bool]:

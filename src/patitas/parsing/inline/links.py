@@ -14,7 +14,7 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING
 
-from patitas.nodes import FootnoteRef, Image, Link
+from patitas.nodes import FootnoteRef, Image, Inline, Link
 
 if TYPE_CHECKING:
     from patitas.location import SourceLocation
@@ -94,21 +94,22 @@ def _parse_link_destination(text: str, pos: int) -> tuple[str, int] | None:
         (url, end_pos) or None if invalid
 
     """
-    if pos >= len(text):
+    text_len = len(text)
+    if pos >= text_len:
         return None
 
     # Skip leading whitespace (but not newlines for raw destinations)
-    while pos < len(text) and text[pos] in " \t":
+    while pos < text_len and text[pos] in " \t":
         pos += 1
 
-    if pos >= len(text):
+    if pos >= text_len:
         return None
 
     # Case 1: Angle-bracket delimited destination
     if text[pos] == "<":
         pos += 1  # Skip opening <
         start = pos
-        while pos < len(text):
+        while pos < text_len:
             char = text[pos]
             if char == ">":
                 # Found closing - success
@@ -120,7 +121,7 @@ def _parse_link_destination(text: str, pos: int) -> tuple[str, int] | None:
             if char == "<":
                 # Unescaped < not allowed
                 return None
-            if char == "\\" and pos + 1 < len(text):
+            if char == "\\" and pos + 1 < text_len:
                 # Skip escaped character
                 pos += 2
                 continue
@@ -133,7 +134,7 @@ def _parse_link_destination(text: str, pos: int) -> tuple[str, int] | None:
     start = pos
     paren_depth = 0
 
-    while pos < len(text):
+    while pos < text_len:
         char = text[pos]
 
         # Space, newline, or tab ends raw destination
@@ -159,7 +160,7 @@ def _parse_link_destination(text: str, pos: int) -> tuple[str, int] | None:
             break
 
         # Backslash escape
-        if char == "\\" and pos + 1 < len(text):
+        if char == "\\" and pos + 1 < text_len:
             next_char = text[pos + 1]
             if next_char in _ESCAPABLE_CHARS:
                 pos += 2  # Skip both backslash and escaped char
@@ -190,10 +191,11 @@ def _parse_link_title(text: str, pos: int) -> tuple[str | None, int]:
 
     """
     # Skip whitespace including newlines (title can be on next line)
-    while pos < len(text) and text[pos] in " \t\n\r":
+    text_len = len(text)
+    while pos < text_len and text[pos] in " \t\n\r":
         pos += 1
 
-    if pos >= len(text):
+    if pos >= text_len:
         return None, pos
 
     char = text[pos]
@@ -209,12 +211,12 @@ def _parse_link_title(text: str, pos: int) -> tuple[str | None, int]:
     pos += 1  # Skip opening delimiter
     start = pos
 
-    while pos < len(text):
+    while pos < text_len:
         c = text[pos]
         if c == closer:
             title = text[start:pos]
             return _process_escapes(title), pos + 1
-        if c == "\\" and pos + 1 < len(text):
+        if c == "\\" and pos + 1 < text_len:
             # Skip escaped character
             pos += 2
             continue
@@ -466,7 +468,7 @@ def _extract_plain_text(text: str) -> str:
     return result
 
 
-def _contains_link(children: tuple) -> bool:
+def _contains_link(children: tuple[object, ...]) -> bool:
     """Check if children contain a Link node at any nesting level.
 
     CommonMark: Links may not contain other links, at any level of nesting.
@@ -501,6 +503,10 @@ class LinkParsingMixin:
 
     _link_refs: dict[str, tuple[str, str]]
 
+    def _parse_inline(self, text: str, location: SourceLocation) -> tuple[Inline, ...]:
+        """Parse inline content. Implemented by InlineParsingCoreMixin."""
+        raise NotImplementedError
+
     def _try_parse_footnote_ref(
         self, text: str, pos: int, location: SourceLocation
     ) -> tuple[FootnoteRef, int] | None:
@@ -509,7 +515,8 @@ class LinkParsingMixin:
         Format: [^identifier]
         Returns (FootnoteRef, new_position) or None if not a footnote ref.
         """
-        if pos + 2 >= len(text) or text[pos : pos + 2] != "[^":
+        text_len = len(text)
+        if pos + 2 >= text_len or text[pos : pos + 2] != "[^":
             return None
 
         # Find closing ]
@@ -524,7 +531,7 @@ class LinkParsingMixin:
             return None
 
         # Make sure this isn't followed by : (which would be a definition)
-        if bracket_pos + 1 < len(text) and text[bracket_pos + 1] == ":":
+        if bracket_pos + 1 < text_len and text[bracket_pos + 1] == ":":
             return None
 
         return FootnoteRef(location=location, identifier=identifier), bracket_pos + 1
@@ -626,7 +633,8 @@ class LinkParsingMixin:
 
         Returns (Image, new_position) or None if not an image.
         """
-        if not (text[pos] == "!" and pos + 1 < len(text) and text[pos + 1] == "["):
+        text_len = len(text)
+        if not (text[pos] == "!" and pos + 1 < text_len and text[pos + 1] == "["):
             return None
 
         # Find ] while respecting code spans (CommonMark precedence)

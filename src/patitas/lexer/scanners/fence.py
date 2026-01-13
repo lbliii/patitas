@@ -3,13 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
-from typing import TYPE_CHECKING
 
 from patitas.lexer.modes import LexerMode
 from patitas.tokens import Token, TokenType
-
-if TYPE_CHECKING:
-    from patitas.location import SourceLocation
 
 
 class FenceScannerMixin:
@@ -42,8 +38,17 @@ class FenceScannerMixin:
         """Commit position to line_end."""
         raise NotImplementedError
 
-    def _location_from(self, start_pos: int) -> SourceLocation:
-        """Get source location from saved position."""
+    def _make_token(
+        self,
+        token_type: TokenType,
+        value: str,
+        start_pos: int,
+        *,
+        start_col: int | None = None,
+        end_pos: int | None = None,
+        line_indent: int = -1,
+    ) -> Token:
+        """Create token with raw coordinates. Implemented by Lexer."""
         raise NotImplementedError
 
     def _is_closing_fence(self, line: str) -> bool:
@@ -78,10 +83,10 @@ class FenceScannerMixin:
             self._fence_count = 0
             self._fence_info = ""
             self._fence_indent = 0
-            yield Token(
+            yield self._make_token(
                 TokenType.FENCED_CODE_END,
                 fence_char * 3,
-                self._location_from(line_start),
+                line_start,
                 line_indent=0,  # Closing fence indent is handled separately
             )
             return
@@ -94,9 +99,9 @@ class FenceScannerMixin:
         if self._consumed_newline:
             content = line + "\n"
 
-        yield Token(
+        yield self._make_token(
             TokenType.FENCED_CODE_CONTENT,
             content,
-            self._location_from(line_start),
+            line_start,
             line_indent=0,  # Content indent is preserved in value
         )

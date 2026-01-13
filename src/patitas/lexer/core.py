@@ -33,7 +33,6 @@ from patitas.lexer.scanners import (
     FenceScannerMixin,
     HtmlScannerMixin,
 )
-from patitas.location import SourceLocation
 from patitas.tokens import Token, TokenType
 
 
@@ -163,7 +162,7 @@ class Lexer(
         while self._pos < source_len:
             yield from self._dispatch_mode()
 
-        yield Token(TokenType.EOF, "", self._location(), line_indent=0)
+        yield self._make_token_at_current(TokenType.EOF, "", line_indent=0)
 
     def _dispatch_mode(self) -> Iterator[Token]:
         """Dispatch to appropriate scanner based on current mode.
@@ -286,7 +285,7 @@ class Lexer(
         Returns:
             Current character or empty string at end of input.
         """
-        if self._pos >= len(self._source):
+        if self._pos >= self._source_len:
             return ""
         return self._source[self._pos]
 
@@ -298,7 +297,7 @@ class Lexer(
         Returns:
             The consumed character.
         """
-        if self._pos >= len(self._source):
+        if self._pos >= self._source_len:
             return ""
 
         char = self._source[self._pos]
@@ -324,44 +323,71 @@ class Lexer(
         self._saved_lineno = self._lineno
         self._saved_col = self._col
 
-    def _location(self) -> SourceLocation:
-        """Get current source location.
-
-        Returns:
-            SourceLocation at current position.
-        """
-        return SourceLocation(
-            lineno=self._lineno,
-            col_offset=self._col,
-            offset=self._pos,
-            end_offset=self._pos,
-            source_file=self._source_file,
-        )
-
-    def _location_from(
+    def _make_token(
         self,
+        token_type: TokenType,
+        value: str,
         start_pos: int,
+        *,
         start_col: int | None = None,
         end_pos: int | None = None,
-    ) -> SourceLocation:
-        """Get source location from saved position.
+        line_indent: int = -1,
+    ) -> Token:
+        """Create a Token with raw coordinates (lazy SourceLocation).
 
         O(1) - uses pre-saved location from _save_location() call.
+        Avoids SourceLocation allocation until token.location is accessed.
 
         Args:
+            token_type: The token type.
+            value: The raw string value.
             start_pos: Start position in source.
             start_col: Optional column override (1-indexed).
             end_pos: Optional end position override.
+            line_indent: Pre-computed indent level.
 
         Returns:
-            SourceLocation spanning from start_pos to current or end_pos.
+            Token with raw coordinates for lazy location creation.
         """
-        return SourceLocation(
-            lineno=self._saved_lineno,
-            col_offset=start_col if start_col is not None else self._saved_col,
-            offset=start_pos,
-            end_offset=end_pos if end_pos is not None else self._pos,
-            end_lineno=self._lineno,
-            end_col_offset=self._col,
-            source_file=self._source_file,
+        return Token(
+            type=token_type,
+            value=value,
+            _lineno=self._saved_lineno,
+            _col=start_col if start_col is not None else self._saved_col,
+            _start_offset=start_pos,
+            _end_offset=end_pos if end_pos is not None else self._pos,
+            line_indent=line_indent,
+            _end_lineno=self._lineno,
+            _end_col=self._col,
+            _source_file=self._source_file,
+        )
+
+    def _make_token_at_current(
+        self,
+        token_type: TokenType,
+        value: str,
+        *,
+        line_indent: int = 0,
+    ) -> Token:
+        """Create a Token at current position (for EOF and similar).
+
+        Args:
+            token_type: The token type.
+            value: The raw string value.
+            line_indent: Pre-computed indent level.
+
+        Returns:
+            Token at current position.
+        """
+        return Token(
+            type=token_type,
+            value=value,
+            _lineno=self._lineno,
+            _col=self._col,
+            _start_offset=self._pos,
+            _end_offset=self._pos,
+            line_indent=line_indent,
+            _end_lineno=self._lineno,
+            _end_col=self._col,
+            _source_file=self._source_file,
         )

@@ -114,7 +114,7 @@ def _try_import_rosettes() -> bool:
     _tried_rosettes = True
 
     try:
-        import rosettes
+        import rosettes  # type: ignore[import-not-found]
 
         class RosettesHighlighter:
             """Rosettes-based syntax highlighter implementing Highlighter protocol."""
@@ -129,17 +129,19 @@ def _try_import_rosettes() -> bool:
             ) -> str:
                 """Highlight code using Rosettes."""
                 hl_set = set(hl_lines) if hl_lines else None
-                return rosettes.highlight(
+                result: str = rosettes.highlight(
                     code,
                     language=language,
                     hl_lines=hl_set,
                     show_linenos=show_linenos,
                 )
+                return result
 
             def supports_language(self, language: str) -> bool:
                 """Check if Rosettes supports the language."""
                 try:
-                    return rosettes.supports_language(language)
+                    result: bool = rosettes.supports_language(language)
+                    return result
                 except Exception:
                     return False
 
