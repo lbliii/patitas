@@ -365,9 +365,8 @@ class InlineParsingCoreMixin:
                 pos += 1
                 continue
 
-            # Regular text - accumulate using set lookup (O(1) per char)
+            # Regular text - accumulate using frozenset lookup (O(1) per char)
             text_start = pos
-            # Use frozenset for faster membership testing
             while pos < text_len and text[pos] not in INLINE_SPECIAL:
                 pos += 1
             if pos > text_start:
