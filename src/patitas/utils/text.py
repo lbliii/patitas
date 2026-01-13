@@ -21,19 +21,19 @@ def slugify(
     separator: str = "-",
 ) -> str:
     """Convert text to URL-safe slug with Unicode support.
-    
+
     Preserves Unicode word characters (letters, digits, underscore) to support
     international content. Modern web browsers and servers handle Unicode URLs.
-    
+
     Args:
         text: Text to slugify
         unescape_html: Whether to decode HTML entities first (e.g., &amp; -> &)
         max_length: Maximum slug length (None = unlimited)
         separator: Character to use between words (default: '-')
-    
+
     Returns:
         URL-safe slug (lowercase, with Unicode word chars and separators)
-    
+
     Examples:
         >>> slugify("Hello World!")
         'hello-world'
@@ -47,7 +47,7 @@ def slugify(
         '你好世界'
         >>> slugify("Café")
         'café'
-    
+
     Note:
         Uses Python's ``\\w`` regex pattern which includes Unicode letters and digits.
         This is intentional to support international content in URLs.
@@ -88,20 +88,20 @@ def slugify(
 
 def escape_html(text: str) -> str:
     """Escape HTML special characters for safe use in attributes.
-    
+
     Converts special characters to HTML entities:
     - & becomes &amp;
     - < becomes &lt;
     - > becomes &gt;
     - " becomes &quot;
     - ' becomes &#x27;
-    
+
     Args:
         text: Text to escape
-    
+
     Returns:
         HTML-escaped text safe for use in attribute values
-    
+
     Examples:
         >>> escape_html("<script>alert('xss')</script>")
         "&lt;script&gt;alert(&#x27;xss&#x27;)&lt;/script&gt;"

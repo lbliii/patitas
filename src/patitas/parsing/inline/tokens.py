@@ -34,21 +34,21 @@ type DelimiterChar = Literal["*", "_", "~"]
 
 class DelimiterToken(NamedTuple):
     """Delimiter token for emphasis/strikethrough processing.
-    
+
     Immutable by design — match state tracked externally in MatchRegistry.
-    
+
     NamedTuple chosen over dataclass for:
     - Immutability by default (required for external match tracking)
     - Tuple unpacking support
     - Lower memory footprint (~80 bytes vs ~200 for dict)
     - Faster attribute access (tuple index vs hash lookup)
-    
+
     Attributes:
         char: The delimiter character ("*", "_", or "~").
         count: Number of consecutive delimiter characters.
         can_open: Whether this delimiter can open emphasis.
         can_close: Whether this delimiter can close emphasis.
-        
+
     """
 
     char: DelimiterChar
@@ -69,10 +69,10 @@ class DelimiterToken(NamedTuple):
 
 class TextToken(NamedTuple):
     """Plain text token.
-    
+
     Attributes:
         content: The text content.
-        
+
     """
 
     content: str
@@ -85,10 +85,10 @@ class TextToken(NamedTuple):
 
 class CodeSpanToken(NamedTuple):
     """Inline code span token.
-    
+
     Attributes:
         code: The code content (already processed per CommonMark rules).
-        
+
     """
 
     code: str
@@ -101,13 +101,13 @@ class CodeSpanToken(NamedTuple):
 
 class NodeToken(NamedTuple):
     """Pre-parsed AST node token (links, images, etc.).
-    
+
     Used when inline content is parsed directly into an AST node
     (e.g., links, images, autolinks, roles, math).
-    
+
     Attributes:
         node: The pre-parsed inline AST node.
-        
+
     """
 
     node: object  # Inline node type
@@ -120,9 +120,9 @@ class NodeToken(NamedTuple):
 
 class HardBreakToken(NamedTuple):
     """Hard line break token.
-    
+
     Represents a hard line break (backslash + newline or two trailing spaces).
-        
+
     """
 
     @property
@@ -133,10 +133,10 @@ class HardBreakToken(NamedTuple):
 
 class SoftBreakToken(NamedTuple):
     """Soft line break token.
-    
+
     Represents a soft line break (single newline in paragraph).
     Typically rendered as a space or newline depending on settings.
-        
+
     """
 
     @property

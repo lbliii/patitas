@@ -20,10 +20,10 @@ from __future__ import annotations
 
 class StringBuilder:
     """Efficient string accumulator.
-    
+
     Appends to a list, joins once at the end.
     O(n) total vs O(n²) for repeated string concatenation.
-    
+
     Usage:
             >>> sb = StringBuilder()
             >>> sb.append("<h1>")
@@ -31,11 +31,11 @@ class StringBuilder:
             >>> sb.append("</h1>")
             >>> sb.build()
             '<h1>Hello</h1>'
-    
+
     Thread Safety:
         Instance is local to each render() call.
         No shared mutable state.
-        
+
     """
 
     __slots__ = ("_parts",)

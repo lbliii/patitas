@@ -44,8 +44,8 @@ Example:
 from __future__ import annotations
 
 from patitas.directives.contracts import (
-    CARDS_CONTRACT,
     CARD_CONTRACT,
+    CARDS_CONTRACT,
     DEFINITION_CONTRACT,
     DEFINITION_LIST_CONTRACT,
     DROPDOWN_CONTRACT,
@@ -77,6 +77,7 @@ from patitas.directives.registry import (
     DirectiveRegistry,
     DirectiveRegistryBuilder,
     create_default_registry,
+    create_registry_with_defaults,
 )
 
 __all__ = [
@@ -112,4 +113,5 @@ __all__ = [
     "DirectiveRegistry",
     "DirectiveRegistryBuilder",
     "create_default_registry",
+    "create_registry_with_defaults",
 ]

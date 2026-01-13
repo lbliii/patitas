@@ -86,10 +86,10 @@ TYPE_TO_ICON: dict[str, str] = {
 
 def _render_admonition_icon(icon_name: str) -> str:
     """Render admonition icon using icon resolver.
-    
+
     Args:
         icon_name: Name of the icon to render
-    
+
     Returns:
         SVG HTML string, or empty string if icon not found
     """
@@ -101,16 +101,16 @@ def _render_admonition_icon(icon_name: str) -> str:
             return icon_html
     except ImportError:
         pass
-    
+
     # Fallback: CSS-only icon class
     return ""
 
 
 class AdmonitionDirective:
     """Handler for admonition directives.
-    
+
     Renders callout boxes for notes, warnings, tips, etc.
-    
+
     Thread Safety:
         Stateless handler. Safe for concurrent use.
     """

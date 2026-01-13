@@ -19,13 +19,13 @@ from patitas.location import SourceLocation
 
 class TokenType(Enum):
     """Token types produced by the lexer.
-    
+
     Organized by category for clarity:
     - Document structure (EOF, BLANK_LINE)
     - Block elements (headings, code blocks, quotes, lists)
     - Inline elements (text, emphasis, links, images)
     - Directives and roles
-        
+
     """
 
     # Document structure
@@ -113,27 +113,27 @@ class TokenType(Enum):
 @dataclass(frozen=True, slots=True)
 class Token:
     """A token produced by the lexer.
-    
+
     Tokens are the atomic units passed from lexer to parser.
     Each token has a type, string value, and source location.
-    
+
     Attributes:
         type: The token type (from TokenType enum)
         value: The raw string value from source
         location: Source location for error messages
         line_indent: Pre-computed indent level of the line (spaces, tabs expand to 4).
             Set by lexer at token creation; -1 if not computed.
-    
+
     Examples:
             >>> tok = Token(TokenType.ATX_HEADING, "## Hello", SourceLocation(1, 1))
             >>> tok.type
         <TokenType.ATX_HEADING: ...>
             >>> tok.value
             '## Hello'
-    
+
     Thread Safety:
         Frozen dataclass ensures immutability for safe sharing.
-        
+
     """
 
     type: TokenType

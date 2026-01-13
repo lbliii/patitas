@@ -6,10 +6,10 @@ as placeholders unless an icon resolver is injected.
 Usage:
     # With patitas[bengal] or custom resolver
     from patitas.icons import set_icon_resolver
-    
+
     def my_resolver(name: str) -> str | None:
         return f'<svg class="icon icon-{name}">...</svg>'
-    
+
     set_icon_resolver(my_resolver)
 
 Without a resolver, directives render without icons (CSS class only).
@@ -17,22 +17,23 @@ Without a resolver, directives render without icons (CSS class only).
 
 from __future__ import annotations
 
-from typing import Callable, Protocol
+from collections.abc import Callable
+from typing import Protocol
 
 
 class IconResolver(Protocol):
     """Protocol for icon resolvers.
-    
+
     Icon resolvers take an icon name and return SVG markup
     or None if the icon is not found.
     """
 
     def __call__(self, name: str) -> str | None:
         """Resolve icon name to SVG markup.
-        
+
         Args:
             name: Icon name (e.g., "github", "warning", "check")
-            
+
         Returns:
             SVG markup string, or None if icon not found
         """
@@ -45,11 +46,11 @@ _icon_resolver: Callable[[str], str | None] | None = None
 
 def set_icon_resolver(resolver: Callable[[str], str | None] | None) -> None:
     """Set the global icon resolver.
-    
+
     Args:
         resolver: Function that takes icon name and returns SVG or None.
             Pass None to clear the resolver.
-    
+
     Example:
         >>> set_icon_resolver(lambda name: f'<svg>{name}</svg>')
         >>> get_icon("check")
@@ -61,10 +62,10 @@ def set_icon_resolver(resolver: Callable[[str], str | None] | None) -> None:
 
 def get_icon(name: str) -> str | None:
     """Get icon SVG by name using the global resolver.
-    
+
     Args:
         name: Icon name
-        
+
     Returns:
         SVG markup if resolver is set and icon exists, None otherwise
     """
@@ -75,10 +76,10 @@ def get_icon(name: str) -> str | None:
 
 def get_icon_or_placeholder(name: str) -> str:
     """Get icon SVG or a placeholder span.
-    
+
     Args:
         name: Icon name
-        
+
     Returns:
         SVG markup if available, otherwise a placeholder span
     """

@@ -15,8 +15,8 @@ def test_import_location() -> None:
 
 def test_import_tokens() -> None:
     """Test Token and TokenType imports."""
-    from patitas.tokens import Token, TokenType
     from patitas.location import SourceLocation
+    from patitas.tokens import Token, TokenType
 
     tok = Token(
         type=TokenType.ATX_HEADING,
@@ -29,33 +29,25 @@ def test_import_tokens() -> None:
 
 def test_import_nodes() -> None:
     """Test AST node imports."""
-    from patitas.nodes import (
-        Document,
-        Heading,
-        Paragraph,
-        Text,
-        Emphasis,
-        Strong,
-        Link,
-        FencedCode,
-        List,
-        ListItem,
-    )
     from patitas.location import SourceLocation
+    from patitas.nodes import (
+        Heading,
+        Text,
+    )
 
     loc = SourceLocation(1, 1)
-    
+
     # Create simple nodes
     text = Text(location=loc, content="Hello")
     assert text.content == "Hello"
-    
+
     heading = Heading(location=loc, level=1, children=(text,))
     assert heading.level == 1
 
 
 def test_import_lexer() -> None:
     """Test Lexer import and basic tokenization."""
-    from patitas.lexer import Lexer, LexerMode
+    from patitas.lexer import Lexer
     from patitas.tokens import TokenType
 
     lexer = Lexer("# Hello\n\nWorld")
@@ -77,7 +69,7 @@ def test_import_stringbuilder() -> None:
 
 def test_import_directive_options() -> None:
     """Test DirectiveOptions import."""
-    from patitas.directives.options import DirectiveOptions, AdmonitionOptions
+    from patitas.directives.options import AdmonitionOptions
 
     opts = AdmonitionOptions.from_raw({"collapsible": "true"})
     assert opts.collapsible is True
@@ -86,11 +78,7 @@ def test_import_directive_options() -> None:
 def test_import_plugins() -> None:
     """Test plugin system imports."""
     from patitas.plugins import (
-        PatitasPlugin,
         BUILTIN_PLUGINS,
-        TablePlugin,
-        StrikethroughPlugin,
-        MathPlugin,
     )
 
     assert "table" in BUILTIN_PLUGINS
@@ -100,14 +88,10 @@ def test_import_plugins() -> None:
 
 def test_import_roles() -> None:
     """Test role system imports."""
-    from patitas.roles import RoleRegistry
     from patitas.roles.builtins import (
-        RefRole,
         DocRole,
         KbdRole,
-        AbbrRole,
-        MathRole,
-        IconRole,
+        RefRole,
     )
 
     # Verify role classes exist

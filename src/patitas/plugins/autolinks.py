@@ -45,10 +45,10 @@ if TYPE_CHECKING:
 @register_plugin("autolinks")
 class AutolinksPlugin:
     """Plugin for automatic URL and email linking.
-    
+
     Extends inline parsing to detect URLs and emails without
     explicit markdown link syntax.
-        
+
     """
 
     @property

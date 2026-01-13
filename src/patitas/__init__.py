@@ -16,15 +16,28 @@ Quick Start:
     >>> md = Markdown()
     >>> html = md("# Hello **World**")
 
-Installation Tiers:
-    pip install patitas              # Core parser (zero deps)
-    pip install patitas[directives]  # + Portable directives
+Custom Directives:
+    >>> from patitas import Markdown, create_registry_with_defaults
+    >>>
+    >>> # Extend defaults with your own directives
+    >>> builder = create_registry_with_defaults()
+    >>> builder.register(MyCustomDirective())
+    >>> md = Markdown(directive_registry=builder.build())
+    >>> html = md(":::{my-directive}\\nContent\\n:::")
+
+Installation:
+    pip install patitas              # Core parser with directives (zero deps)
     pip install patitas[syntax]      # + Syntax highlighting via Rosettes
-    pip install patitas[bengal]      # + Full Bengal directive suite
 """
 
 from __future__ import annotations
 
+from patitas.directives.registry import (
+    DirectiveRegistry,
+    DirectiveRegistryBuilder,
+    create_default_registry,
+    create_registry_with_defaults,
+)
 from patitas.lexer import Lexer
 from patitas.location import SourceLocation
 from patitas.nodes import (
@@ -67,12 +80,18 @@ from patitas.tokens import Token, TokenType
 __version__ = "0.1.0"
 
 
-def parse(source: str, *, source_file: str | None = None) -> Document:
+def parse(
+    source: str,
+    *,
+    source_file: str | None = None,
+    directive_registry: DirectiveRegistry | None = None,
+) -> Document:
     """Parse Markdown source into a typed AST.
 
     Args:
         source: Markdown source text
         source_file: Optional source file path for error messages
+        directive_registry: Custom directive registry (uses defaults if None)
 
     Returns:
         Document AST root node
@@ -81,8 +100,15 @@ def parse(source: str, *, source_file: str | None = None) -> Document:
         >>> doc = parse("# Hello **World**")
         >>> doc.children[0]
         Heading(level=1, ...)
+
+        >>> # With custom directives
+        >>> from patitas import DirectiveRegistryBuilder
+        >>> builder = DirectiveRegistryBuilder()
+        >>> builder.register(MyDirective())
+        >>> doc = parse(source, directive_registry=builder.build())
     """
-    parser = Parser(source, source_file=source_file)
+    registry = directive_registry or create_default_registry()
+    parser = Parser(source, source_file=source_file, directive_registry=registry)
     blocks = parser.parse()
     # Wrap blocks in a Document
     loc = SourceLocation(
@@ -95,13 +121,20 @@ def parse(source: str, *, source_file: str | None = None) -> Document:
     return Document(location=loc, children=tuple(blocks))
 
 
-def render(doc: Document, *, source: str = "", highlight: bool = False) -> str:
+def render(
+    doc: Document,
+    *,
+    source: str = "",
+    highlight: bool = False,
+    directive_registry: DirectiveRegistry | None = None,
+) -> str:
     """Render an AST Document to HTML.
 
     Args:
         doc: Document AST to render
         source: Original source (needed for zero-copy code block extraction)
         highlight: Enable syntax highlighting for code blocks
+        directive_registry: Custom directive registry for rendering
 
     Returns:
         HTML string
@@ -112,7 +145,8 @@ def render(doc: Document, *, source: str = "", highlight: bool = False) -> str:
         >>> print(html)
         <h1 id="hello">Hello</h1>
     """
-    renderer = HtmlRenderer(source=source, highlight=highlight)
+    registry = directive_registry or create_default_registry()
+    renderer = HtmlRenderer(source=source, highlight=highlight, directive_registry=registry)
     return renderer.render(doc)
 
 
@@ -128,6 +162,12 @@ class Markdown:
         >>> doc = md.parse("# Heading")
         >>> print(doc.children[0].level)
         1
+
+        >>> # Custom directives
+        >>> from patitas import DirectiveRegistryBuilder
+        >>> builder = DirectiveRegistryBuilder()
+        >>> builder.register(MyDirective())
+        >>> md = Markdown(directive_registry=builder.build())
     """
 
     def __init__(
@@ -135,15 +175,18 @@ class Markdown:
         *,
         highlight: bool = False,
         plugins: list[str] | None = None,
+        directive_registry: DirectiveRegistry | None = None,
     ) -> None:
         """Initialize Markdown processor.
 
         Args:
             highlight: Enable syntax highlighting for code blocks
             plugins: List of plugin names to enable (e.g., ["table", "math"])
+            directive_registry: Custom directive registry (uses defaults if None)
         """
         self._highlight = highlight
         self._plugins = plugins or []
+        self._directive_registry = directive_registry or create_default_registry()
 
     def __call__(self, source: str) -> str:
         """Parse and render Markdown in one call.
@@ -155,7 +198,11 @@ class Markdown:
             HTML string
         """
         doc = self.parse(source)
-        renderer = HtmlRenderer(source=source, highlight=self._highlight)
+        renderer = HtmlRenderer(
+            source=source,
+            highlight=self._highlight,
+            directive_registry=self._directive_registry,
+        )
         return renderer.render(doc)
 
     def parse(self, source: str, *, source_file: str | None = None) -> Document:
@@ -168,7 +215,11 @@ class Markdown:
         Returns:
             Document AST root node
         """
-        parser = Parser(source, source_file=source_file)
+        parser = Parser(
+            source,
+            source_file=source_file,
+            directive_registry=self._directive_registry,
+        )
         blocks = parser.parse()
         # Wrap blocks in a Document
         loc = SourceLocation(
@@ -190,7 +241,11 @@ class Markdown:
         Returns:
             HTML string
         """
-        renderer = HtmlRenderer(source=source, highlight=self._highlight)
+        renderer = HtmlRenderer(
+            source=source,
+            highlight=self._highlight,
+            directive_registry=self._directive_registry,
+        )
         return renderer.render(doc)
 
 
@@ -205,6 +260,11 @@ __all__ = [
     "Parser",
     "Lexer",
     "HtmlRenderer",
+    # Directive extensibility
+    "DirectiveRegistry",
+    "DirectiveRegistryBuilder",
+    "create_default_registry",
+    "create_registry_with_defaults",
     # Location
     "SourceLocation",
     # Tokens

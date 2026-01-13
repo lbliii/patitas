@@ -32,17 +32,10 @@ classifiers = [
 dependencies = []  # Pure Python, zero runtime dependencies
 
 [project.optional-dependencies]
-# Portable directives (admonition, dropdown, container, tabs)
-# No external deps - just enables the directive subsystem
-directives = []
-
 # Syntax highlighting for code blocks
 syntax = ["rosettes>=0.1.0"]
 
-# Full Bengal integration (cards, code-tabs, navigation, versioning)
-bengal = ["bengal>=0.1.8"]
-
-# Everything except Bengal
+# All optional features
 all = ["rosettes>=0.1.0"]
 
 [project.urls]
@@ -50,10 +43,6 @@ Homepage = "https://github.com/lbliii/patitas"
 Documentation = "https://lbliii.github.io/patitas"
 Repository = "https://github.com/lbliii/patitas"
 Changelog = "https://github.com/lbliii/patitas/blob/main/CHANGELOG.md"
-
-[project.entry-points."patitas.directives"]
-# Entry points allow Bengal to register its directives
-# bengal = "bengal.patitas:register_directives"
 
 [tool.setuptools.packages.find]
 where = ["src"]

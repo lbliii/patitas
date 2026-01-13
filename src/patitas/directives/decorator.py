@@ -11,7 +11,7 @@ Example (function):
 Example (class):
     >>> @directive("gallery", options=GalleryOptions, preserves_raw_content=True)
     >>> class GalleryDirective:
-    ...     def render(self, node: Directive[GalleryOptions], children: str, sb: StringBuilder) -> None:
+    ...     def render(self, node, children: str, sb: StringBuilder) -> None:
     ...         images = self._parse_images(node.raw_content)
     ...         ...
 """
@@ -59,28 +59,28 @@ def directive(
     token_type: str | None = None,
 ):
     """Decorator to create directive handlers with minimal boilerplate.
-    
+
     Works with both functions (simple directives) and classes (complex directives).
-    
+
     Args:
         *names: Directive names (e.g., "note", "warning", "tip")
         options: Options class for typed option parsing
         contract: Optional nesting validation contract
         preserves_raw_content: If True, parser preserves raw content string
         token_type: Token type identifier (defaults to first name)
-    
+
     Example (function):
         @directive("note", options=NoteOptions)
         def render_note(node: Directive[NoteOptions], children: str, sb: StringBuilder) -> None:
             sb.append(f'<div class="note">{children}</div>')
-    
+
     Example (class):
         @directive("gallery", options=GalleryOptions, preserves_raw_content=True)
         class GalleryDirective:
-            def render(self, node: Directive[GalleryOptions], children: str, sb: StringBuilder) -> None:
+            def render(self, node, children: str, sb: StringBuilder) -> None:
                 images = self._parse_images(node.raw_content)
                     ...
-        
+
     """
     from patitas.directives.options import DirectiveOptions
     from patitas.nodes import Directive

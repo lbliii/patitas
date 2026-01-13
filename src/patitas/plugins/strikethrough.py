@@ -33,9 +33,9 @@ if TYPE_CHECKING:
 @register_plugin("strikethrough")
 class StrikethroughPlugin:
     """Plugin adding ~~strikethrough~~ support.
-    
+
     Extends inline parsing to recognize ~~ delimiters.
-        
+
     """
 
     @property

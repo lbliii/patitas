@@ -43,12 +43,12 @@ if TYPE_CHECKING:
 @register_plugin("footnotes")
 class FootnotesPlugin:
     """Plugin adding [^1] footnote support.
-    
+
     Footnotes are:
     1. Parsed as inline references [^id]
     2. Defined as block elements [^id]: content
     3. Rendered as a footnotes section at document end
-        
+
     """
 
     @property

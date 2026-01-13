@@ -49,10 +49,10 @@ DROPDOWN_COLORS = frozenset(["success", "warning", "danger", "info", "minimal"])
 
 def _render_dropdown_icon(icon_name: str) -> str:
     """Render dropdown icon using icon resolver.
-    
+
     Args:
         icon_name: Name of the icon to render
-    
+
     Returns:
         SVG HTML string, or empty string if icon not found
     """
@@ -64,7 +64,7 @@ def _render_dropdown_icon(icon_name: str) -> str:
             return icon_html
     except ImportError:
         pass
-    
+
     # Fallback: CSS-only icon class
     return ""
 
@@ -72,7 +72,7 @@ def _render_dropdown_icon(icon_name: str) -> str:
 @dataclass(frozen=True, slots=True)
 class DropdownOptions(StyledOptions):
     """Options for dropdown directive.
-    
+
     Attributes:
         open: Whether dropdown is initially open (expanded)
         icon: Icon name to display next to the title
@@ -90,9 +90,9 @@ class DropdownOptions(StyledOptions):
 
 class DropdownDirective:
     """Handler for dropdown (collapsible) directive.
-    
+
     Renders collapsible content using <details>/<summary>.
-    
+
     Thread Safety:
         Stateless handler. Safe for concurrent use.
     """

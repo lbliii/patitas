@@ -8,8 +8,8 @@ class TestHtmlRenderer:
 
     def test_render_heading(self) -> None:
         """Test heading rendering with auto-generated ID."""
-        from patitas.nodes import Document, Heading, Text
         from patitas.location import SourceLocation
+        from patitas.nodes import Document, Heading, Text
         from patitas.renderers.html import HtmlRenderer
 
         loc = SourceLocation(1, 1)
@@ -33,8 +33,8 @@ class TestHtmlRenderer:
 
     def test_render_paragraph(self) -> None:
         """Test paragraph rendering."""
-        from patitas.nodes import Document, Paragraph, Text
         from patitas.location import SourceLocation
+        from patitas.nodes import Document, Paragraph, Text
         from patitas.renderers.html import HtmlRenderer
 
         loc = SourceLocation(1, 1)
@@ -55,8 +55,8 @@ class TestHtmlRenderer:
 
     def test_render_emphasis(self) -> None:
         """Test emphasis rendering."""
-        from patitas.nodes import Document, Paragraph, Text, Emphasis
         from patitas.location import SourceLocation
+        from patitas.nodes import Document, Emphasis, Paragraph, Text
         from patitas.renderers.html import HtmlRenderer
 
         loc = SourceLocation(1, 1)
@@ -83,8 +83,8 @@ class TestHtmlRenderer:
 
     def test_render_strong(self) -> None:
         """Test strong rendering."""
-        from patitas.nodes import Document, Paragraph, Text, Strong
         from patitas.location import SourceLocation
+        from patitas.nodes import Document, Paragraph, Strong, Text
         from patitas.renderers.html import HtmlRenderer
 
         loc = SourceLocation(1, 1)
@@ -110,8 +110,8 @@ class TestHtmlRenderer:
 
     def test_render_link(self) -> None:
         """Test link rendering."""
-        from patitas.nodes import Document, Paragraph, Text, Link
         from patitas.location import SourceLocation
+        from patitas.nodes import Document, Link, Paragraph, Text
         from patitas.renderers.html import HtmlRenderer
 
         loc = SourceLocation(1, 1)
@@ -141,8 +141,8 @@ class TestHtmlRenderer:
 
     def test_render_code_block(self) -> None:
         """Test fenced code block rendering."""
-        from patitas.nodes import Document, FencedCode
         from patitas.location import SourceLocation
+        from patitas.nodes import Document, FencedCode
         from patitas.renderers.html import HtmlRenderer
 
         loc = SourceLocation(1, 1)
@@ -168,8 +168,8 @@ class TestHtmlRenderer:
 
     def test_render_list(self) -> None:
         """Test list rendering."""
-        from patitas.nodes import Document, List, ListItem, Paragraph, Text
         from patitas.location import SourceLocation
+        from patitas.nodes import Document, List, ListItem, Paragraph, Text
         from patitas.renderers.html import HtmlRenderer
 
         loc = SourceLocation(1, 1)
@@ -213,8 +213,8 @@ class TestHtmlRenderer:
 
     def test_get_headings(self) -> None:
         """Test TOC data collection."""
-        from patitas.nodes import Document, Heading, Text
         from patitas.location import SourceLocation
+        from patitas.nodes import Document, Heading, Text
         from patitas.renderers.html import HtmlRenderer
 
         loc = SourceLocation(1, 1)
@@ -247,8 +247,8 @@ class TestHtmlRenderer:
 
     def test_html_escape(self) -> None:
         """Test HTML escaping in text."""
-        from patitas.nodes import Document, Paragraph, Text
         from patitas.location import SourceLocation
+        from patitas.nodes import Document, Paragraph, Text
         from patitas.renderers.html import HtmlRenderer
 
         loc = SourceLocation(1, 1)

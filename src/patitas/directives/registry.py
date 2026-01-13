@@ -25,10 +25,10 @@ if TYPE_CHECKING:
 
 class DirectiveRegistry:
     """Immutable registry of directive handlers.
-    
+
     Maps directive names to their handlers for lookup during parsing
     and rendering.
-    
+
     Thread Safety:
         Immutable after creation. Safe to share across threads.
     """
@@ -96,10 +96,10 @@ class DirectiveRegistry:
 
 class DirectiveRegistryBuilder:
     """Mutable builder for DirectiveRegistry.
-    
+
     Use this to register handlers, then call build() to create
     an immutable registry.
-    
+
     Example:
         >>> builder = DirectiveRegistryBuilder()
         >>> builder.register(NoteDirective())
@@ -182,20 +182,8 @@ class DirectiveRegistryBuilder:
         return len(self._handlers)
 
 
-def create_default_registry() -> DirectiveRegistry:
-    """Create registry with portable built-in directives.
-    
-    Returns:
-        Registry with portable directives:
-        - Admonitions: note, warning, tip, danger, etc.
-        - Tabs: tab-set, tab-item
-        - Dropdown: collapsible content
-        - Container: generic wrapper
-    
-    Note:
-        Bengal-specific directives (cards, code-tabs, navigation, etc.)
-        are registered separately via patitas[bengal].
-    """
+def _build_default_registry() -> DirectiveRegistry:
+    """Build the default registry (internal, not cached)."""
     from patitas.directives.builtins.admonition import AdmonitionDirective
     from patitas.directives.builtins.container import ContainerDirective
     from patitas.directives.builtins.dropdown import DropdownDirective
@@ -213,3 +201,61 @@ def create_default_registry() -> DirectiveRegistry:
     builder.register(TabItemDirective())
 
     return builder.build()
+
+
+# Cached singleton — thread-safe since DirectiveRegistry is immutable
+_DEFAULT_REGISTRY: DirectiveRegistry | None = None
+
+
+def create_default_registry() -> DirectiveRegistry:
+    """Get the default directive registry (cached singleton).
+
+    Returns:
+        Registry with portable directives:
+        - Admonitions: note, warning, tip, danger, etc.
+        - Tabs: tab-set, tab-item
+        - Dropdown: collapsible content
+        - Container: generic wrapper
+
+    Thread Safety:
+        Returns a cached immutable registry. Safe for concurrent access.
+
+    Note:
+        Bengal-specific directives (cards, code-tabs, navigation, etc.)
+        are registered separately via patitas[bengal].
+    """
+    global _DEFAULT_REGISTRY
+    if _DEFAULT_REGISTRY is None:
+        _DEFAULT_REGISTRY = _build_default_registry()
+    return _DEFAULT_REGISTRY
+
+
+def create_registry_with_defaults() -> DirectiveRegistryBuilder:
+    """Create a builder pre-populated with default directives.
+
+    Use this to extend the default set with custom directives:
+
+        >>> builder = create_registry_with_defaults()
+        >>> builder.register(MyCustomDirective())
+        >>> registry = builder.build()
+
+    Returns:
+        DirectiveRegistryBuilder with defaults already registered
+    """
+    from patitas.directives.builtins.admonition import AdmonitionDirective
+    from patitas.directives.builtins.container import ContainerDirective
+    from patitas.directives.builtins.dropdown import DropdownDirective
+    from patitas.directives.builtins.tabs import TabItemDirective, TabSetDirective
+
+    builder = DirectiveRegistryBuilder()
+
+    # Core directives
+    builder.register(AdmonitionDirective())
+    builder.register(ContainerDirective())
+    builder.register(DropdownDirective())
+
+    # Tabs
+    builder.register(TabSetDirective())
+    builder.register(TabItemDirective())
+
+    return builder

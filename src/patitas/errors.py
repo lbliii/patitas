@@ -8,7 +8,7 @@ from __future__ import annotations
 
 class PatitasError(Exception):
     """Base exception for all Patitas errors.
-    
+
     Subclass this for specific error categories.
     """
 
@@ -17,7 +17,7 @@ class PatitasError(Exception):
 
 class ParseError(PatitasError):
     """Error during Markdown parsing.
-    
+
     Raised when the parser encounters invalid or unexpected input.
     """
 
@@ -29,7 +29,7 @@ class ParseError(PatitasError):
         source_file: str | None = None,
     ) -> None:
         """Initialize parse error with optional location.
-        
+
         Args:
             message: Error description
             lineno: Line number where error occurred (1-indexed)
@@ -57,7 +57,7 @@ class ParseError(PatitasError):
 
 class DirectiveContractError(PatitasError):
     """Error when a directive contract is violated.
-    
+
     Raised when directive options don't meet requirements or
     content doesn't match expected structure.
     """
@@ -69,7 +69,7 @@ class DirectiveContractError(PatitasError):
         lineno: int | None = None,
     ) -> None:
         """Initialize directive contract error.
-        
+
         Args:
             directive_name: Name of the directive (e.g., "note", "code-tabs")
             message: Description of the contract violation
@@ -84,7 +84,7 @@ class DirectiveContractError(PatitasError):
 
 class RenderError(PatitasError):
     """Error during HTML rendering.
-    
+
     Raised when the renderer encounters an invalid AST node
     or fails to produce valid output.
     """
@@ -94,13 +94,13 @@ class RenderError(PatitasError):
 
 class PluginError(PatitasError):
     """Error in plugin initialization or execution.
-    
+
     Raised when a plugin fails to register or process content.
     """
 
     def __init__(self, plugin_name: str, message: str) -> None:
         """Initialize plugin error.
-        
+
         Args:
             plugin_name: Name of the failing plugin
             message: Description of the error

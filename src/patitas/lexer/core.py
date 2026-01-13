@@ -55,14 +55,14 @@ class Lexer(
     HtmlScannerMixin,
 ):
     """State-machine lexer with O(n) guaranteed performance.
-    
+
     Uses a window-based approach for block scanning:
     1. Scan to end of line (find window)
     2. Classify the line (pure logic, no position changes)
     3. Commit position (always advances)
-    
+
     This eliminates rewinds and guarantees forward progress.
-    
+
     Usage:
             >>> lexer = Lexer("# Hello\n\nWorld")
             >>> for token in lexer.tokenize():
@@ -71,11 +71,11 @@ class Lexer(
         Token(BLANK_LINE, '', 2:1)
         Token(PARAGRAPH_LINE, 'World', 3:1)
         Token(EOF, '', 3:6)
-    
+
     Thread Safety:
         Lexer instances are single-use. Create one per source string.
         All state is instance-local; no shared mutable state.
-        
+
     """
 
     __slots__ = (

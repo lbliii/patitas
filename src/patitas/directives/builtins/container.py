@@ -39,7 +39,7 @@ if TYPE_CHECKING:
 @dataclass(frozen=True, slots=True)
 class ContainerOptions(StyledOptions):
     """Options for container directive.
-    
+
     The :class: option adds additional CSS classes beyond
     those specified in the title.
     """
@@ -49,10 +49,10 @@ class ContainerOptions(StyledOptions):
 
 class ContainerDirective:
     """Handler for container directive.
-    
+
     Renders a generic wrapper div with custom CSS classes.
     The title line is treated as class names.
-    
+
     Thread Safety:
         Stateless handler. Safe for concurrent use.
     """

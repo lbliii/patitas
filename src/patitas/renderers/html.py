@@ -14,20 +14,10 @@ regex-based post-processing. TOC data is collected during rendering.
 from __future__ import annotations
 
 import html
-import re
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 from urllib.parse import quote as url_quote
-
-
-def html_escape(s: str) -> str:
-    """Escape HTML special characters.
-    
-    CommonMark-compliant: escapes <, >, &, " but NOT single quotes.
-    Python's html.escape() escapes ' to &#x27; which CommonMark doesn't require.
-    """
-    return html.escape(s, quote=False).replace('"', "&quot;")
 
 from patitas.nodes import (
     Block,
@@ -57,7 +47,6 @@ from patitas.nodes import (
     Strikethrough,
     Strong,
     Table,
-    TableCell,
     TableRow,
     Text,
     ThematicBreak,
@@ -70,13 +59,22 @@ if TYPE_CHECKING:
     from patitas.roles.registry import RoleRegistry
 
 
+def html_escape(s: str) -> str:
+    """Escape HTML special characters.
+
+    CommonMark-compliant: escapes <, >, &, " but NOT single quotes.
+    Python's html.escape() escapes ' to &#x27; which CommonMark doesn't require.
+    """
+    return html.escape(s, quote=False).replace('"', "&quot;")
+
+
 def _encode_url(url: str) -> str:
     """Encode URL for CommonMark compliance.
-    
+
     CommonMark requires:
     1. Decode HTML entities (e.g., &auml; → ä)
     2. Percent-encode special characters (spaces, backslashes, non-ASCII)
-    
+
     Returns URL safe for href attribute (still needs html_escape for quotes).
     """
     # First decode HTML entities
@@ -89,7 +87,7 @@ def _encode_url(url: str) -> str:
 @dataclass(frozen=True, slots=True)
 class HeadingInfo:
     """Heading metadata collected during rendering.
-    
+
     Used to build TOC without post-render regex scanning.
     Collected by HtmlRenderer during the AST walk.
     """
@@ -101,10 +99,10 @@ class HeadingInfo:
 
 class HtmlRenderer:
     """Render AST to HTML using StringBuilder pattern.
-    
+
     O(n) rendering using StringBuilder for string accumulation.
     All state is local to each render() call.
-    
+
     Usage:
         >>> from patitas.parser import Parser
         >>> parser = Parser()
@@ -112,7 +110,7 @@ class HtmlRenderer:
         >>> renderer = HtmlRenderer()
         >>> html = renderer.render(doc)
         '<h1>Hello <strong>World</strong></h1>\\n'
-    
+
     Thread Safety:
         Multiple threads can render concurrently without synchronization.
         Each call creates independent StringBuilder.
@@ -248,12 +246,9 @@ class HtmlRenderer:
         """Render heading with ID for anchoring."""
         # Extract plain text for slug
         text = self._extract_text(heading.children)
-        
+
         # Use explicit ID if provided, otherwise generate slug
-        if heading.explicit_id:
-            slug = heading.explicit_id
-        else:
-            slug = self._slugify(text)
+        slug = heading.explicit_id or self._slugify(text)
 
         # Ensure unique slug
         original_slug = slug
@@ -289,6 +284,7 @@ class HtmlRenderer:
             # Try syntax highlighting
             try:
                 from patitas.highlighting import highlight
+
                 highlighted = highlight(content, lang)
                 sb.append(highlighted).append("\n")
                 return
@@ -325,11 +321,9 @@ class HtmlRenderer:
 
         sb.append("</ol>\n" if lst.ordered else "</ul>\n")
 
-    def _render_list_item(
-        self, item: ListItem, sb: StringBuilder, tight: bool
-    ) -> None:
+    def _render_list_item(self, item: ListItem, sb: StringBuilder, tight: bool) -> None:
         """Render list item.
-        
+
         CommonMark:
         - Tight lists: Single paragraph items render as text (no <p> tags)
         - Loose lists: All paragraphs wrapped in <p> tags
@@ -368,7 +362,7 @@ class HtmlRenderer:
             else:
                 # First is non-paragraph (heading, blockquote, code, etc.): add newline
                 sb.append("\n")
-                for i, child in enumerate(item.children):
+                for _i, child in enumerate(item.children):
                     if isinstance(child, Paragraph):
                         # In tight list after heading, paragraphs render as text
                         self._render_inlines(child.children, sb)
@@ -428,7 +422,7 @@ class HtmlRenderer:
 
     def _render_directive(self, directive: Directive[Any], sb: StringBuilder) -> None:
         """Render directive block.
-        
+
         If a directive registry is configured and has a handler for this
         directive, use it. Otherwise, render as a generic container.
         """
@@ -512,7 +506,8 @@ class HtmlRenderer:
             case FootnoteRef():
                 self._footnote_refs.append(inline.identifier)
                 ref_num = len(self._footnote_refs)
-                sb.append(f'<sup><a href="#fn-{html_escape(inline.identifier)}" id="fnref-{html_escape(inline.identifier)}">{ref_num}</a></sup>')
+                esc_id = html_escape(inline.identifier)
+                sb.append(f'<sup><a href="#fn-{esc_id}" id="fnref-{esc_id}">{ref_num}</a></sup>')
             case Role():
                 self._render_role(inline, sb)
 

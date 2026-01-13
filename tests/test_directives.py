@@ -69,9 +69,9 @@ class TestDirectiveContracts:
     def test_tab_set_contract(self) -> None:
         """Test tab-set allows only tab-item children."""
         from patitas.directives import TAB_SET_CONTRACT
-        from patitas.nodes import Directive
-        from patitas.location import SourceLocation
         from patitas.directives.options import DirectiveOptions
+        from patitas.location import SourceLocation
+        from patitas.nodes import Directive
 
         loc = SourceLocation(1, 1)
         opts = DirectiveOptions()
@@ -100,10 +100,18 @@ class TestAdmonitionDirective:
         from patitas.directives.builtins.admonition import ADMONITION_TYPES
 
         expected = {
-            "note", "tip", "warning", "danger", "error",
-            "info", "example", "success", "caution", "seealso"
+            "note",
+            "tip",
+            "warning",
+            "danger",
+            "error",
+            "info",
+            "example",
+            "success",
+            "caution",
+            "seealso",
         }
-        assert ADMONITION_TYPES == expected
+        assert expected == ADMONITION_TYPES
 
     def test_admonition_parse(self) -> None:
         """Test admonition parsing."""

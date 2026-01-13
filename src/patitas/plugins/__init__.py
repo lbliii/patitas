@@ -60,15 +60,15 @@ __all__ = [
 @runtime_checkable
 class PatitasPlugin(Protocol):
     """Protocol for Patitas plugins.
-    
+
     Plugins can hook into multiple extension points:
     - extend_lexer: Add token types and scanning logic
     - extend_parser: Add parsing rules for new tokens
     - extend_renderer: Add rendering methods for new nodes
-    
+
     Thread Safety:
         Plugins must be stateless. All state should be in AST nodes.
-        
+
     """
 
     @property
@@ -107,18 +107,18 @@ BUILTIN_PLUGINS: dict[str, type[PatitasPlugin]] = {}
 
 def register_plugin(name: str) -> type[PatitasPlugin]:
     """Decorator to register a plugin.
-    
+
     Args:
         name: Plugin name for lookup
-    
+
     Returns:
         The decorated class
-    
+
     Usage:
         @register_plugin("table")
         class TablePlugin:
                 ...
-        
+
     """
 
     def decorator(cls: type[PatitasPlugin]) -> type[PatitasPlugin]:
@@ -130,16 +130,16 @@ def register_plugin(name: str) -> type[PatitasPlugin]:
 
 def get_plugin(name: str) -> PatitasPlugin:
     """Get a plugin instance by name.
-    
+
     Args:
         name: Plugin name (e.g., "table", "strikethrough")
-    
+
     Returns:
         Plugin instance
-    
+
     Raises:
         KeyError: If plugin name is not recognized
-        
+
     """
     if name not in BUILTIN_PLUGINS:
         available = ", ".join(sorted(BUILTIN_PLUGINS.keys()))
@@ -154,13 +154,13 @@ def apply_plugins(
     renderer_class: type[HtmlRenderer],
 ) -> None:
     """Apply plugins to parser components.
-    
+
     Args:
         plugins: List of plugin names to apply
         lexer_class: Lexer class to extend
         parser_class: Parser class to extend
         renderer_class: Renderer class to extend
-        
+
     """
     for plugin_name in plugins:
         if plugin_name == "all":

@@ -46,13 +46,13 @@ SPEC_TESTS: list[dict[str, Any]] = _load_spec()
 
 def normalize_html(html_string: str) -> str:
     """Normalize HTML for comparison.
-    
+
     CommonMark spec allows variation in:
     - Attribute ordering
     - Self-closing tag style (<br> vs <br />)
     - Whitespace handling
     - Entity encoding
-    
+
     This normalizer makes comparisons more forgiving while still
     validating semantic correctness.
     """

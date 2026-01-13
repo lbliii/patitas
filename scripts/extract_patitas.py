@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import argparse
 import re
-import shutil
 from pathlib import Path
 
 # Source and destination paths
@@ -205,7 +204,7 @@ def extract_patitas(*, verify: bool = False, dry_run: bool = False) -> None:
         print("=" * 60)
         print("Verification")
         print("=" * 60)
-        
+
         # Check all extracted files for Bengal imports
         all_clear = True
         for py_file in PATITAS_SRC.rglob("*.py"):

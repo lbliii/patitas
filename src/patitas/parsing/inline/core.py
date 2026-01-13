@@ -47,13 +47,13 @@ if TYPE_CHECKING:
 
 class InlineParsingCoreMixin:
     """Core inline parsing methods.
-    
+
     Required Host Attributes:
         - _math_enabled: bool
         - _strikethrough_enabled: bool
         - _footnotes_enabled: bool
         - _link_refs: dict[str, tuple[str, str]]
-    
+
     Required Host Methods (from other mixins):
         - _is_left_flanking(before, after, delim) -> bool
         - _is_right_flanking(before, after, delim) -> bool
@@ -66,7 +66,7 @@ class InlineParsingCoreMixin:
         - _try_parse_html_inline(text, pos, location) -> tuple | None
         - _try_parse_role(text, pos, location) -> tuple | None
         - _try_parse_math(text, pos, location) -> tuple | None
-        
+
     """
 
     _math_enabled: bool

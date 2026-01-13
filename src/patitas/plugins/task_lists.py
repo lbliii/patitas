@@ -41,10 +41,10 @@ if TYPE_CHECKING:
 @register_plugin("task_lists")
 class TaskListPlugin:
     """Plugin for task list checkbox support.
-    
+
     Task lists are partially built into the core parser via the
     ListItem.checked field. This plugin enables checkbox detection.
-        
+
     """
 
     @property

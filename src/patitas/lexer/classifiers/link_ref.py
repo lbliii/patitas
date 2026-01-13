@@ -152,8 +152,8 @@ class LinkRefClassifierMixin:
             elif char == "]":
                 # Potential end
                 if curr + 1 < self._source_len and self._source[curr + 1] == ":":
-                    # Found it!
-                    # CommonMark 4.7: normalize whitespace - collapse runs of whitespace to single space
+                    # Found it! CommonMark 4.7: normalize whitespace
+                    # (collapse runs of whitespace to single space)
                     label = "".join(label_parts).strip()
                     # Normalize internal whitespace (spaces, tabs, newlines -> single space)
                     label = re.sub(r"[ \t\n]+", " ", label)
@@ -164,8 +164,8 @@ class LinkRefClassifierMixin:
                 else:
                     # ']' not followed by ':' - is this allowed in label?
                     # Spec 4.7: "A link label ... may not contain an unescaped ]"
-                    # Wait, so the search should be for the FIRST unescaped ] followed by :?
-                    # No, it's just the FIRST unescaped ]. If it's not followed by :, it's NOT a link ref def.
+                    # The search is for the FIRST unescaped ]. If not followed
+                    # by ':', it's NOT a link ref def.
                     return "", 0, False
             elif char == "\n":
                 # Line break in label. Check for blank line.

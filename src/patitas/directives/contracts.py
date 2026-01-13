@@ -30,13 +30,13 @@ if TYPE_CHECKING:
 @dataclass(frozen=True, slots=True)
 class DirectiveContract:
     """Validation rules for directive nesting.
-    
+
     Use contracts to enforce structural requirements like "step must
     be inside steps" or "tab-item can only contain certain content".
-    
+
     Violations emit warnings rather than raising exceptions, allowing
     graceful degradation of invalid markup.
-    
+
     Attributes:
         requires_parent: This directive must be inside one of these parents.
         requires_children: This directive must contain at least one of these.
@@ -105,10 +105,11 @@ class DirectiveContract:
                 )
 
             if parent_name not in self.requires_parent:
+                allowed = ", ".join(self.requires_parent)
                 return ContractViolation(
                     directive=directive_name,
                     violation_type="wrong_parent",
-                    message=f"'{directive_name}' must be inside {', '.join(self.requires_parent)}, not '{parent_name}'",
+                    message=f"'{directive_name}' must be inside {allowed}, not '{parent_name}'",
                     expected=self.requires_parent,
                     actual=parent_name,
                 )
@@ -117,10 +118,11 @@ class DirectiveContract:
         if self.allows_parent is not None and (
             parent_name is None or parent_name not in self.allows_parent
         ):
+            suggested = ", ".join(self.allows_parent)
             return ContractViolation(
                 directive=directive_name,
                 violation_type="suggested_parent",
-                message=f"'{directive_name}' is intended to be inside: {', '.join(self.allows_parent)}",
+                message=f"'{directive_name}' is intended to be inside: {suggested}",
                 expected=self.allows_parent,
                 actual=parent_name,
             )
@@ -150,11 +152,12 @@ class DirectiveContract:
         if self.requires_children is not None:
             has_required = any(name in self.requires_children for name in child_names)
             if not has_required and children:
+                required = ", ".join(self.requires_children)
                 violations.append(
                     ContractViolation(
                         directive=directive_name,
                         violation_type="missing_required_child",
-                        message=f"'{directive_name}' requires at least one of: {', '.join(self.requires_children)}",
+                        message=f"'{directive_name}' requires at least one of: {required}",
                         expected=self.requires_children,
                         actual=tuple(child_names),
                     )
@@ -190,13 +193,15 @@ class DirectiveContract:
 
         # Check max_children
         if self.max_children is not None and len(children) > self.max_children:
+            count = len(children)
+            max_c = self.max_children
             violations.append(
                 ContractViolation(
                     directive=directive_name,
                     violation_type="too_many_children",
-                    message=f"'{directive_name}' allows max {self.max_children} children, got {len(children)}",
-                    expected=self.max_children,
-                    actual=len(children),
+                    message=f"'{directive_name}' allows max {max_c} children, got {count}",
+                    expected=max_c,
+                    actual=count,
                 )
             )
 
@@ -206,7 +211,7 @@ class DirectiveContract:
 @dataclass(frozen=True, slots=True)
 class ContractViolation:
     """Record of a contract violation.
-    
+
     Contains information about what went wrong and suggestions for fixes.
     """
 

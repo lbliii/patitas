@@ -62,7 +62,7 @@ if TYPE_CHECKING:
 @dataclass(frozen=True, slots=True)
 class TabItemOptions(StyledOptions):
     """Options for tab-item directive.
-    
+
     Attributes:
         selected: Whether this tab is initially selected
         icon: Icon name to show next to tab label
@@ -80,7 +80,7 @@ class TabItemOptions(StyledOptions):
 @dataclass(frozen=True, slots=True)
 class TabSetOptions(StyledOptions):
     """Options for tab-set directive.
-    
+
     Attributes:
         id: Unique ID for the tab set
         sync: Sync key for synchronizing tabs across multiple tab-sets
@@ -106,9 +106,9 @@ class TabItemData:
 
 class TabItemDirective:
     """Handler for tab-item directive.
-    
+
     Must be inside a tab-set container.
-    
+
     Thread Safety:
         Stateless handler. Safe for concurrent use.
     """
@@ -169,9 +169,9 @@ class TabItemDirective:
 
 class TabSetDirective:
     """Handler for tab-set container directive.
-    
+
     Contains tab-item children that form a tabbed interface.
-    
+
     Thread Safety:
         Stateless handler. Safe for concurrent use.
     """
@@ -270,8 +270,10 @@ class TabSetDirective:
 
             # Build link attributes
             disabled_attr = ' aria-disabled="true" tabindex="-1"' if is_disabled else ""
+            target = f"{html_escape(tab_id)}-{i}"
             sb.append(
-                f'    <li{class_attr}><a href="#" data-tab-target="{html_escape(tab_id)}-{i}"{disabled_attr}>{label}</a></li>\n'
+                f'    <li{class_attr}><a href="#" data-tab-target="{target}"'
+                f"{disabled_attr}>{label}</a></li>\n"
             )
         sb.append("  </ul>\n")
 
@@ -287,8 +289,9 @@ class TabSetDirective:
                 pane_classes.append("active")
             class_str = " ".join(pane_classes)
 
+            div_id = f"{html_escape(tab_id)}-{i}"
             sb.append(
-                f'    <div id="{html_escape(tab_id)}-{i}" class="{class_str}">\n{tab_data.content}    </div>\n'
+                f'    <div id="{div_id}" class="{class_str}">\n{tab_data.content}    </div>\n'
             )
         sb.append("  </div>\n</div>\n")
 
@@ -325,8 +328,9 @@ class TabSetDirective:
             if is_disabled:
                 aria_attrs += ' aria-disabled="true" tabindex="-1"'
 
+            esc_pane_id = html_escape(pane_id)
             sb.append(
-                f'    <a href="#{html_escape(pane_id)}" {aria_attrs} data-pane="{html_escape(pane_id)}">{label}</a>\n'
+                f'    <a href="#{esc_pane_id}" {aria_attrs} data-pane="{esc_pane_id}">{label}</a>\n'
             )
         sb.append("  </nav>\n")
 
@@ -354,10 +358,10 @@ class TabSetDirective:
 
 def _extract_tab_items(text: str) -> list[TabItemData]:
     """Extract tab-item divs from rendered HTML, handling nested divs correctly.
-    
+
     Args:
         text: Rendered HTML containing tab-item divs
-    
+
     Returns:
         List of TabItemData with extracted attributes
     """

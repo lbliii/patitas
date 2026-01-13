@@ -42,10 +42,10 @@ if TYPE_CHECKING:
 @register_plugin("table")
 class TablePlugin:
     """Plugin adding GFM table support.
-    
+
     Tables are detected at the block level when a line starts with |
     and is followed by a delimiter row (|---|---|).
-        
+
     """
 
     @property

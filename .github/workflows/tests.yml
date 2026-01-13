@@ -82,9 +82,9 @@ jobs:
       - name: Install dependencies
         run: uv sync --group dev
 
-      - name: Run pyright
+      - name: Run mypy
         run: |
-          uv run pyright src/patitas
+          uv run mypy src/patitas
 
   lint:
     runs-on: ubuntu-latest

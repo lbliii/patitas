@@ -37,27 +37,27 @@ class Parser(
     BlockParsingMixin,
 ):
     """Recursive descent parser for Markdown.
-    
+
     Consumes tokens from Lexer and builds typed AST.
-    
+
     Architecture:
         Uses mixin inheritance to separate concerns while maintaining
         a single entry point. Each mixin handles one aspect of the grammar:
-    
+
         - `TokenNavigationMixin`: Token stream access, advance, peek
         - `InlineParsingMixin`: Emphasis, links, code spans, etc.
         - `BlockParsingMixin`: Lists, tables, code blocks, directives, etc.
-    
+
     Usage:
             >>> parser = Parser("# Hello\n\nWorld")
             >>> ast = parser.parse()
             >>> ast[0]
         Heading(level=1, children=(Text(content='Hello'),), ...)
-    
+
     Thread Safety:
         Parser instances are single-use and not thread-safe. Create one per
         parse operation. The resulting AST is immutable and thread-safe.
-        
+
     """
 
     __slots__ = (

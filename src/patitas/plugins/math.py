@@ -42,10 +42,10 @@ if TYPE_CHECKING:
 @register_plugin("math")
 class MathPlugin:
     """Plugin adding $math$ and $$math$$ support.
-    
+
     Inline math uses $...$ syntax.
     Block math uses $$...$$ on separate lines.
-        
+
     """
 
     @property

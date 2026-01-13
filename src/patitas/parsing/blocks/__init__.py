@@ -39,10 +39,10 @@ class BlockParsingMixin(
     FootnoteParsingMixin,
 ):
     """Combined block parsing mixin.
-    
+
     Combines all block parsing functionality into a single mixin
     that can be inherited by the Parser class.
-    
+
     Required Host Attributes:
         - _source: str
         - _tokens: list[Token]
@@ -52,12 +52,12 @@ class BlockParsingMixin(
         - _directive_registry: DirectiveRegistry | None
         - _directive_stack: list[str]
         - _strict_contracts: bool
-    
+
     Required Host Methods:
         - _at_end() -> bool
         - _advance() -> Token | None
         - _parse_inline(text, location) -> tuple[Inline, ...]
-        
+
     """
 
     pass

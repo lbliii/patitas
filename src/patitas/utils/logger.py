@@ -15,15 +15,15 @@ import logging
 
 def get_logger(name: str) -> logging.Logger:
     """Get a logger for the given name.
-    
+
     Returns a standard library logger with the "patitas." prefix.
-    
+
     Args:
         name: Logger name (typically __name__)
-    
+
     Returns:
         logging.Logger instance
-    
+
     Example:
         >>> logger = get_logger("mymodule")
         >>> logger.name

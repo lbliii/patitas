@@ -4,8 +4,10 @@
 [![Build Status](https://github.com/lbliii/patitas/actions/workflows/tests.yml/badge.svg)](https://github.com/lbliii/patitas/actions/workflows/tests.yml)
 [![Python 3.14+](https://img.shields.io/badge/python-3.14+-blue.svg)](https://pypi.org/project/patitas/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![CommonMark](https://img.shields.io/badge/CommonMark-0.31.2-brightgreen.svg)](https://spec.commonmark.org/0.31.2/)
+[![ReDoS Safe](https://img.shields.io/badge/ReDoS-Safe-brightgreen.svg)](docs/security.md)
 
-**Modern Markdown parser for Python 3.14t**
+**The secure, typed Markdown parser for modern Python.**
 
 ```python
 from patitas import Markdown
@@ -18,11 +20,16 @@ html = md("# Hello **World**")
 
 ## Why Patitas?
 
-- **Fast** — 40-50% faster than mistune, O(n) guaranteed parsing
-- **Safe** — No regex backtracking, no ReDoS vulnerabilities
-- **Modern** — Python 3.14t free-threading native, fully typed
-- **Standards-based** — CommonMark 0.31.2 compliant (652 test cases)
-- **Zero dependencies** — Pure Python core, optional extras for features
+|   | Patitas | mistune | markdown-it-py |
+|---|---------|---------|----------------|
+| **ReDoS-proof** | ✅ O(n) FSM lexer | ❌ Regex-based | ✅ Token-based |
+| **CommonMark** | 0.31.2 ✅ | Partial | 0.31.2 ✅ |
+| **Free-threading** | ✅ Python 3.14t safe | ✅ Works | ❌ **Crashes** |
+| **Typed AST** | ✅ Frozen dataclasses | ❌ `Dict[str, Any]` | ❌ Token objects |
+| **Dependencies** | Zero | Zero | Zero |
+| **Directives** | ✅ MyST syntax | RST-style | Plugin required |
+
+**Patitas is the only CommonMark-compliant parser with typed AST that works safely under Python 3.14t free-threading.**
 
 ---
 
@@ -37,10 +44,8 @@ Requires Python 3.14+
 **Optional extras:**
 
 ```bash
-pip install patitas[directives]  # MyST-style directives (admonition, tabs, dropdown)
 pip install patitas[syntax]      # Syntax highlighting via Rosettes
-pip install patitas[bengal]      # Full Bengal directive suite
-pip install patitas[all]         # Everything except Bengal
+pip install patitas[all]         # All optional features
 ```
 
 ---
@@ -52,6 +57,53 @@ pip install patitas[all]         # Everything except Bengal
 | `parse(source)` | Parse Markdown to typed AST |
 | `render(doc)` | Render AST to HTML |
 | `Markdown()` | All-in-one parser and renderer |
+
+---
+
+## Security
+
+**Patitas is immune to ReDoS attacks.**
+
+Traditional Markdown parsers use regex patterns vulnerable to catastrophic backtracking:
+
+```python
+# Malicious input that can freeze regex-based parsers
+evil = "a](" + "\\)" * 10000
+
+# mistune: hangs for seconds/minutes
+# Patitas: completes in milliseconds (O(n) guaranteed)
+```
+
+Patitas uses a hand-written finite state machine lexer:
+- **Single character lookahead** — No backtracking, ever
+- **Linear time guaranteed** — Processing time scales with input length
+- **Safe for untrusted input** — Use in web apps, APIs, user-facing tools
+
+[Learn more about Patitas security →](docs/security.md)
+
+---
+
+## Performance
+
+**Python 3.14t (free-threading) — 652 CommonMark examples:**
+
+| Parser | Single Thread | 4 Threads | Thread-safe? |
+|--------|---------------|-----------|--------------|
+| mistune | 11ms | 4ms | ✅ |
+| **Patitas** | 17ms | 7ms | ✅ |
+| markdown-it-py | 20ms | **CRASH** | ❌ |
+
+```bash
+# Run benchmarks yourself
+PYTHONPATH=src python3.14t benchmarks/benchmark_vs_mistune.py
+```
+
+**Key insights:**
+- **mistune is faster** — regex engines are highly optimized
+- **Patitas scales linearly** — 2.5x speedup with 4 threads
+- **markdown-it-py crashes** under free-threading (race condition in URL encoding)
+
+Patitas prioritizes **safety over raw speed**: O(n) guaranteed parsing, typed AST, and full thread-safety.
 
 ---
 
@@ -71,7 +123,7 @@ pip install patitas[all]         # Everything except Bengal
 ## Usage
 
 <details>
-<summary><strong>Basic Parsing</strong> — Parse and render Markdown</summary>
+<summary><strong>Basic Parsing</strong></summary>
 
 ```python
 from patitas import parse, render
@@ -87,68 +139,31 @@ html = render(doc)
 </details>
 
 <details>
-<summary><strong>Markdown Class</strong> — All-in-one interface</summary>
-
-```python
-from patitas import Markdown
-
-md = Markdown()
-
-# Parse and render in one call
-html = md("# Hello\n\nParagraph with *emphasis*.")
-
-# Access the AST separately
-doc = md.parse("# Heading")
-print(doc[0])  # Heading(level=1, ...)
-```
-
-</details>
-
-<details>
-<summary><strong>Plugins</strong> — Enable extensions</summary>
-
-```python
-from patitas import Markdown
-
-md = Markdown(plugins=["table", "footnotes", "math", "strikethrough", "task_lists"])
-
-html = md("""
-| Header | Header |
-|--------|--------|
-| Cell   | Cell   |
-
-- [x] Task complete
-- [ ] Task pending
-
-Here is math: $E = mc^2$
-""")
-```
-
-</details>
-
-<details>
-<summary><strong>Typed AST</strong> — Work with structured nodes</summary>
+<summary><strong>Typed AST</strong> — IDE autocomplete, catch errors at dev time</summary>
 
 ```python
 from patitas import parse
 from patitas.nodes import Heading, Paragraph, Strong
 
 doc = parse("# Hello **World**")
-heading = doc[0]
+heading = doc.children[0]
 
+# Full type safety
 assert isinstance(heading, Heading)
 assert heading.level == 1
-assert isinstance(heading.children[0].children[0], Strong)
+
+# IDE knows the types!
+for child in heading.children:
+    if isinstance(child, Strong):
+        print(f"Bold text: {child.children}")
 ```
 
-All nodes are frozen dataclasses with slots — immutable and memory-efficient.
+All nodes are `@dataclass(frozen=True, slots=True)` — immutable and memory-efficient.
 
 </details>
 
 <details>
 <summary><strong>Directives</strong> — MyST-style blocks</summary>
-
-With `pip install patitas[directives]`:
 
 ```markdown
 :::{note}
@@ -179,7 +194,32 @@ JavaScript code here.
 </details>
 
 <details>
-<summary><strong>Syntax Highlighting</strong> — Code block highlighting</summary>
+<summary><strong>Custom Directives</strong> — Extend with your own</summary>
+
+```python
+from patitas import Markdown, create_registry_with_defaults
+
+# Define a custom directive
+class AlertDirective:
+    names = ("alert",)
+    token_type = "alert"
+    
+    def render(self, directive, renderer):
+        return f'<div class="alert">{directive.title}</div>'
+
+# Extend defaults with your directive
+builder = create_registry_with_defaults()  # Has admonition, dropdown, tabs
+builder.register(AlertDirective())
+
+# Use it
+md = Markdown(directive_registry=builder.build())
+html = md(":::{alert} This is important!\n:::")
+```
+
+</details>
+
+<details>
+<summary><strong>Syntax Highlighting</strong></summary>
 
 With `pip install patitas[syntax]`:
 
@@ -196,12 +236,12 @@ def hello():
 """)
 ```
 
-Uses Rosettes for O(n) highlighting with 55+ language support.
+Uses [Rosettes](https://github.com/lbliii/rosettes) for O(n) highlighting.
 
 </details>
 
 <details>
-<summary><strong>Free-Threading</strong> — Parallel parsing</summary>
+<summary><strong>Free-Threading</strong> — Python 3.14t</summary>
 
 ```python
 from concurrent.futures import ThreadPoolExecutor
@@ -214,86 +254,47 @@ with ThreadPoolExecutor() as executor:
     results = list(executor.map(parse, documents))
 ```
 
+Patitas is designed for Python 3.14t's free-threading mode (PEP 703).
+
 </details>
 
 ---
 
-## Comparison
+## Migrate from mistune
 
-| Feature | Patitas | mistune | markdown-it-py |
-|---------|---------|---------|----------------|
-| **Performance** | ~40-50% faster | Baseline | ~Similar |
-| **Dependencies** | Zero | Zero | Zero |
-| **Free-threading** | Native | No | No |
-| **AST** | Frozen dataclasses | `Dict[str, Any]` | `Token` objects |
-| **CommonMark** | 0.31.2 ✅ | Partial | 0.31.2 ✅ |
-| **ReDoS safe** | ✅ O(n) guaranteed | Regex-based | Regex-based |
-| **Directives** | MyST fenced | RST-style | N/A |
+```python
+# Before (mistune)
+import mistune
+md = mistune.create_markdown()
+html = md(source)
 
----
-
-## Architecture
-
-<details>
-<summary><strong>Parsing Pipeline</strong> — Source to HTML</summary>
-
-```
-Markdown Source → Lexer → Tokens → Parser → Typed AST → Renderer → HTML
+# After (patitas) — same API!
+from patitas import Markdown
+md = Markdown()
+html = md(source)
 ```
 
-**Key design principles:**
-- **Zero-Copy Lexer**: AST nodes store source offsets, not content copies
-- **Immutable AST**: All nodes are frozen dataclasses with slots
-- **Single-pass rendering**: TOC extraction during render, no post-processing
+**Key differences:**
+- Patitas uses MyST directive syntax (`:::{note}`) vs mistune's RST (`.. note::`)
+- Patitas AST is typed dataclasses vs mistune's `Dict[str, Any]`
+- Patitas is ReDoS-proof; mistune uses regex
 
-</details>
-
-<details>
-<summary><strong>State Machine Lexer</strong> — O(n) guaranteed</summary>
-
-The lexer is a hand-written finite state machine:
-- Single character lookahead
-- No backtracking (no ReDoS possible)
-- Immutable state (thread-safe)
-- Local variables only (no shared mutable state)
-
-</details>
-
-<details>
-<summary><strong>Thread Safety</strong> — Free-threading ready</summary>
-
-All public APIs are thread-safe by design:
-- **Parsing** — Uses only local state
-- **Rendering** — StringBuilder pattern, no shared state
-- **AST nodes** — Immutable frozen dataclasses
-- Module declares itself GIL-independent (PEP 703)
-
-</details>
-
----
-
-## Performance
-
-Benchmarked against mistune 3.0 on CommonMark corpus:
-
-| Metric | Patitas | mistune | Improvement |
-|--------|---------|---------|-------------|
-| Parse time | 12ms | 20ms | **40% faster** |
-| Memory | Lower | Standard | Zero-copy lexer |
-| Cold start | <50ms | ~Similar | — |
+[Full migration guide →](docs/migrate-from-mistune.md)
 
 ---
 
 ## The Bengal Cat Family
 
-Patitas is part of the Bengal ecosystem:
+Patitas is part of the Bengal ecosystem — a zero-dependency Python stack:
 
 ```
-ᓚᘏᗢ  Bengal    — Static site generator (the breed)
- )彡  Kida      — Template engine (the cat's name)
-⌾⌾⌾  Rosettes  — Syntax highlighter (the spots)
-ฅᨐฅ  Patitas   — Markdown parser (the paws) ← You are here
+ᓚᘏᗢ  Bengal    — Static site generator
+ )彡  Kida      — Template engine
+⌾⌾⌾  Rosettes  — Syntax highlighter
+ฅᨐฅ  Patitas   — Markdown parser ← You are here
 ```
+
+Build complete documentation sites with pure Python. No C extensions. No Node.js.
 
 ---
 
@@ -304,6 +305,13 @@ git clone https://github.com/lbliii/patitas.git
 cd patitas
 uv sync --group dev
 pytest
+```
+
+**Run benchmarks:**
+
+```bash
+pip install mistune markdown-it-py
+python benchmarks/benchmark_vs_mistune.py
 ```
 
 ---

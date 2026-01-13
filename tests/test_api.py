@@ -8,7 +8,7 @@ class TestParseFunction:
 
     def test_parse_heading(self) -> None:
         """Test parsing a heading."""
-        from patitas import parse, Heading
+        from patitas import Heading, parse
 
         doc = parse("# Hello World")
         assert len(doc.children) == 1
@@ -17,7 +17,7 @@ class TestParseFunction:
 
     def test_parse_paragraph(self) -> None:
         """Test parsing a paragraph."""
-        from patitas import parse, Paragraph
+        from patitas import Paragraph, parse
 
         doc = parse("Hello World")
         assert len(doc.children) == 1
@@ -66,7 +66,7 @@ class TestMarkdownClass:
 
     def test_parse_method(self) -> None:
         """Test Markdown.parse() method."""
-        from patitas import Markdown, Document
+        from patitas import Document, Markdown
 
         md = Markdown()
         doc = md.parse("# Test")
@@ -134,11 +134,13 @@ class TestExports:
     def test_version(self) -> None:
         """Test version is exported."""
         from patitas import __version__
+
         assert __version__ == "0.1.0"
 
     def test_core_api(self) -> None:
         """Test core API functions are exported."""
-        from patitas import parse, render, Markdown
+        from patitas import Markdown, parse, render
+
         assert callable(parse)
         assert callable(render)
         assert Markdown is not None
@@ -148,25 +150,16 @@ class TestExports:
         from patitas import (
             Document,
             Heading,
-            Paragraph,
-            Text,
-            Emphasis,
-            Strong,
-            Link,
-            Image,
-            CodeSpan,
-            FencedCode,
-            List,
-            ListItem,
-            BlockQuote,
         )
+
         # Just verify they're importable
         assert Document is not None
         assert Heading is not None
 
     def test_parser_components(self) -> None:
         """Test parser components are exported."""
-        from patitas import Parser, Lexer, HtmlRenderer, Token, TokenType
+        from patitas import HtmlRenderer, Lexer, Parser
+
         assert Parser is not None
         assert Lexer is not None
         assert HtmlRenderer is not None

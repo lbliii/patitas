@@ -21,15 +21,15 @@ def hash_str(
     algorithm: str = "sha256",
 ) -> str:
     """Hash string content using specified algorithm.
-    
+
     Args:
         content: String content to hash
         truncate: Truncate result to N characters (None = full hash)
         algorithm: Hash algorithm ('sha256', 'md5')
-    
+
     Returns:
         Hex digest of hash, optionally truncated
-    
+
     Examples:
         >>> hash_str("hello")
         '2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824'
@@ -48,12 +48,12 @@ def hash_bytes(
     algorithm: str = "sha256",
 ) -> str:
     """Hash bytes content using specified algorithm.
-    
+
     Args:
         content: Bytes content to hash
         truncate: Truncate result to N characters (None = full hash)
         algorithm: Hash algorithm ('sha256', 'md5')
-    
+
     Returns:
         Hex digest of hash, optionally truncated
     """

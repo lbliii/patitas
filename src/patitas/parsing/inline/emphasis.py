@@ -31,14 +31,14 @@ if TYPE_CHECKING:
 
 class EmphasisMixin:
     """Mixin for emphasis delimiter processing.
-    
+
     Implements CommonMark flanking rules and delimiter matching algorithm.
     Uses external MatchRegistry for match tracking (enables immutable tokens).
-    
+
     Required Host Attributes: None
-    
+
     Required Host Methods: None
-        
+
     """
 
     def _is_left_flanking(self, before: str, after: str, delim: str) -> bool:
