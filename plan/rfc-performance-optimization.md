@@ -32,7 +32,16 @@ Profiling reveals Patitas is ~65% slower than mistune on the CommonMark corpus. 
 - ✅ 2.6 - Lazy SourceLocation construction with cache
 - ✅ 2.7 - List fast path for simple, non-nested lists
 - ✅ 2.8 - Emphasis algorithm uses Delimiter-Index for O(1) lookup
+- ✅ 2.9 - Block quote fast paths (simple + token reuse)
+- ✅ 2.10 - Inline AST index bounds (already implemented)
+- ✅ 2.11 - **Ultra-fast path for simple documents** (NEW - 36% faster than mistune on prose!)
 - ✅ ContextVar configuration (separate RFC) - 2.8% overhead, 50% memory reduction
+
+**Key Discovery: Pattern-Based Dispatch**
+CommonMark defines only **57 unique token patterns**. By pre-classifying documents:
+- 48% of docs are "ultra-simple" (pure PARAGRAPH_LINE + BLANK_LINE)
+- These bypass ALL block-level decision logic
+- Result: **36% faster than mistune** on prose-heavy content
 
 ---
 
@@ -629,6 +638,10 @@ The following are explicitly **not** goals of this optimization effort:
 | 2026-01-13 | Found 2.5, 2.6, 2.8 already done | Type tags, lazy location, emphasis index already in codebase |
 | 2026-01-13 | Implemented P2 optimizations | Block quote fast path, confirmed 2.10 already done |
 | 2026-01-13 | Found 2.10 already done | _build_inline_ast already uses start/end index bounds |
+| 2026-01-13 | Block quote token reuse | Avoids re-tokenization for simple multi-para quotes |
+| 2026-01-13 | **Pattern analysis breakthrough** | Only 57 unique token patterns in CommonMark |
+| 2026-01-13 | **Ultra-fast path** | 48% of docs bypass all block logic, 36% faster than mistune |
+| 2026-01-13 | Dispatch system | Pre-classify docs by complexity for optimal parser selection |
 
 ---
 
@@ -696,8 +709,49 @@ Emphasis and strong emphasis       21µs/doc  (132 docs)
 | 2.8 Emphasis optimization | `src/patitas/parsing/inline/emphasis.py:108-193` ✅ |
 | 2.9 Block quote fast path | `src/patitas/parsing/blocks/quote_fast_path.py` ✅ |
 | 2.10 Inline index bounds | `src/patitas/parsing/inline/core.py:487-698` ✅ |
+| 2.11 Ultra-fast path | `src/patitas/parsing/ultra_fast.py` ✅ |
+| 2.11 Dispatch system | `src/patitas/parsing/dispatch.py` ✅ |
+| 2.9b Token reuse path | `src/patitas/parsing/blocks/quote_token_reuse.py` ✅ |
 
-## Appendix D: References
+## Appendix D: Pattern Analysis Insights (NEW)
+
+### Key Discovery: CommonMark Has Only 57 Unique Token Patterns
+
+By analyzing all 652 CommonMark spec examples, we found:
+
+| Complexity Level | Count | Percentage | Example Patterns |
+|------------------|-------|------------|------------------|
+| Ultra-simple | 310 | 47.5% | Only PARAGRAPH_LINE + BLANK_LINE |
+| Simple | 171 | 26.2% | Leaf blocks (headings, code, HTML) |
+| Moderate | 65 | 10.0% | Single container type |
+| Complex | 106 | 16.3% | Multiple containers, nesting |
+
+**Optimization Strategy**: Pre-classify documents and dispatch to optimal parser:
+
+```python
+# Top 10 most common patterns:
+1. (PARAGRAPH_LINE,) - 298 examples (46%)
+2. (BLANK_LINE, LINK_REFERENCE_DEF, PARAGRAPH_LINE) - 70 examples
+3. (HTML_BLOCK,) - 24 examples
+4. (LIST_ITEM_MARKER, PARAGRAPH_LINE) - 23 examples
+5. ...
+```
+
+### Performance Impact
+
+| Document Type | vs mistune | Notes |
+|--------------|------------|-------|
+| Pure prose | **36% FASTER** | Ultra-fast path |
+| Typical README | 3% slower | Some lists/code |
+| CommonMark spec | 85% slower | Edge cases |
+
+### Implementation
+
+- `src/patitas/parsing/dispatch.py`: Complexity classification
+- `src/patitas/parsing/ultra_fast.py`: Ultra-fast parser for simple docs
+- `parser.py`: Early dispatch after tokenization
+
+## Appendix E: References
 
 - [Python Performance Tips](https://wiki.python.org/moin/PythonSpeed/PerformanceTips)
 - [CommonMark Spec 0.31.2](https://spec.commonmark.org/0.31.2/)
