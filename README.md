@@ -1,4 +1,4 @@
-# 🐾 Patitas
+# ฅᨐฅ Patitas
 
 [![PyPI version](https://img.shields.io/pypi/v/patitas.svg)](https://pypi.org/project/patitas/)
 [![Build Status](https://github.com/lbliii/patitas/actions/workflows/tests.yml/badge.svg)](https://github.com/lbliii/patitas/actions/workflows/tests.yml)
@@ -289,10 +289,10 @@ Benchmarked against mistune 3.0 on CommonMark corpus:
 Patitas is part of the Bengal ecosystem:
 
 ```
-Bengal — Static site generator (the breed)
-├── Kida — Template engine (the cat's name)
-├── Rosettes — Syntax highlighter (the spots)
-└── Patitas — Markdown parser (the paws) ← You are here
+ᓚᘏᗢ  Bengal    — Static site generator (the breed)
+ )彡  Kida      — Template engine (the cat's name)
+⌾⌾⌾  Rosettes  — Syntax highlighter (the spots)
+ฅᨐฅ  Patitas   — Markdown parser (the paws) ← You are here
 ```
 
 ---
