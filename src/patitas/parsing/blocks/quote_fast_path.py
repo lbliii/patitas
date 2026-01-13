@@ -68,8 +68,8 @@ def is_simple_block_quote(tokens: list, start_pos: int) -> bool:
                 last_lineno = token_lineno
                 pos += 1
                 continue
-            elif token.type == TokenType.BLANK_LINE:
-                # Blank line ends the quote - that's OK for simple quote
+            elif token.type in (TokenType.BLANK_LINE, TokenType.EOF):
+                # Blank line or EOF ends the quote - that's OK for simple quote
                 break
             else:
                 # No > marker on new line = lazy continuation
@@ -133,11 +133,13 @@ def parse_simple_block_quote(
         (BlockQuote node, new_position after quote)
     """
     first_token = tokens[start_pos]
-    content_lines: list[str] = []
+    # Track paragraphs separately (blank lines create new paragraphs)
+    paragraphs: list[list[str]] = [[]]
     pos = start_pos + 1  # Skip first marker
     tokens_len = len(tokens)
     first_lineno = first_token.location.lineno
     last_lineno = first_lineno
+    line_had_content = False  # Track if current line has content after marker
 
     while pos < tokens_len:
         token = tokens[pos]
@@ -146,7 +148,12 @@ def parse_simple_block_quote(
         # If we're on a new line
         if token_lineno != last_lineno:
             if token.type == TokenType.BLOCK_QUOTE_MARKER:
-                # New line continues the quote
+                # New line with > marker
+                # If previous line had no content (just >), it's a blank line in quote
+                if not line_had_content and paragraphs[-1]:
+                    # Start new paragraph
+                    paragraphs.append([])
+                line_had_content = False
                 last_lineno = token_lineno
                 pos += 1
                 continue
@@ -157,23 +164,24 @@ def parse_simple_block_quote(
         # Accumulate content
         if token.type == TokenType.PARAGRAPH_LINE:
             # Strip leading whitespace from content
-            content_lines.append(token.value.lstrip())
+            paragraphs[-1].append(token.value.lstrip())
+            line_had_content = True
             last_lineno = token_lineno
             pos += 1
         elif token.type == TokenType.BLOCK_QUOTE_MARKER:
-            # Skip additional markers on same line (shouldn't happen in simple path)
+            # Additional marker on same line (shouldn't happen in simple path)
             last_lineno = token_lineno
             pos += 1
         else:
             # End of quote
             break
 
-    # Build the paragraph content
-    if content_lines:
-        content = "\n".join(content_lines)
-        inlines = parse_inline_fn(content, first_token.location)
-        children = (Paragraph(location=first_token.location, children=inlines),)
-    else:
-        children = ()
+    # Build paragraph nodes
+    children: list[Paragraph] = []
+    for para_lines in paragraphs:
+        if para_lines:
+            content = "\n".join(para_lines)
+            inlines = parse_inline_fn(content, first_token.location)
+            children.append(Paragraph(location=first_token.location, children=inlines))
 
-    return BlockQuote(location=first_token.location, children=children), pos
+    return BlockQuote(location=first_token.location, children=tuple(children)), pos
