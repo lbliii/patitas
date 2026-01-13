@@ -9,7 +9,12 @@ Quick Start:
     >>> doc = parse("# Hello, World!")
     >>> html = render(doc)
     >>> print(html)
-    <h1>Hello, World!</h1>
+    <h1 id="hello-world">Hello, World!</h1>
+
+    >>> # Or use the high-level Markdown class
+    >>> from patitas import Markdown
+    >>> md = Markdown()
+    >>> html = md("# Hello **World**")
 
 Installation Tiers:
     pip install patitas              # Core parser (zero deps)
@@ -20,61 +25,222 @@ Installation Tiers:
 
 from __future__ import annotations
 
+from patitas.lexer import Lexer
+from patitas.location import SourceLocation
+from patitas.nodes import (
+    Block,
+    BlockQuote,
+    CodeSpan,
+    Directive,
+    Document,
+    Emphasis,
+    FencedCode,
+    FootnoteDef,
+    FootnoteRef,
+    Heading,
+    HtmlBlock,
+    HtmlInline,
+    Image,
+    IndentedCode,
+    Inline,
+    LineBreak,
+    Link,
+    List,
+    ListItem,
+    Math,
+    MathBlock,
+    Paragraph,
+    Role,
+    SoftBreak,
+    Strikethrough,
+    Strong,
+    Table,
+    TableCell,
+    TableRow,
+    Text,
+    ThematicBreak,
+)
+from patitas.parser import Parser
+from patitas.renderers.html import HtmlRenderer
+from patitas.tokens import Token, TokenType
+
 __version__ = "0.1.0"
+
+
+def parse(source: str, *, source_file: str | None = None) -> Document:
+    """Parse Markdown source into a typed AST.
+
+    Args:
+        source: Markdown source text
+        source_file: Optional source file path for error messages
+
+    Returns:
+        Document AST root node
+
+    Example:
+        >>> doc = parse("# Hello **World**")
+        >>> doc.children[0]
+        Heading(level=1, ...)
+    """
+    parser = Parser(source, source_file=source_file)
+    blocks = parser.parse()
+    # Wrap blocks in a Document
+    loc = SourceLocation(
+        lineno=1,
+        col_offset=1,
+        offset=0,
+        end_offset=len(source),
+        source_file=source_file,
+    )
+    return Document(location=loc, children=tuple(blocks))
+
+
+def render(doc: Document, *, source: str = "", highlight: bool = False) -> str:
+    """Render an AST Document to HTML.
+
+    Args:
+        doc: Document AST to render
+        source: Original source (needed for zero-copy code block extraction)
+        highlight: Enable syntax highlighting for code blocks
+
+    Returns:
+        HTML string
+
+    Example:
+        >>> doc = parse("# Hello")
+        >>> html = render(doc)
+        >>> print(html)
+        <h1 id="hello">Hello</h1>
+    """
+    renderer = HtmlRenderer(source=source, highlight=highlight)
+    return renderer.render(doc)
+
+
+class Markdown:
+    """High-level Markdown processor combining parser and renderer.
+
+    Usage:
+        >>> md = Markdown()
+        >>> html = md("# Hello **World**")
+        '<h1 id="hello-world">Hello <strong>World</strong></h1>\\n'
+
+        >>> # Access the AST
+        >>> doc = md.parse("# Heading")
+        >>> print(doc.children[0].level)
+        1
+    """
+
+    def __init__(
+        self,
+        *,
+        highlight: bool = False,
+        plugins: list[str] | None = None,
+    ) -> None:
+        """Initialize Markdown processor.
+
+        Args:
+            highlight: Enable syntax highlighting for code blocks
+            plugins: List of plugin names to enable (e.g., ["table", "math"])
+        """
+        self._highlight = highlight
+        self._plugins = plugins or []
+
+    def __call__(self, source: str) -> str:
+        """Parse and render Markdown in one call.
+
+        Args:
+            source: Markdown source text
+
+        Returns:
+            HTML string
+        """
+        doc = self.parse(source)
+        renderer = HtmlRenderer(source=source, highlight=self._highlight)
+        return renderer.render(doc)
+
+    def parse(self, source: str, *, source_file: str | None = None) -> Document:
+        """Parse Markdown source into AST.
+
+        Args:
+            source: Markdown source text
+            source_file: Optional source file path for error messages
+
+        Returns:
+            Document AST root node
+        """
+        parser = Parser(source, source_file=source_file)
+        blocks = parser.parse()
+        # Wrap blocks in a Document
+        loc = SourceLocation(
+            lineno=1,
+            col_offset=1,
+            offset=0,
+            end_offset=len(source),
+            source_file=source_file,
+        )
+        return Document(location=loc, children=tuple(blocks))
+
+    def render(self, doc: Document, *, source: str = "") -> str:
+        """Render AST to HTML.
+
+        Args:
+            doc: Document AST to render
+            source: Original source (for zero-copy code extraction)
+
+        Returns:
+            HTML string
+        """
+        renderer = HtmlRenderer(source=source, highlight=self._highlight)
+        return renderer.render(doc)
+
+
 __all__ = [
     # Version
     "__version__",
-    # Core API (to be implemented)
-    # "parse",
-    # "render",
-    # "Markdown",
-    # Node types (to be exported from nodes.py)
-    # "Document",
-    # "Heading",
-    # "Paragraph",
-    # ...
+    # Core API
+    "parse",
+    "render",
+    "Markdown",
+    # Parser components
+    "Parser",
+    "Lexer",
+    "HtmlRenderer",
+    # Location
+    "SourceLocation",
+    # Tokens
+    "Token",
+    "TokenType",
+    # Block nodes
+    "Block",
+    "Document",
+    "Heading",
+    "Paragraph",
+    "FencedCode",
+    "IndentedCode",
+    "BlockQuote",
+    "List",
+    "ListItem",
+    "ThematicBreak",
+    "HtmlBlock",
+    "Directive",
+    "Table",
+    "TableRow",
+    "TableCell",
+    "MathBlock",
+    "FootnoteDef",
+    # Inline nodes
+    "Inline",
+    "Text",
+    "Emphasis",
+    "Strong",
+    "Strikethrough",
+    "Link",
+    "Image",
+    "CodeSpan",
+    "LineBreak",
+    "SoftBreak",
+    "HtmlInline",
+    "Role",
+    "Math",
+    "FootnoteRef",
 ]
-
-# =============================================================================
-# Core API
-# =============================================================================
-# These will be implemented after extraction from Bengal:
-#
-# from patitas.parser import Parser
-# from patitas.nodes import Document
-# from patitas.renderers.html import HtmlRenderer
-#
-# def parse(source: str, *, plugins: list | None = None) -> Document:
-#     """Parse Markdown source into a typed AST."""
-#     parser = Parser(plugins=plugins or [])
-#     return parser.parse(source)
-#
-# def render(doc: Document, *, renderer: HtmlRenderer | None = None) -> str:
-#     """Render an AST Document to HTML."""
-#     renderer = renderer or HtmlRenderer()
-#     return renderer.render(doc)
-#
-# class Markdown:
-#     """High-level Markdown processor combining parser and renderer."""
-#
-#     def __init__(
-#         self,
-#         *,
-#         plugins: list | None = None,
-#         renderer: HtmlRenderer | None = None,
-#     ) -> None:
-#         self._parser = Parser(plugins=plugins or [])
-#         self._renderer = renderer or HtmlRenderer()
-#
-#     def __call__(self, source: str) -> str:
-#         """Parse and render Markdown in one call."""
-#         doc = self._parser.parse(source)
-#         return self._renderer.render(doc)
-#
-#     def parse(self, source: str) -> Document:
-#         """Parse Markdown source into AST."""
-#         return self._parser.parse(source)
-#
-#     def render(self, doc: Document) -> str:
-#         """Render AST to HTML."""
-#         return self._renderer.render(doc)
