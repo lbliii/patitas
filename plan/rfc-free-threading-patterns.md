@@ -10,7 +10,9 @@
 
 Python 3.13 introduced experimental free-threading (GIL-disabled builds), and Python 3.14t makes it production-ready. This fundamentally changes how Python developers must think about concurrent code. This RFC documents synchronization patterns validated through benchmarking, providing guidance for the Bengal ecosystem.
 
-**Key Finding**: Patitas's immutable AST architecture is validated as the optimal pattern for thread-safe parsing.
+**Key Findings**:
+- Patitas's immutable AST architecture is validated as optimal for thread-safe parsing
+- **NEW**: ContextVar config pattern reduces Parser slots by 50% and speeds instantiation by 2.2x
 
 ---
 
@@ -322,9 +324,82 @@ Patitas scales linearly with threads because:
 
 ### For Patitas (Parser)
 
-**Current approach validated**: Frozen dataclasses + no global state.
+**Current approach validated**: Frozen dataclasses + no global state for AST.
 
-No changes needed. Architecture is optimal for free-threading.
+**NEW: ContextVar Config Pattern** — Extract configuration flags to immutable ContextVar.
+
+**Problem**: Parser carries 18 slots, many duplicated per instance:
+
+```python
+# Before: 18 slots, configuration duplicated per parser
+class Parser:
+    __slots__ = (
+        "_source", "_tokens", "_pos", "_current", "_source_file",
+        "_text_transformer",
+        "_tables_enabled",        # Config (duplicated)
+        "_strikethrough_enabled", # Config (duplicated)
+        "_task_lists_enabled",    # Config (duplicated)
+        "_footnotes_enabled",     # Config (duplicated)
+        "_math_enabled",          # Config (duplicated)
+        "_autolinks_enabled",     # Config (duplicated)
+        "_directive_registry",    # Config (duplicated)
+        "_strict_contracts",      # Config (duplicated)
+        "_directive_stack",
+        "_link_refs",
+        "_containers",
+        "_allow_setext_headings",
+    )  # 18 slots!
+```
+
+**Solution**: Extract immutable config to ContextVar:
+
+```python
+from contextvars import ContextVar
+
+@dataclass(frozen=True, slots=True)
+class ParseConfig:
+    """Immutable parse configuration - set once, read many."""
+    tables_enabled: bool = False
+    strikethrough_enabled: bool = False
+    task_lists_enabled: bool = False
+    footnotes_enabled: bool = False
+    math_enabled: bool = False
+    autolinks_enabled: bool = False
+    directive_registry: DirectiveRegistry | None = None
+    strict_contracts: bool = False
+    text_transformer: Callable[[str], str] | None = None
+
+# Thread-local config
+_parse_config: ContextVar[ParseConfig] = ContextVar('parse_config')
+
+class Parser:
+    __slots__ = (
+        "_source", "_tokens", "_pos", "_current", "_source_file",
+        "_directive_stack",       # Per-parse state
+        "_link_refs",             # Per-document state
+        "_containers",            # Per-parse state
+        "_allow_setext_headings", # Per-parse state
+    )  # 9 slots! (50% reduction)
+    
+    @property
+    def _math_enabled(self) -> bool:
+        return _parse_config.get().math_enabled
+```
+
+**Benchmark Results**:
+
+| Metric | Before | After | Improvement |
+|--------|--------|-------|-------------|
+| Parser slots | 18 | 9 | **50% smaller** |
+| Instantiation (100K) | 26ms | 12ms | **2.2x faster** |
+| Config passing | Every method | ContextVar lookup | Cleaner |
+| Thread safety | ✅ | ✅ | Same |
+
+**Why This Works**:
+- Config is immutable (frozen dataclass) — thread-safe by design
+- ContextVar lookup is ~8M ops/sec (Pattern 2 benchmarks)
+- Properties delegate to ContextVar — transparent to existing code
+- Parser instantiation 2.2x faster — significant for parallel parsing
 
 ### For Rosettes (Syntax Highlighter)
 
