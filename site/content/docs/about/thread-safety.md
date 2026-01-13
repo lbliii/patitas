@@ -46,7 +46,23 @@ doc1 = parse(source1)  # Thread 1
 doc2 = parse(source2)  # Thread 2 - no conflict
 ```
 
-### 3. Thread-Local Where Needed
+### 3. Thread-Local Configuration
+
+Parse configuration uses Python's `ContextVar` (thread-local by design):
+
+```python
+from patitas import Markdown
+
+# Each thread gets isolated configuration
+md1 = Markdown(plugins=["tables"])  # Thread 1
+md2 = Markdown(plugins=["math"])    # Thread 2
+
+# Concurrent parsing with different configs - safe!
+html1 = md1("| a | b |")  # Uses tables config
+html2 = md2("$x^2$")      # Uses math config (no conflict)
+```
+
+### 4. Thread-Local Extension Points
 
 Global extension points use thread-local storage:
 
@@ -84,6 +100,36 @@ with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
     htmls = [f.result() for f in futures]
 ```
 
+## ContextVar Configuration
+
+For advanced use cases, you can control configuration explicitly:
+
+```python
+from patitas import (
+    Parser,
+    ParseConfig,
+    parse_config_context,
+    set_parse_config,
+    reset_parse_config,
+)
+
+# Option 1: Context manager (recommended)
+with parse_config_context(ParseConfig(tables_enabled=True)):
+    parser = Parser(source)
+    doc = parser.parse()
+# Config automatically reset after context
+
+# Option 2: Manual control
+set_parse_config(ParseConfig(math_enabled=True))
+try:
+    parser = Parser(source)
+    doc = parser.parse()
+finally:
+    reset_parse_config()
+```
+
+The `Markdown` class handles this automatically—you only need explicit control when using `Parser` directly.
+
 ## Best Practices
 
 ### Do
@@ -91,12 +137,14 @@ with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
 - Create parser/renderer per thread or per call
 - Use frozen AST nodes (default)
 - Share source text (immutable strings are safe)
+- Use `Markdown` class for automatic config management
 
 ### Don't
 
 - Mutate AST nodes (they're frozen anyway)
 - Share mutable registries across threads
 - Use global mutable state
+- Forget to reset config when using `set_parse_config()` directly
 
 ## Python 3.14t
 
