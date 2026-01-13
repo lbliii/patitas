@@ -251,13 +251,15 @@ class HtmlRenderer:
     def _render_fenced_code(self, code: FencedCode, sb: StringBuilder) -> None:
         """Render fenced code block."""
         content = code.get_code(self._source)
-        lang_class = f' class="language-{html_escape(code.info)}"' if code.info else ""
+        # CommonMark: only the first word of the info string is the language
+        lang = code.info.split()[0] if code.info else None
+        lang_class = f' class="language-{html_escape(lang)}"' if lang else ""
 
-        if self._highlight and code.info:
+        if self._highlight and lang:
             # Try syntax highlighting
             try:
                 from patitas.highlighting import highlight
-                highlighted = highlight(content, code.info)
+                highlighted = highlight(content, lang)
                 sb.append(highlighted).append("\n")
                 return
             except Exception:

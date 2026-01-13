@@ -151,6 +151,7 @@ class TestCommonMarkSpec:
 
         # Import here to avoid import errors if parser not fully implemented
         try:
+            from patitas.nodes import Document, SourceLocation
             from patitas.parser import Parser
             from patitas.renderers.html import HtmlRenderer
         except ImportError as e:
@@ -171,9 +172,18 @@ class TestCommonMarkSpec:
 
         # Parse and render
         try:
-            parser = Parser()
-            doc = parser.parse(markdown)
-            renderer = HtmlRenderer()
+            parser = Parser(markdown)
+            blocks = parser.parse()
+            # Wrap blocks in a Document node (as Markdown.parse() does)
+            loc = SourceLocation(
+                lineno=1,
+                col_offset=1,
+                offset=0,
+                end_offset=len(markdown),
+                source_file=None,
+            )
+            doc = Document(location=loc, children=tuple(blocks))
+            renderer = HtmlRenderer(source=markdown)
             actual_html = renderer.render(doc)
         except Exception as e:
             pytest.fail(f"Parser/renderer error: {e}")

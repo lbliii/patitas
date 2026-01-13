@@ -72,11 +72,14 @@ markers = [
     "property: property-based tests (may take longer)",
 ]
 
-[tool.pyright]
-include = ["src"]
-pythonVersion = "3.14"
-typeCheckingMode = "strict"
-reportMissingTypeStubs = false
+[tool.mypy]
+python_version = "3.14"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+strict_optional = true
+disallow_any_generics = true
+disallow_incomplete_defs = true
 
 [tool.ruff]
 target-version = "py314"
@@ -104,7 +107,7 @@ dev = [
     "pytest-benchmark>=4.0.0",
     "pytest-timeout>=2.3.0",
     "pytest-xdist>=3.5.0",
-    "pyright>=1.1.391",
+    "mypy>=1.11.0",
     "ruff>=0.14.0",
     "pre-commit>=4.0.0",
     "hypothesis>=6.100.0",
