@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "patitas"
-version = "0.1.0"
+version = "0.1.1"
 description = "Modern Markdown parser for Python 3.14t — CommonMark compliant, free-threading ready, 40-50% faster than mistune"
 readme = "README.md"
 requires-python = ">=3.14"

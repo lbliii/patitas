@@ -7,11 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-01-13
+
 ### Added
 
 - **`Parser._reinit()`** — Reinitialize parser for reuse, enabling instance pooling in frameworks like Bengal. Resets all per-parse state while keeping the instance allocated, reducing allocation overhead for high-volume parsing.
 
 - **`ParseConfig.from_dict()`** — Create ParseConfig from dictionary, useful for framework integration where config may come from external sources.
+
+## [0.1.0] - 2026-01-12
+
+### Added
 
 - Initial extraction from Bengal's embedded parser
 - Core Markdown parser with CommonMark 0.31.2 compliance (652 examples)
@@ -30,16 +36,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `patitas[syntax]` — Syntax highlighting via Rosettes
 - `patitas[bengal]` — Full Bengal directive suite
 
-## [0.1.0] - 2026-01-12
-
-### Added
-
-- First public release
-- Extracted from Bengal v0.1.8
-
 ### Changed
 
-- **`DelimiterToken`** — Renamed `count` attribute to `run_length` for clarity. This better describes the semantic meaning (number of delimiter characters in a run).
+- **`DelimiterToken`** — Renamed `count` attribute to `run_length` for clarity (vs Bengal's embedded version).
 
-[Unreleased]: https://github.com/lbliii/patitas/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/lbliii/patitas/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/lbliii/patitas/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/lbliii/patitas/releases/tag/v0.1.0
