@@ -74,6 +74,39 @@ class ParseConfig:
     strict_contracts: bool = False
     text_transformer: Callable[[str], str] | None = None
 
+    @classmethod
+    def from_dict(cls, config_dict: dict) -> "ParseConfig":
+        """Create ParseConfig from dictionary.
+
+        Useful for framework integration where config may come from external
+        sources (e.g., Bengal's own ParseConfig, YAML files, etc.).
+
+        Only includes keys that are valid ParseConfig fields; unknown keys
+        are silently ignored.
+
+        Args:
+            config_dict: Dictionary with config values. Keys should match
+                ParseConfig attribute names.
+
+        Returns:
+            New ParseConfig instance with values from dict.
+
+        Example:
+            >>> config = ParseConfig.from_dict({
+            ...     "tables_enabled": True,
+            ...     "math_enabled": True,
+            ...     "unknown_key": "ignored",
+            ... })
+            >>> config.tables_enabled
+            True
+
+        """
+        # Get valid field names from dataclass
+        valid_fields = {f.name for f in cls.__dataclass_fields__.values()}
+        # Filter to only valid fields
+        filtered = {k: v for k, v in config_dict.items() if k in valid_fields}
+        return cls(**filtered)
+
 
 # Module-level default config (reused, never recreated)
 _DEFAULT_CONFIG: ParseConfig = ParseConfig()

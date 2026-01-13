@@ -129,6 +129,38 @@ class Parser(
         # Setext heading control - can be disabled for blockquote lazy continuation
         self._allow_setext_headings = True
 
+    def _reinit(self, source: str, source_file: str | None = None) -> None:
+        """Reinitialize parser for reuse (enables pooling).
+
+        Resets all per-parse state while keeping the instance allocated.
+        This enables frameworks like Bengal to pool Parser instances and
+        avoid allocation overhead for high-volume parsing.
+
+        Args:
+            source: New Markdown source text
+            source_file: Optional source file path for error messages
+
+        Usage (in Bengal's ParserPool):
+            if pool:
+                parser = pool.pop()
+                parser._reinit(source, source_file)
+            else:
+                parser = Parser(source, source_file)
+
+        Thread Safety:
+            Parser instances are single-use per thread. Pooling is thread-local.
+
+        """
+        self._source = source
+        self._source_file = source_file
+        self._tokens = []
+        self._pos = 0
+        self._current = None
+        self._link_refs = {}
+        self._directive_stack = []
+        self._containers = ContainerStack()
+        self._allow_setext_headings = True
+
     # =========================================================================
     # Configuration Properties (read from ContextVar)
     # =========================================================================
