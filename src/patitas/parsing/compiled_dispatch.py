@@ -95,89 +95,43 @@ class PatternDispatcher:
 def build_dispatcher() -> PatternDispatcher:
     """Build the pattern dispatcher at module load time.
     
-    Registers all known pattern parsers.
-    Called once when module is imported.
+    Registers ONLY patterns where token types alone determine parsing.
+    
+    NOT registered (require content analysis):
+    - PARAGRAPH_LINE patterns: Can contain setext underlines (===, ---), tables
+    - LIST patterns: Can contain indented code, complex nesting
+    - FENCED_CODE: FencedCode node uses source_start/source_end tracking
+    
+    These are handled by the ultra-fast path (can_use_ultra_fast) or
+    the main parser's existing fast paths.
     """
     from patitas.parsing.pattern_parsers import (
         parse_atx_only,
-        parse_fenced_code_only,
         parse_html_only,
         parse_indented_only,
-        parse_paragraphs_with_blanks,
-        parse_simple_flat_list,
-        parse_simple_list_with_blanks,
     )
-    from patitas.parsing.ultra_fast import parse_ultra_simple
     
     dispatcher = PatternDispatcher()
     
-    # Pattern 1: Pure paragraphs (45.7%)
-    dispatcher.register(
-        frozenset({TokenType.PARAGRAPH_LINE}),
-        parse_ultra_simple,
-    )
-    
     # Pattern 3: HTML only (3.7%)
+    # Safe: HTML_BLOCK tokens are unambiguous
     dispatcher.register(
         frozenset({TokenType.HTML_BLOCK}),
         parse_html_only,
     )
     
-    # Pattern 4: Simple flat list (3.5%)
-    dispatcher.register(
-        frozenset({TokenType.LIST_ITEM_MARKER, TokenType.PARAGRAPH_LINE}),
-        parse_simple_flat_list,
-    )
-    
-    # Pattern 6: Paragraphs with blanks (3.1%)
-    dispatcher.register(
-        frozenset({TokenType.BLANK_LINE, TokenType.PARAGRAPH_LINE}),
-        parse_paragraphs_with_blanks,
-    )
-    
-    # Pattern 7: Fenced code only (2.9%)
-    dispatcher.register(
-        frozenset({
-            TokenType.FENCED_CODE_START,
-            TokenType.FENCED_CODE_CONTENT,
-            TokenType.FENCED_CODE_END,
-        }),
-        parse_fenced_code_only,
-    )
-    
-    # Pattern 8: List with blanks (2.3%)
-    dispatcher.register(
-        frozenset({
-            TokenType.BLANK_LINE,
-            TokenType.LIST_ITEM_MARKER,
-            TokenType.PARAGRAPH_LINE,
-        }),
-        parse_simple_list_with_blanks,
-    )
-    
     # Pattern 9: ATX headings only (2.1%)
+    # Safe: ATX_HEADING tokens are unambiguous
     dispatcher.register(
         frozenset({TokenType.ATX_HEADING}),
         parse_atx_only,
     )
     
     # Pattern 10: Indented code only (2.0%)
+    # Safe: INDENTED_CODE tokens are unambiguous
     dispatcher.register(
         frozenset({TokenType.INDENTED_CODE}),
         parse_indented_only,
-    )
-    
-    # Additional common patterns
-    
-    # Fenced code with blanks
-    dispatcher.register(
-        frozenset({
-            TokenType.BLANK_LINE,
-            TokenType.FENCED_CODE_START,
-            TokenType.FENCED_CODE_CONTENT,
-            TokenType.FENCED_CODE_END,
-        }),
-        parse_fenced_code_only,  # Blanks before/after are ignored
     )
     
     return dispatcher

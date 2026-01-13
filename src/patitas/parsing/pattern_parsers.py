@@ -65,11 +65,18 @@ def parse_atx_only(
     blocks: list[Block] = []
     for tok in tokens:
         if tok.type == TokenType.ATX_HEADING:
-            # ATX_HEADING value format: "level|content"
-            parts = tok.value.split("|", 1)
-            level = int(parts[0]) if parts[0].isdigit() else 1
-            content = parts[1] if len(parts) > 1 else ""
-            inlines = parse_inline_fn(content.strip(), tok.location)
+            # ATX_HEADING value format: "### content" (raw markdown)
+            value = tok.value
+            # Count leading hashes for level
+            level = 0
+            for ch in value:
+                if ch == "#":
+                    level += 1
+                else:
+                    break
+            # Extract content after hashes (strip whitespace only)
+            content = value[level:].strip()
+            inlines = parse_inline_fn(content, tok.location)
             blocks.append(Heading(
                 location=tok.location,
                 level=level,
@@ -95,13 +102,12 @@ def parse_indented_only(
         if tok.type == TokenType.INDENTED_CODE:
             if first_location is None:
                 first_location = tok.location
+            # Token value already includes trailing newline
             code_lines.append(tok.value)
         elif tok.type == TokenType.EOF:
             if code_lines and first_location:
-                # Join lines, preserve trailing newline
-                content = "\n".join(code_lines)
-                if not content.endswith("\n"):
-                    content += "\n"
+                # Concatenate directly - values already have newlines
+                content = "".join(code_lines)
                 blocks.append(IndentedCode(location=first_location, code=content))
     
     return tuple(blocks)
