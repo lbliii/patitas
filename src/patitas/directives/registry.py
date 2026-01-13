@@ -17,6 +17,7 @@ Example:
 
 from __future__ import annotations
 
+import threading
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -205,6 +206,7 @@ def _build_default_registry() -> DirectiveRegistry:
 
 # Cached singleton — thread-safe since DirectiveRegistry is immutable
 _DEFAULT_REGISTRY: DirectiveRegistry | None = None
+_REGISTRY_LOCK = threading.Lock()
 
 
 def create_default_registry() -> DirectiveRegistry:
@@ -219,15 +221,25 @@ def create_default_registry() -> DirectiveRegistry:
 
     Thread Safety:
         Returns a cached immutable registry. Safe for concurrent access.
+        Uses lock-protected initialization to prevent import deadlocks
+        in free-threaded Python (3.14t+).
 
     Note:
         Bengal-specific directives (cards, code-tabs, navigation, etc.)
         are registered separately via patitas[bengal].
     """
     global _DEFAULT_REGISTRY
-    if _DEFAULT_REGISTRY is None:
-        _DEFAULT_REGISTRY = _build_default_registry()
-    return _DEFAULT_REGISTRY
+    # Fast path: already initialized
+    if _DEFAULT_REGISTRY is not None:
+        return _DEFAULT_REGISTRY
+    # Slow path: acquire lock to initialize
+    # This prevents import deadlocks when multiple threads try to
+    # create Markdown instances concurrently in free-threaded Python
+    with _REGISTRY_LOCK:
+        # Double-check after acquiring lock
+        if _DEFAULT_REGISTRY is None:
+            _DEFAULT_REGISTRY = _build_default_registry()
+        return _DEFAULT_REGISTRY
 
 
 def create_registry_with_defaults() -> DirectiveRegistryBuilder:
