@@ -1,7 +1,7 @@
 # Patitas Development Makefile
 # =============================================================================
 
-.PHONY: help install dev test lint typecheck format clean build docs benchmark publish release
+.PHONY: help install dev test lint ty typecheck format clean build docs benchmark publish release
 
 # Default target
 help:
@@ -20,9 +20,10 @@ help:
 	@echo ""
 	@echo "Code Quality:"
 	@echo "  make lint        Run ruff linter"
-	@echo "  make typecheck   Run pyright type checker"
+	@echo "  make ty          Run ty type checker (fast, Rust-based)"
+	@echo "  make typecheck   Run mypy type checker (legacy)"
 	@echo "  make format      Format code with ruff"
-	@echo "  make check       Run all checks (lint + typecheck)"
+	@echo "  make check       Run all checks (lint + ty)"
 	@echo ""
 	@echo "Build & Release:"
 	@echo "  make build       Build distribution packages"
@@ -66,14 +67,19 @@ commonmark:
 lint:
 	uv run ruff check src/ tests/
 
+ty:
+	@echo "Running ty type checker (Astral, Rust-based)..."
+	uv run ty check src/patitas/
+
 typecheck:
-	uv run pyright src/
+	@echo "Running mypy type checking (legacy)..."
+	uv run mypy src/patitas/
 
 format:
 	uv run ruff format src/ tests/
 	uv run ruff check --fix src/ tests/
 
-check: lint typecheck
+check: lint ty
 
 # =============================================================================
 # Build & Release
