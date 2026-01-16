@@ -138,7 +138,7 @@ class DocRole:
 
         # Convert to .html extension for static site
         if not target.endswith(".html") and not target.endswith("/"):
-            target = target.rstrip(".md") + ".html"
+            target = target.removesuffix(".md") + ".html"
 
         sb.append(f'<a class="reference internal" href="{html_escape(target)}">')
         sb.append(html_escape(display))

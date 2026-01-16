@@ -31,7 +31,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass
 from html import escape as html_escape
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from patitas.directives.contracts import DROPDOWN_CONTRACT, DirectiveContract
 from patitas.directives.options import StyledOptions
@@ -56,17 +56,10 @@ def _render_dropdown_icon(icon_name: str) -> str:
     Returns:
         SVG HTML string, or empty string if icon not found
     """
-    try:
-        from patitas.icons import get_icon
+    from patitas.icons import get_icon
 
-        icon_html = get_icon(icon_name)
-        if icon_html:
-            return icon_html
-    except ImportError:
-        pass
-
-    # Fallback: CSS-only icon class
-    return ""
+    icon_html = get_icon(icon_name)
+    return icon_html or ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -111,7 +104,7 @@ class DropdownDirective:
         content: str,
         children: Sequence[Block],
         location: SourceLocation,
-    ) -> Directive:
+    ) -> Directive[DropdownOptions]:
         """Build dropdown AST node."""
         effective_title = title or "Details"
 
@@ -144,18 +137,6 @@ class DropdownDirective:
         color = opts.color or ""
         description = opts.description or ""
         css_class = opts.class_ or ""
-
-        # Clean up None strings
-        if icon == "None":
-            icon = ""
-        if badge == "None":
-            badge = ""
-        if color == "None":
-            color = ""
-        if description == "None":
-            description = ""
-        if css_class == "None":
-            css_class = ""
 
         # Add color variant to class string if valid
         if color and color in DROPDOWN_COLORS:

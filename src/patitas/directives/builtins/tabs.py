@@ -42,7 +42,7 @@ import re
 from collections.abc import Sequence
 from dataclasses import dataclass
 from html import escape as html_escape
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from patitas.directives.contracts import (
     TAB_ITEM_CONTRACT,
@@ -127,7 +127,7 @@ class TabItemDirective:
         content: str,
         children: Sequence[Block],
         location: SourceLocation,
-    ) -> Directive:
+    ) -> Directive[TabItemOptions]:
         """Build tab-item AST node."""
         return Directive(
             location=location,
@@ -190,7 +190,7 @@ class TabSetDirective:
         content: str,
         children: Sequence[Block],
         location: SourceLocation,
-    ) -> Directive:
+    ) -> Directive[TabSetOptions]:
         """Build tab-set AST node."""
         return Directive(
             location=location,

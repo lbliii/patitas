@@ -203,16 +203,24 @@ class Markdown:
 
         Args:
             highlight: Enable syntax highlighting for code blocks
-            plugins: List of plugin names to enable (e.g., ["table", "math"])
+            plugins: List of plugin names to enable (e.g., ["table", "math"]).
+                Use ["all"] to enable all built-in plugins.
             directive_registry: Custom directive registry (uses defaults if None)
         """
         self._highlight = highlight
-        self._plugins = plugins or []
         self._directive_registry = directive_registry or create_default_registry()
+
+        # Expand "all" to all built-in plugin names
+        raw_plugins = plugins or []
+        if "all" in raw_plugins:
+            from patitas.plugins import BUILTIN_PLUGINS
+            self._plugins = list(BUILTIN_PLUGINS.keys())
+        else:
+            self._plugins = raw_plugins
 
         # Build immutable config once (thread-safe, reused across calls)
         self._config = ParseConfig(
-            tables_enabled="tables" in self._plugins,
+            tables_enabled="table" in self._plugins,
             strikethrough_enabled="strikethrough" in self._plugins,
             task_lists_enabled="task_lists" in self._plugins,
             footnotes_enabled="footnotes" in self._plugins,

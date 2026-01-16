@@ -23,6 +23,7 @@ from typing import TYPE_CHECKING
 
 from patitas.config import ParseConfig, get_parse_config
 from patitas.lexer import Lexer
+from patitas.location import SourceLocation
 from patitas.nodes import Block, FencedCode
 from patitas.parsing import (
     BlockParsingMixin,
@@ -308,7 +309,7 @@ class Parser(
     def _parse_nested_content(
         self,
         content: str,
-        location,
+        location: SourceLocation,
         *,
         allow_setext_headings: bool = True,
     ) -> tuple[Block, ...]:

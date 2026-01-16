@@ -28,40 +28,24 @@ This plugin is stateless and thread-safe.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from patitas.plugins import register_plugin
-
-if TYPE_CHECKING:
-    from patitas.lexer import Lexer
-    from patitas.parser import Parser
-    from patitas.renderers.html import HtmlRenderer
 
 
 @register_plugin("task_lists")
 class TaskListPlugin:
     """Plugin for task list checkbox support.
 
-    Task lists are partially built into the core parser via the
-    ListItem.checked field. This plugin enables checkbox detection.
+    Task lists are built into the core parser via the ListItem.checked field.
+    Enable via Markdown(plugins=["task_lists"]).
+
+    Note: The actual parsing is controlled by ParseConfig.task_lists_enabled,
+    which is set by the Markdown class based on the plugins list.
 
     """
 
     @property
     def name(self) -> str:
         return "task_lists"
-
-    def extend_lexer(self, lexer_class: type[Lexer]) -> None:
-        """Enable task list detection in lexer."""
-        lexer_class._task_lists_enabled = True
-
-    def extend_parser(self, parser_class: type[Parser]) -> None:
-        """Enable task list parsing."""
-        parser_class._task_lists_enabled = True
-
-    def extend_renderer(self, renderer_class: type[HtmlRenderer]) -> None:
-        """Task list rendering is handled in base renderer."""
-        pass
 
 
 # Task list parsing is integrated into list handling.

@@ -13,10 +13,16 @@ Usage:
     set_icon_resolver(my_resolver)
 
 Without a resolver, directives render without icons (CSS class only).
+
+Thread Safety:
+    set_icon_resolver() should be called once at application startup,
+    before any concurrent rendering. The resolver reference is protected
+    by a lock for safe updates in multi-threaded environments.
 """
 
 from __future__ import annotations
 
+import threading
 from collections.abc import Callable
 from typing import Protocol
 
@@ -40,8 +46,9 @@ class IconResolver(Protocol):
         ...
 
 
-# Global icon resolver
+# Global icon resolver with thread-safe access
 _icon_resolver: Callable[[str], str | None] | None = None
+_resolver_lock = threading.Lock()
 
 
 def set_icon_resolver(resolver: Callable[[str], str | None] | None) -> None:
@@ -51,13 +58,18 @@ def set_icon_resolver(resolver: Callable[[str], str | None] | None) -> None:
         resolver: Function that takes icon name and returns SVG or None.
             Pass None to clear the resolver.
 
+    Thread Safety:
+        This function is thread-safe. However, for best performance,
+        call it once at application startup before concurrent rendering.
+
     Example:
         >>> set_icon_resolver(lambda name: f'<svg>{name}</svg>')
         >>> get_icon("check")
         '<svg>check</svg>'
     """
     global _icon_resolver
-    _icon_resolver = resolver
+    with _resolver_lock:
+        _icon_resolver = resolver
 
 
 def get_icon(name: str) -> str | None:
@@ -68,9 +80,15 @@ def get_icon(name: str) -> str | None:
 
     Returns:
         SVG markup if resolver is set and icon exists, None otherwise
+
+    Thread Safety:
+        This function is thread-safe. Reads the resolver reference
+        atomically (GIL-protected simple read).
     """
-    if _icon_resolver is not None:
-        return _icon_resolver(name)
+    # Simple read is atomic under GIL; no lock needed for reads
+    resolver = _icon_resolver
+    if resolver is not None:
+        return resolver(name)
     return None
 
 

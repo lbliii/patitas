@@ -54,7 +54,7 @@ Parse configuration uses Python's `ContextVar` (thread-local by design):
 from patitas import Markdown
 
 # Each thread gets isolated configuration
-md1 = Markdown(plugins=["tables"])  # Thread 1
+md1 = Markdown(plugins=["table"])  # Thread 1
 md2 = Markdown(plugins=["math"])    # Thread 2
 
 # Concurrent parsing with different configs - safe!

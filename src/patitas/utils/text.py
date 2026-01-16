@@ -73,7 +73,7 @@ def slugify(
     text = text.strip(separator)
 
     # Apply max length if specified
-    if max_length and len(text) > max_length:
+    if max_length is not None and len(text) > max_length:
         # Try to break at separator for cleaner truncation
         truncated = text[:max_length]
         if separator in truncated:

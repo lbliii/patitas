@@ -30,14 +30,7 @@ This plugin is stateless and thread-safe.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from patitas.plugins import register_plugin
-
-if TYPE_CHECKING:
-    from patitas.lexer import Lexer
-    from patitas.parser import Parser
-    from patitas.renderers.html import HtmlRenderer
 
 
 @register_plugin("footnotes")
@@ -49,23 +42,16 @@ class FootnotesPlugin:
     2. Defined as block elements [^id]: content
     3. Rendered as a footnotes section at document end
 
+    Enable via Markdown(plugins=["footnotes"]).
+
+    Note: The actual parsing is controlled by ParseConfig.footnotes_enabled,
+    which is set by the Markdown class based on the plugins list.
+
     """
 
     @property
     def name(self) -> str:
         return "footnotes"
-
-    def extend_lexer(self, lexer_class: type[Lexer]) -> None:
-        """Enable footnote detection in lexer."""
-        lexer_class._footnotes_enabled = True
-
-    def extend_parser(self, parser_class: type[Parser]) -> None:
-        """Enable footnote parsing."""
-        parser_class._footnotes_enabled = True
-
-    def extend_renderer(self, renderer_class: type[HtmlRenderer]) -> None:
-        """Enable footnote section rendering."""
-        renderer_class._footnotes_enabled = True
 
 
 # Footnote parsing is integrated into lexer and parser.

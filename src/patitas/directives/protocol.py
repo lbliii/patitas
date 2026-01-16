@@ -24,7 +24,7 @@ Example:
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, ClassVar, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, ClassVar, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
     from patitas.directives.contracts import DirectiveContract
@@ -53,6 +53,11 @@ class DirectiveHandler(Protocol):
         Handlers must be stateless. All mutable state must be in the AST
         node (which is immutable) or passed as arguments. Multiple threads
         may call the same handler instance concurrently.
+
+    Note:
+        The `options` parameter in parse() and `node` in render() use `Any`
+        to allow handlers with specific options subclasses to satisfy the
+        protocol (covariance). The actual runtime types are always correct.
     """
 
     # Class-level attributes
@@ -65,8 +70,8 @@ class DirectiveHandler(Protocol):
     contract: ClassVar[DirectiveContract | None]
     """Optional contract for nesting validation. None means no restrictions."""
 
-    options_class: ClassVar[type[DirectiveOptions]]
-    """Class for typed options parsing. Defaults to DirectiveOptions."""
+    options_class: ClassVar[type[Any]]
+    """Class for typed options parsing (DirectiveOptions or subclass)."""
 
     preserves_raw_content: ClassVar[bool]
     """If True, parser will preserve raw content string in node.raw_content.
@@ -79,11 +84,11 @@ class DirectiveHandler(Protocol):
         self,
         name: str,
         title: str | None,
-        options: DirectiveOptions,
+        options: Any,  # DirectiveOptions or subclass - Any for covariance
         content: str,
         children: Sequence[Block],
         location: SourceLocation,
-    ) -> Directive:
+    ) -> Directive[Any]:
         """Build the directive AST node.
 
         Called by the parser when a directive block is encountered.
@@ -108,7 +113,7 @@ class DirectiveHandler(Protocol):
 
     def render(
         self,
-        node: Directive,
+        node: Directive[Any],
         rendered_children: str,
         sb: StringBuilder,
     ) -> None:
@@ -140,17 +145,17 @@ class DirectiveParseOnly(Protocol):
     names: ClassVar[tuple[str, ...]]
     token_type: ClassVar[str]
     contract: ClassVar[DirectiveContract | None]
-    options_class: ClassVar[type[DirectiveOptions]]
+    options_class: ClassVar[type[Any]]
 
     def parse(
         self,
         name: str,
         title: str | None,
-        options: DirectiveOptions,
+        options: Any,  # DirectiveOptions or subclass
         content: str,
         children: Sequence[Block],
         location: SourceLocation,
-    ) -> Directive:
+    ) -> Directive[Any]:
         """Build the directive AST node."""
         ...
 
@@ -168,7 +173,7 @@ class DirectiveRenderOnly(Protocol):
 
     def render(
         self,
-        node: Directive,
+        node: Directive[Any],
         rendered_children: str,
         sb: StringBuilder,
     ) -> None:

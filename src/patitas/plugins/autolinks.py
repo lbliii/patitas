@@ -32,14 +32,7 @@ This plugin is stateless and thread-safe.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from patitas.plugins import register_plugin
-
-if TYPE_CHECKING:
-    from patitas.lexer import Lexer
-    from patitas.parser import Parser
-    from patitas.renderers.html import HtmlRenderer
 
 
 @register_plugin("autolinks")
@@ -49,23 +42,16 @@ class AutolinksPlugin:
     Extends inline parsing to detect URLs and emails without
     explicit markdown link syntax.
 
+    Enable via Markdown(plugins=["autolinks"]).
+
+    Note: The actual parsing is controlled by ParseConfig.autolinks_enabled,
+    which is set by the Markdown class based on the plugins list.
+
     """
 
     @property
     def name(self) -> str:
         return "autolinks"
-
-    def extend_lexer(self, lexer_class: type[Lexer]) -> None:
-        """No lexer extension needed."""
-        pass
-
-    def extend_parser(self, parser_class: type[Parser]) -> None:
-        """Enable autolink detection in inline parser."""
-        parser_class._autolinks_enabled = True
-
-    def extend_renderer(self, renderer_class: type[HtmlRenderer]) -> None:
-        """Autolink rendering uses standard link rendering."""
-        pass
 
 
 # Autolink detection is integrated into inline parsing.

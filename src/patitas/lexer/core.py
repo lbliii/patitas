@@ -162,6 +162,11 @@ class Lexer(
         while self._pos < source_len:
             yield from self._dispatch_mode()
 
+        # Emit any accumulated HTML block content at EOF (types 1-5 may not
+        # have found their closing delimiter before source ended)
+        if self._mode == LexerMode.HTML_BLOCK and self._html_block_content:
+            yield from self._emit_html_block()
+
         yield self._make_token_at_current(TokenType.EOF, "", line_indent=0)
 
     def _dispatch_mode(self) -> Iterator[Token]:

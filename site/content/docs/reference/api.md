@@ -113,7 +113,7 @@ html = md("# Hello **World**")
 print(html)  # <h1>Hello <strong>World</strong></h1>
 
 # With plugins
-md = Markdown(plugins=["tables", "math", "strikethrough"])
+md = Markdown(plugins=["table", "math", "strikethrough"])
 html = md("| a | b |\n|---|---|\n| 1 | 2 |")
 ```
 

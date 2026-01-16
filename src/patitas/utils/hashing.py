@@ -39,7 +39,7 @@ def hash_str(
     hasher = hashlib.new(algorithm)
     hasher.update(content.encode("utf-8"))
     digest = hasher.hexdigest()
-    return digest[:truncate] if truncate else digest
+    return digest[:truncate] if truncate is not None else digest
 
 
 def hash_bytes(
@@ -60,4 +60,4 @@ def hash_bytes(
     hasher = hashlib.new(algorithm)
     hasher.update(content)
     digest = hasher.hexdigest()
-    return digest[:truncate] if truncate else digest
+    return digest[:truncate] if truncate is not None else digest

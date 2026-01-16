@@ -34,6 +34,7 @@ class KbdRole:
     Syntax:
         {kbd}`Ctrl+C` - Single shortcut
         {kbd}`Ctrl+Shift+P` - Multiple modifiers
+        {kbd}`+` or {kbd}`Plus` - The plus key itself
 
     Thread Safety:
         Stateless handler. Safe for concurrent use.
@@ -64,21 +65,31 @@ class KbdRole:
         """Render keyboard shortcut.
 
         Wraps each key in <kbd> tags for proper semantics.
-        Handles + as key separator.
+        Handles + as key separator, with special handling for the + key itself.
         """
         content = node.content
 
-        # Split by + to wrap individual keys
-        if "+" in content:
-            keys = content.split("+")
-            parts = []
-            for key in keys:
-                key = key.strip()
-                if key:
-                    parts.append(f"<kbd>{html_escape(key)}</kbd>")
-            sb.append("+".join(parts))
-        else:
+        # Handle single "+" key or no separator
+        if content == "+" or "+" not in content:
             sb.append(f"<kbd>{html_escape(content)}</kbd>")
+            return
+
+        # Split by + to wrap individual keys, handling empty parts as literal +
+        keys = content.split("+")
+        parts: list[str] = []
+        i = 0
+        while i < len(keys):
+            key = keys[i].strip()
+            if key:
+                parts.append(f"<kbd>{html_escape(key)}</kbd>")
+            elif i + 1 < len(keys) and not keys[i + 1].strip():
+                # Two consecutive empty parts = literal + key (from "++")
+                parts.append("<kbd>+</kbd>")
+                i += 1  # Skip the next empty part
+            # Single empty part at edges is ignored (leading/trailing +)
+            i += 1
+
+        sb.append("+".join(parts))
 
 
 class AbbrRole:

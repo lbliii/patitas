@@ -20,14 +20,7 @@ This plugin is stateless and thread-safe.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from patitas.plugins import register_plugin
-
-if TYPE_CHECKING:
-    from patitas.lexer import Lexer
-    from patitas.parser import Parser
-    from patitas.renderers.html import HtmlRenderer
 
 
 @register_plugin("strikethrough")
@@ -36,25 +29,16 @@ class StrikethroughPlugin:
 
     Extends inline parsing to recognize ~~ delimiters.
 
+    Enable via Markdown(plugins=["strikethrough"]).
+
+    Note: The actual parsing is controlled by ParseConfig.strikethrough_enabled,
+    which is set by the Markdown class based on the plugins list.
+
     """
 
     @property
     def name(self) -> str:
         return "strikethrough"
-
-    def extend_lexer(self, lexer_class: type[Lexer]) -> None:
-        """No lexer extension needed - handled in inline parsing."""
-        pass
-
-    def extend_parser(self, parser_class: type[Parser]) -> None:
-        """Add strikethrough to inline special characters."""
-        # Add ~ to inline special chars for recognition
-        # The parser will handle the actual parsing
-        pass
-
-    def extend_renderer(self, renderer_class: type[HtmlRenderer]) -> None:
-        """No renderer extension needed - handled in base renderer."""
-        pass
 
 
 # The actual parsing is integrated into the parser's inline handling.

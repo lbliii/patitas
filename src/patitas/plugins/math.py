@@ -29,14 +29,7 @@ This plugin is stateless and thread-safe.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from patitas.plugins import register_plugin
-
-if TYPE_CHECKING:
-    from patitas.lexer import Lexer
-    from patitas.parser import Parser
-    from patitas.renderers.html import HtmlRenderer
 
 
 @register_plugin("math")
@@ -46,23 +39,16 @@ class MathPlugin:
     Inline math uses $...$ syntax.
     Block math uses $$...$$ on separate lines.
 
+    Enable via Markdown(plugins=["math"]).
+
+    Note: The actual parsing is controlled by ParseConfig.math_enabled,
+    which is set by the Markdown class based on the plugins list.
+
     """
 
     @property
     def name(self) -> str:
         return "math"
-
-    def extend_lexer(self, lexer_class: type[Lexer]) -> None:
-        """Enable math detection in lexer."""
-        lexer_class._math_enabled = True
-
-    def extend_parser(self, parser_class: type[Parser]) -> None:
-        """Enable math parsing."""
-        parser_class._math_enabled = True
-
-    def extend_renderer(self, renderer_class: type[HtmlRenderer]) -> None:
-        """Math rendering is handled in base renderer."""
-        pass
 
 
 # Math parsing is integrated into lexer and parser.

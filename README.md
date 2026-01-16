@@ -285,16 +285,16 @@ html = md(source)
 
 ## The Bengal Cat Family
 
-Patitas is part of the Bengal ecosystem — a zero-dependency Python stack:
+The Bengal Cat Family's core components are written in pure Python:
 
-```
-ᓚᘏᗢ  Bengal    — Static site generator
- )彡  Kida      — Template engine
-⌾⌾⌾  Rosettes  — Syntax highlighter
-ฅᨐฅ  Patitas   — Markdown parser ← You are here
-```
+| | | |
+|--:|---|---|
+| **ᓚᘏᗢ** | [Bengal](https://github.com/lbliii/bengal) | Static site generator |
+| **)彡** | [Kida](https://github.com/lbliii/kida) | Template engine |
+| **⌾⌾⌾** | [Rosettes](https://github.com/lbliii/rosettes) | Syntax highlighter |
+| **ฅᨐฅ** | **Patitas** | Markdown parser ← You are here |
 
-Build complete documentation sites with pure Python. No C extensions. No Node.js.
+Python-native. Free-threading ready. No npm required.
 
 ---
 

@@ -21,11 +21,11 @@ Thread Safety:
 
 from __future__ import annotations
 
-from contextvars import ContextVar
+from contextvars import ContextVar, Token as ContextVarToken
 from typing import TYPE_CHECKING, Iterator
 
 if TYPE_CHECKING:
-    from patitas.tokens import Token, TokenType
+    from patitas.tokens import Token as PatitasToken, TokenType
 
 
 class TokenStream:
@@ -37,7 +37,7 @@ class TokenStream:
     
     __slots__ = ("tokens", "length", "_type_cache")
     
-    def __init__(self, tokens: list[Token]) -> None:
+    def __init__(self, tokens: list[PatitasToken]) -> None:
         self.tokens = tokens
         self.length = len(tokens)
         # Cache token type sets for pattern matching
@@ -81,12 +81,12 @@ class TokenCursor:
         self.stream = stream
         self.pos = start
         self.end = end if end is not None else stream.length
-        self._current: Token | None = (
+        self._current: PatitasToken | None = (
             stream.tokens[start] if start < self.end else None
         )
     
     @property
-    def current(self) -> Token | None:
+    def current(self) -> PatitasToken | None:
         """Current token (cached for performance)."""
         return self._current
     
@@ -94,7 +94,7 @@ class TokenCursor:
         """Check if cursor is at end of range."""
         return self.pos >= self.end
     
-    def advance(self) -> Token | None:
+    def advance(self) -> PatitasToken | None:
         """Move to next token, return previous."""
         prev = self._current
         self.pos += 1
@@ -105,14 +105,14 @@ class TokenCursor:
         )
         return prev
     
-    def peek(self, offset: int = 0) -> Token | None:
+    def peek(self, offset: int = 0) -> PatitasToken | None:
         """Look ahead without advancing."""
         target = self.pos + offset
         if 0 <= target < self.end:
             return self.stream.tokens[target]
         return None
     
-    def __iter__(self) -> Iterator[Token]:
+    def __iter__(self) -> Iterator[PatitasToken]:
         """Iterate over remaining tokens."""
         while self.pos < self.end:
             yield self.stream.tokens[self.pos]
@@ -161,7 +161,10 @@ class TokenStreamContext:
     
     __slots__ = ("stream", "_token")
     
-    def __init__(self, tokens: list[Token]) -> None:
+    stream: TokenStream
+    _token: ContextVarToken[TokenStream | None] | None
+    
+    def __init__(self, tokens: list[PatitasToken]) -> None:
         self.stream = TokenStream(tokens)
         self._token = None
     
@@ -169,5 +172,6 @@ class TokenStreamContext:
         self._token = _token_stream.set(self.stream)
         return self.stream
     
-    def __exit__(self, *args) -> None:
-        _token_stream.reset(self._token)
+    def __exit__(self, *args: object) -> None:
+        if self._token is not None:
+            _token_stream.reset(self._token)

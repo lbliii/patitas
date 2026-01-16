@@ -49,6 +49,8 @@ if TYPE_CHECKING:
     from patitas.parser import Parser
     from patitas.renderers.html import HtmlRenderer
 
+# These imports are kept for backward compatibility in apply_plugins signature
+
 __all__ = [
     "PatitasPlugin",
     "BUILTIN_PLUGINS",
@@ -61,10 +63,12 @@ __all__ = [
 class PatitasPlugin(Protocol):
     """Protocol for Patitas plugins.
 
-    Plugins can hook into multiple extension points:
-    - extend_lexer: Add token types and scanning logic
-    - extend_parser: Add parsing rules for new tokens
-    - extend_renderer: Add rendering methods for new nodes
+    Plugins are lightweight markers that enable features in Patitas.
+    The actual parsing behavior is controlled by ParseConfig via ContextVars.
+
+    To enable a plugin, pass its name to Markdown(plugins=[...]).
+    The Markdown class reads the plugin names and sets the appropriate
+    ParseConfig flags.
 
     Thread Safety:
         Plugins must be stateless. All state should be in AST nodes.
@@ -76,36 +80,12 @@ class PatitasPlugin(Protocol):
         """Plugin identifier."""
         ...
 
-    def extend_lexer(self, lexer_class: type[Lexer]) -> None:
-        """Extend lexer with additional token scanning.
-
-        Called once at parser configuration time.
-        Should add methods or modify class behavior.
-        """
-        ...
-
-    def extend_parser(self, parser_class: type[Parser]) -> None:
-        """Extend parser with additional parsing rules.
-
-        Called once at parser configuration time.
-        Should add methods or modify class behavior.
-        """
-        ...
-
-    def extend_renderer(self, renderer_class: type[HtmlRenderer]) -> None:
-        """Extend renderer with additional render methods.
-
-        Called once at parser configuration time.
-        Should add methods for new node types.
-        """
-        ...
-
 
 # Registry of built-in plugins
 BUILTIN_PLUGINS: dict[str, type[PatitasPlugin]] = {}
 
 
-from typing import Callable
+from collections.abc import Callable
 
 
 def register_plugin(
@@ -160,27 +140,20 @@ def apply_plugins(
 ) -> None:
     """Apply plugins to parser components.
 
+    Note: This function is deprecated. Plugin configuration is now handled
+    by the Markdown class via ParseConfig and ContextVars. This function
+    is kept for backward compatibility but no longer does anything.
+
     Args:
         plugins: List of plugin names to apply
-        lexer_class: Lexer class to extend
-        parser_class: Parser class to extend
-        renderer_class: Renderer class to extend
+        lexer_class: Lexer class to extend (unused)
+        parser_class: Parser class to extend (unused)
+        renderer_class: Renderer class to extend (unused)
 
     """
-    for plugin_name in plugins:
-        if plugin_name == "all":
-            # Apply all plugins
-            for name in BUILTIN_PLUGINS:
-                plugin = get_plugin(name)
-                plugin.extend_lexer(lexer_class)
-                plugin.extend_parser(parser_class)
-                plugin.extend_renderer(renderer_class)
-            break
-        else:
-            plugin = get_plugin(plugin_name)
-            plugin.extend_lexer(lexer_class)
-            plugin.extend_parser(parser_class)
-            plugin.extend_renderer(renderer_class)
+    # Configuration is now handled via ParseConfig/ContextVars
+    # This function is a no-op for backward compatibility
+    pass
 
 
 # Import built-in plugins to register them

@@ -120,6 +120,10 @@ class DirectiveOptions:
         Raises:
             ValueError: If coercion fails
         """
+        # Handle explicit None indicators (e.g., `:option: None` in markdown)
+        if value.lower() in ("none", "null"):
+            return None
+
         # Handle Optional types (X | None)
         origin = getattr(target_type, "__origin__", None)
         if origin is type(None):

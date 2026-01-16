@@ -112,8 +112,8 @@ class EmphasisMixin:
         while closer_idx < tokens_len:
             closer = tokens[closer_idx]
 
-            # Skip non-delimiter tokens
-            if closer.tag != TOKEN_DELIMITER:
+            # Skip non-delimiter tokens (use isinstance for proper type narrowing)
+            if not isinstance(closer, DelimiterToken):
                 closer_idx += 1
                 continue
 
@@ -126,6 +126,10 @@ class EmphasisMixin:
                 for i in range(len(stack) - 1, -1, -1):
                     opener_idx = stack[i]
                     opener = tokens[opener_idx]
+
+                    # Type narrow opener (guaranteed to be DelimiterToken due to index structure)
+                    if not isinstance(opener, DelimiterToken):
+                        continue
 
                     if not registry.is_active(opener_idx):
                         continue
@@ -149,7 +153,7 @@ class EmphasisMixin:
 
                     # Deactivate intermediate delimiters in both registry and index stacks
                     for mid_idx in range(opener_idx + 1, closer_idx):
-                        if tokens[mid_idx].tag == TOKEN_DELIMITER:
+                        if isinstance(tokens[mid_idx], DelimiterToken):
                             registry.deactivate(mid_idx)
 
                     # Clean up all stacks of intermediate delimiters (including other chars)
@@ -163,10 +167,10 @@ class EmphasisMixin:
                         registry.deactivate(opener_idx)
                         if stack and stack[-1] == opener_idx:
                             stack.pop()
-                    
+
                     if registry.remaining_count(closer_idx, closer.run_length) == 0:
                         registry.deactivate(closer_idx)
-                    
+
                     break  # Match made for this closer (at least one segment)
 
                 if not found_opener:

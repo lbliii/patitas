@@ -29,10 +29,11 @@ class DirectiveParsingMixin:
         - _parse_block() -> Block | None
     """
 
-    _current: Token | None
-    _directive_registry: object | None
-    _directive_stack: list[str]
-    _strict_contracts: bool
+    # Required host attributes (documented, not declared, to avoid override conflicts)
+    # _current: Token | None
+    # _directive_registry: object | None
+    # _directive_stack: list[str]
+    # _strict_contracts: bool
 
     def _parse_directive(self) -> Directive:
         """Parse directive block (:::{name} ... :::).
@@ -94,6 +95,7 @@ class DirectiveParsingMixin:
                 logger = get_logger(__name__)
                 if self._strict_contracts and violation.violation_type != "suggested_parent":
                     raise DirectiveContractError(
+                        name,
                         violation.message,
                     )
                 else:
@@ -159,7 +161,7 @@ class DirectiveParsingMixin:
                 logger = get_logger(__name__)
                 for violation in violations:
                     if self._strict_contracts:
-                        raise DirectiveContractError(violation.message)
+                        raise DirectiveContractError(name, violation.message)
                     else:
                         logger.warning(
                             "Directive contract violation: %s: %s",

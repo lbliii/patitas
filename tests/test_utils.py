@@ -42,6 +42,21 @@ class TestSlugify:
 
         assert slugify("") == ""
 
+    def test_max_length_zero(self) -> None:
+        """Edge case: max_length=0 should return empty string."""
+        from patitas.utils.text import slugify
+
+        assert slugify("hello world", max_length=0) == ""
+
+    def test_max_length_negative(self) -> None:
+        """Edge case: negative max_length follows Python slice semantics."""
+        from patitas.utils.text import slugify
+
+        # Negative values follow Python slice semantics (remove from end)
+        # "hello"[:-1] == "hell"
+        assert slugify("hello", max_length=-1) == "hell"
+        assert slugify("hello", max_length=-2) == "hel"
+
 
 class TestHashStr:
     """Tests for hash_str function."""
@@ -71,6 +86,39 @@ class TestHashStr:
 
         assert hash_str("a") != hash_str("b")
 
+    def test_truncate_zero(self) -> None:
+        """Edge case: truncate=0 should return empty string."""
+        from patitas.utils.hashing import hash_str
+
+        assert hash_str("hello", truncate=0) == ""
+
+
+class TestHashBytes:
+    """Tests for hash_bytes function."""
+
+    def test_basic_hash(self) -> None:
+        from patitas.utils.hashing import hash_bytes
+
+        result = hash_bytes(b"hello")
+        assert len(result) == 64  # SHA256 hex length
+        assert result.startswith("2cf24dba")  # Known hash prefix
+
+    def test_truncated_hash(self) -> None:
+        from patitas.utils.hashing import hash_bytes
+
+        assert hash_bytes(b"hello", truncate=8) == "2cf24dba"
+
+    def test_truncate_zero(self) -> None:
+        """Edge case: truncate=0 should return empty string."""
+        from patitas.utils.hashing import hash_bytes
+
+        assert hash_bytes(b"hello", truncate=0) == ""
+
+    def test_consistent_hash(self) -> None:
+        from patitas.utils.hashing import hash_bytes
+
+        assert hash_bytes(b"test") == hash_bytes(b"test")
+
 
 class TestLogger:
     """Tests for logger module."""
@@ -86,6 +134,83 @@ class TestLogger:
 
         logger = get_logger("patitas.parser")
         assert logger.name == "patitas.parser"
+
+    def test_logger_name_starting_with_patitas_not_submodule(self) -> None:
+        """Names starting with 'patitas' but not submodules should get prefix."""
+        from patitas.utils.logger import get_logger
+
+        # This was a bug - patitas_other incorrectly matched startswith("patitas")
+        logger = get_logger("patitas_other")
+        assert logger.name == "patitas.patitas_other"
+
+    def test_logger_exact_patitas_name(self) -> None:
+        """The exact name 'patitas' should not get double-prefixed."""
+        from patitas.utils.logger import get_logger
+
+        logger = get_logger("patitas")
+        assert logger.name == "patitas"
+
+
+class TestEscapeHtml:
+    """Tests for escape_html function."""
+
+    def test_basic_escape(self) -> None:
+        from patitas.utils.text import escape_html
+
+        assert escape_html("<script>") == "&lt;script&gt;"
+
+    def test_escape_quotes(self) -> None:
+        from patitas.utils.text import escape_html
+
+        assert escape_html('a="b"') == 'a=&quot;b&quot;'
+        assert escape_html("a='b'") == "a=&#x27;b&#x27;"
+
+    def test_escape_ampersand(self) -> None:
+        from patitas.utils.text import escape_html
+
+        assert escape_html("a & b") == "a &amp; b"
+
+    def test_escape_empty(self) -> None:
+        from patitas.utils.text import escape_html
+
+        assert escape_html("") == ""
+
+    def test_escape_xss_payload(self) -> None:
+        """Verify common XSS payloads are properly escaped."""
+        from patitas.utils.text import escape_html
+
+        payload = "<script>alert('xss')</script>"
+        escaped = escape_html(payload)
+        assert "<script>" not in escaped
+        assert "'" not in escaped
+
+
+class TestUtilsPublicAPI:
+    """Tests for the public API of the utils package."""
+
+    def test_all_exports_importable(self) -> None:
+        """All items in __all__ should be importable from patitas.utils."""
+        import patitas.utils as utils
+
+        for name in utils.__all__:
+            assert hasattr(utils, name), f"{name} in __all__ but not importable"
+
+    def test_expected_exports(self) -> None:
+        """Verify expected functions are exported."""
+        from patitas.utils import (
+            escape_html,
+            get_logger,
+            hash_bytes,
+            hash_str,
+            slugify,
+        )
+
+        # Verify they're callable
+        assert callable(escape_html)
+        assert callable(get_logger)
+        assert callable(hash_bytes)
+        assert callable(hash_str)
+        assert callable(slugify)
 
 
 class TestErrors:

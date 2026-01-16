@@ -116,11 +116,12 @@ class BlockParsingCoreMixin:
 
     """
 
-    _source: str
-    _tokens: list[Token]
-    _pos: int
-    _current: Token | None
-    _tables_enabled: bool
+    # Required host attributes (documented, not declared, to avoid override conflicts)
+    # _source: str
+    # _tokens: list[Token]
+    # _pos: int
+    # _current: Token | None
+    # _tables_enabled: bool
 
     def _parse_block(self) -> Block | None:
         """Parse a single block element."""

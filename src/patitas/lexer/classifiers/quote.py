@@ -72,14 +72,17 @@ class QuoteClassifierMixin:
                 content_col = sub_indent + leading_spaces
 
                 # Check for block-level elements in remaining content
+                # Note: Methods below are provided by other classifier mixins when composed
                 if stripped.startswith("#"):
-                    token = self._try_classify_atx_heading(stripped, line_start, content_col)
+                    token = self._try_classify_atx_heading(  # type: ignore[attr-defined]
+                        stripped, line_start, content_col
+                    )
                     if token:
                         yield token
                         return
                 # Link reference definitions inside block quotes should be recognized
                 if stripped.startswith("[") and not stripped.startswith("[^"):
-                    link_ref_token = self._try_classify_link_reference_def(
+                    link_ref_token = self._try_classify_link_reference_def(  # type: ignore[attr-defined]
                         stripped, line_start, content_col
                     )
                     if link_ref_token:
@@ -96,28 +99,32 @@ class QuoteClassifierMixin:
                 )
 
                 if stripped[0] in THEMATIC_BREAK_CHARS:
-                    token = self._try_classify_thematic_break(stripped, line_start, content_col)
+                    token = self._try_classify_thematic_break(  # type: ignore[attr-defined]
+                        stripped, line_start, content_col
+                    )
                     if token:
                         yield token
                         return
 
                 if stripped[0] in FENCE_CHARS:
                     # Don't change lexer mode - blockquote parser handles fence content
-                    token = self._try_classify_fence_start(
+                    token = self._try_classify_fence_start(  # type: ignore[attr-defined]
                         stripped, line_start, content_col, change_mode=False
                     )
                     if token:
                         yield token
                         return
 
-                nested_tokens = self._try_classify_list_marker(stripped, line_start, content_col)
+                nested_tokens = self._try_classify_list_marker(  # type: ignore[attr-defined]
+                    stripped, line_start, content_col
+                )
                 if nested_tokens:
                     yield from nested_tokens
                     return
 
                 # Link reference definitions inside block quotes are still global.
                 if stripped.startswith("[") and not stripped.startswith("[^"):
-                    link_ref = self._try_classify_link_reference_def(
+                    link_ref = self._try_classify_link_reference_def(  # type: ignore[attr-defined]
                         stripped, line_start, indent=leading_spaces
                     )
                     if link_ref is not None:

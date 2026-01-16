@@ -18,7 +18,8 @@ Example:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from types import MappingProxyType
+from typing import TYPE_CHECKING, Mapping
 
 if TYPE_CHECKING:
     from patitas.roles.protocol import RoleHandler
@@ -31,11 +32,16 @@ class RoleRegistry:
     and rendering.
 
     Thread Safety:
-        Immutable after creation. Safe to share across threads.
+        Truly immutable after creation (uses MappingProxyType).
+        Safe to share across threads.
 
     """
 
     __slots__ = ("_handlers", "_by_name", "_by_token_type")
+
+    _handlers: tuple[RoleHandler, ...]
+    _by_name: Mapping[str, RoleHandler]
+    _by_token_type: Mapping[str, RoleHandler]
 
     def __init__(
         self,
@@ -48,8 +54,9 @@ class RoleRegistry:
         Use RoleRegistryBuilder to create instances.
         """
         self._handlers = handlers
-        self._by_name = by_name
-        self._by_token_type = by_token_type
+        # Wrap in MappingProxyType for true immutability
+        self._by_name = MappingProxyType(by_name)
+        self._by_token_type = MappingProxyType(by_token_type)
 
     def get(self, name: str) -> RoleHandler | None:
         """Get handler for role name.

@@ -27,7 +27,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from html import escape as html_escape
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from patitas.directives.contracts import DirectiveContract
 from patitas.directives.options import AdmonitionOptions
@@ -93,17 +93,10 @@ def _render_admonition_icon(icon_name: str) -> str:
     Returns:
         SVG HTML string, or empty string if icon not found
     """
-    try:
-        from patitas.icons import get_icon
+    from patitas.icons import get_icon
 
-        icon_html = get_icon(icon_name)
-        if icon_html:
-            return icon_html
-    except ImportError:
-        pass
-
-    # Fallback: CSS-only icon class
-    return ""
+    icon_html = get_icon(icon_name)
+    return icon_html or ""
 
 
 class AdmonitionDirective:
@@ -129,7 +122,7 @@ class AdmonitionDirective:
         content: str,
         children: Sequence[Block],
         location: SourceLocation,
-    ) -> Directive:
+    ) -> Directive[AdmonitionOptions]:
         """Build admonition AST node.
 
         Args:

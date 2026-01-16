@@ -1,64 +1,87 @@
 """Icon role handler.
 
-STUB: This is a placeholder for icon role functionality.
-The full implementation requires an icon resolver from Bengal.
-
-For full icon support, install patitas[bengal].
+Provides inline SVG icon support via {icon}`name` syntax.
+The icon resolver can be configured per-instance for registry isolation.
 """
 
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
-from patitas.roles.protocol import RoleHandler
+from patitas.nodes import Role
 
 if TYPE_CHECKING:
     from patitas.location import SourceLocation
+    from patitas.stringbuilder import StringBuilder
 
 
-class IconRole(RoleHandler):
+class IconRole:
     """Role for inline SVG icons.
 
-    STUB: Icon rendering requires an icon resolver.
-    Without patitas[bengal], this role renders the icon name as text.
+    Icon rendering requires a resolver function that maps icon names to SVG.
+    Without a resolver, this role renders placeholder text.
 
-    Usage (with patitas[bengal]):
+    Usage (with resolver configured):
         {icon}`github` → <svg>...</svg>
         {icon}`check` → <svg>...</svg>
 
-    Usage (without icon resolver):
+    Usage (without resolver):
         {icon}`github` → [icon:github]
+
+    Thread Safety:
+        Instance-level resolver ensures registry isolation.
+        Safe for concurrent use when resolver is thread-safe.
     """
 
-    name = "icon"
+    names: ClassVar[tuple[str, ...]] = ("icon",)
+    token_type: ClassVar[str] = "icon"
 
-    # Optional icon resolver - set by Bengal adapter
-    _resolver: Callable[[str], str | None] | None = None
+    __slots__ = ("_resolver",)
 
-    @classmethod
-    def set_resolver(cls, resolver: Callable[[str], str | None]) -> None:
-        """Set the icon resolver function.
+    def __init__(
+        self,
+        resolver: Callable[[str], str | None] | None = None,
+    ) -> None:
+        """Initialize IconRole with optional resolver.
 
         Args:
-            resolver: Function that takes icon name and returns SVG string or None
+            resolver: Function that takes icon name and returns SVG string or None.
+                     If None, icons render as placeholder text.
         """
-        cls._resolver = resolver
+        self._resolver = resolver
 
-    def render(self, content: str, location: SourceLocation) -> str:
-        """Render icon role to HTML.
+    def parse(
+        self,
+        name: str,
+        content: str,
+        location: SourceLocation,
+    ) -> Role:
+        """Build the icon role AST node.
 
         Args:
+            name: The role name ("icon")
             content: Icon name (e.g., "github", "check")
             location: Source location for error reporting
 
         Returns:
-            HTML string (SVG if resolver available, placeholder otherwise)
+            A Role node for the AST
         """
+        return Role(location=location, name=name, content=content)
+
+    def render(self, node: Role, sb: StringBuilder) -> None:
+        """Render icon role to HTML.
+
+        Args:
+            node: The Role AST node to render
+            sb: StringBuilder to append output to
+        """
+        content = node.content
         if self._resolver is not None:
             svg = self._resolver(content)
             if svg:
-                return svg
+                sb.append(svg)
+                return
 
         # Fallback: render as text placeholder
-        return f'<span class="icon-placeholder">[icon:{content}]</span>'
+        sb.append(f'<span class="icon-placeholder">[icon:{content}]</span>')

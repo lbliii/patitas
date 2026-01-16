@@ -30,6 +30,6 @@ def get_logger(name: str) -> logging.Logger:
         'patitas.mymodule'
     """
     # Ensure patitas prefix for consistent namespacing
-    if not name.startswith("patitas"):
+    if not (name == "patitas" or name.startswith("patitas.")):
         name = f"patitas.{name}"
     return logging.getLogger(name)

@@ -117,24 +117,33 @@ class ListClassifierMixin:
         content_col = indent + len(marker) + leading_spaces
 
         # Check for block-level elements in remaining content
+        # Note: Methods below are provided by other classifier mixins when composed
         if stripped.startswith("#"):
-            token = self._try_classify_atx_heading(stripped, line_start, content_col)
+            token = self._try_classify_atx_heading(  # type: ignore[attr-defined]
+                stripped, line_start, content_col
+            )
             if token:
                 yield token
                 return
 
         if stripped.startswith(">"):
-            yield from self._classify_block_quote(stripped, line_start, content_col)
+            yield from self._classify_block_quote(  # type: ignore[attr-defined]
+                stripped, line_start, content_col
+            )
             return
 
         if stripped[0] in THEMATIC_BREAK_CHARS:
-            token = self._try_classify_thematic_break(stripped, line_start, content_col)
+            token = self._try_classify_thematic_break(  # type: ignore[attr-defined]
+                stripped, line_start, content_col
+            )
             if token:
                 yield token
                 return
 
         if stripped[0] in FENCE_CHARS:
-            token = self._try_classify_fence_start(stripped, line_start, content_col)
+            token = self._try_classify_fence_start(  # type: ignore[attr-defined]
+                stripped, line_start, content_col
+            )
             if token:
                 yield token
                 return

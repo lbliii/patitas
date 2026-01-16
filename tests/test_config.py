@@ -170,7 +170,7 @@ class TestThreadIsolation:
         source = "| a | b |\n|---|---|\n| 1 | 2 |"
 
         def worker(thread_id: int, with_tables: bool) -> None:
-            plugins = ["tables"] if with_tables else []
+            plugins = ["table"] if with_tables else []
             md = Markdown(plugins=plugins)
             results[thread_id] = md(source)
 
@@ -213,7 +213,7 @@ class TestParserConfigInheritance:
         source = "> | a | b |\n> |---|---|\n> | 1 | 2 |"
 
         # Use Markdown class which sets ContextVar
-        md = Markdown(plugins=["tables"])
+        md = Markdown(plugins=["table"])
         doc = md.parse(source)
 
         # Block quote should contain a table (parsed by sub-parser)
@@ -229,7 +229,7 @@ class TestMarkdownConfigIntegration:
     def test_markdown_builds_config_from_plugins(self) -> None:
         """Markdown class builds config from plugins list."""
         md = Markdown(
-            plugins=["tables", "math", "strikethrough", "task_lists", "footnotes", "autolinks"]
+            plugins=["table", "math", "strikethrough", "task_lists", "footnotes", "autolinks"]
         )
         # Config is built and stored
         assert md._config.tables_enabled is True
@@ -241,7 +241,7 @@ class TestMarkdownConfigIntegration:
 
     def test_markdown_sets_contextvar_during_call(self) -> None:
         """Markdown sets ContextVar during __call__."""
-        md = Markdown(plugins=["tables"])
+        md = Markdown(plugins=["table"])
 
         # Before calling, config should be default
         assert get_parse_config().tables_enabled is False
@@ -267,7 +267,7 @@ class TestMarkdownConfigIntegration:
 
     def test_tables_with_markdown_class(self) -> None:
         """Tables are parsed when enabled via Markdown plugins."""
-        md = Markdown(plugins=["tables"])
+        md = Markdown(plugins=["table"])
         doc = md.parse("| a | b |\n|---|---|\n| 1 | 2 |")
 
         # Should have a table

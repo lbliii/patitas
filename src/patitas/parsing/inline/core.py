@@ -69,10 +69,11 @@ class InlineParsingCoreMixin:
 
     """
 
-    _math_enabled: bool
-    _strikethrough_enabled: bool
-    _footnotes_enabled: bool
-    _link_refs: dict[str, tuple[str, str]]
+    # Required host attributes (documented, not declared, to avoid override conflicts)
+    # _math_enabled: bool
+    # _strikethrough_enabled: bool
+    # _footnotes_enabled: bool
+    # _link_refs: dict[str, tuple[str, str]]
 
     def _parse_inline(self, text: str, location: SourceLocation) -> tuple[Inline, ...]:
         """Parse inline content using CommonMark delimiter stack algorithm.

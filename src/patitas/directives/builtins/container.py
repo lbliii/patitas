@@ -24,7 +24,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from html import escape as html_escape
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from patitas.directives.contracts import DirectiveContract
 from patitas.directives.options import StyledOptions
@@ -71,7 +71,7 @@ class ContainerDirective:
         content: str,
         children: Sequence[Block],
         location: SourceLocation,
-    ) -> Directive:
+    ) -> Directive[ContainerOptions]:
         """Build container AST node.
 
         The title is treated as class name(s). Additional classes

@@ -29,14 +29,7 @@ This plugin is stateless and thread-safe.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from patitas.plugins import register_plugin
-
-if TYPE_CHECKING:
-    from patitas.lexer import Lexer
-    from patitas.parser import Parser
-    from patitas.renderers.html import HtmlRenderer
 
 
 @register_plugin("table")
@@ -46,24 +39,16 @@ class TablePlugin:
     Tables are detected at the block level when a line starts with |
     and is followed by a delimiter row (|---|---|).
 
+    Enable via Markdown(plugins=["table"]).
+
+    Note: The actual parsing is controlled by ParseConfig.tables_enabled,
+    which is set by the Markdown class based on the plugins list.
+
     """
 
     @property
     def name(self) -> str:
         return "table"
-
-    def extend_lexer(self, lexer_class: type[Lexer]) -> None:
-        """Enable table detection in lexer."""
-        # Mark that tables are enabled
-        lexer_class._tables_enabled = True
-
-    def extend_parser(self, parser_class: type[Parser]) -> None:
-        """Enable table parsing."""
-        parser_class._tables_enabled = True
-
-    def extend_renderer(self, renderer_class: type[HtmlRenderer]) -> None:
-        """Table rendering is handled in base renderer."""
-        pass
 
 
 # Table parsing is integrated into the lexer and parser.

@@ -9,7 +9,7 @@ Thread Safety:
 
 Usage:
     # In Markdown class
-    md = Markdown(plugins=["tables", "math"])
+    md = Markdown(plugins=["table", "math"])
     html = md("# Hello")  # Sets config internally via ContextVar
 
     # Direct parser usage (advanced)

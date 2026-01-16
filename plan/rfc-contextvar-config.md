@@ -564,7 +564,7 @@ sub_parser = Parser(content, self._source_file)
 
 ```python
 # User-facing API remains identical
-md = Markdown(plugins=["tables", "math"])
+md = Markdown(plugins=["table", "math"])
 html = md("# Hello *world*")
 ```
 

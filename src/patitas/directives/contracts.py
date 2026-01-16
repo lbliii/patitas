@@ -19,7 +19,7 @@ Example:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -132,7 +132,7 @@ class DirectiveContract:
     def validate_children(
         self,
         directive_name: str,
-        children: Sequence[Directive],
+        children: Sequence[Directive[Any]],
     ) -> list[ContractViolation]:
         """Validate directive children against contract.
 
@@ -151,7 +151,7 @@ class DirectiveContract:
         # Check requires_children
         if self.requires_children is not None:
             has_required = any(name in self.requires_children for name in child_names)
-            if not has_required and children:
+            if not has_required:
                 required = ", ".join(self.requires_children)
                 violations.append(
                     ContractViolation(
@@ -159,7 +159,7 @@ class DirectiveContract:
                         violation_type="missing_required_child",
                         message=f"'{directive_name}' requires at least one of: {required}",
                         expected=self.requires_children,
-                        actual=tuple(child_names),
+                        actual=tuple(child_names) if child_names else None,
                     )
                 )
 
@@ -250,6 +250,7 @@ class ContractViolation:
 
 # Steps container must have step children
 STEPS_CONTRACT = DirectiveContract(
+    requires_children=("step",),
     allows_children=("step",),
 )
 

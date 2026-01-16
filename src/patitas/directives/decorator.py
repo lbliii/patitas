@@ -18,37 +18,20 @@ Example (class):
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import TYPE_CHECKING, TypeVar, overload
+from collections.abc import Callable, Sequence
+from typing import TYPE_CHECKING, Any, TypeVar
 
 if TYPE_CHECKING:
     from patitas.directives.contracts import DirectiveContract
     from patitas.directives.options import DirectiveOptions
-    from patitas.nodes import Directive
+    from patitas.location import SourceLocation
+    from patitas.nodes import Block, Directive
     from patitas.stringbuilder import StringBuilder
 
 TOptions = TypeVar("TOptions", bound="DirectiveOptions")
-TClass = TypeVar("TClass", bound=type)
 
-
-@overload
-def directive(  # noqa: UP047
-    *names: str,
-    options: type[TOptions] = ...,
-    contract: DirectiveContract | None = ...,
-    preserves_raw_content: bool = ...,
-    token_type: str | None = ...,
-) -> Callable[[Callable[[Directive[TOptions], str, StringBuilder], None]], type]: ...
-
-
-@overload
-def directive(  # noqa: UP047
-    *names: str,
-    options: type[TOptions] = ...,
-    contract: DirectiveContract | None = ...,
-    preserves_raw_content: bool = ...,
-    token_type: str | None = ...,
-) -> Callable[[TClass], TClass]: ...
+# Type for the decorated function/class
+RenderFunc = Callable[["Directive[Any]", str, "StringBuilder"], None]
 
 
 def directive(
@@ -57,7 +40,7 @@ def directive(
     contract: DirectiveContract | None = None,
     preserves_raw_content: bool = False,
     token_type: str | None = None,
-):
+) -> Callable[[RenderFunc | type], type]:
     """Decorator to create directive handlers with minimal boilerplate.
 
     Works with both functions (simple directives) and classes (complex directives).
@@ -92,37 +75,56 @@ def directive(
     effective_token_type = token_type or names[0]
     effective_options = options or DirectiveOptions
 
-    def decorator(func_or_class):
+    def decorator(func_or_class: RenderFunc | type) -> type:
         if isinstance(func_or_class, type):
-            # Class decorator — add attributes
-            func_or_class.names = names
-            func_or_class.token_type = effective_token_type
-            func_or_class.contract = contract
-            func_or_class.options_class = effective_options
-            func_or_class.preserves_raw_content = preserves_raw_content
+            # Class decorator — add attributes via setattr to satisfy type checker
+            setattr(func_or_class, "names", names)
+            setattr(func_or_class, "token_type", effective_token_type)
+            setattr(func_or_class, "contract", contract)
+            setattr(func_or_class, "options_class", effective_options)
+            setattr(func_or_class, "preserves_raw_content", preserves_raw_content)
             return func_or_class
         else:
             # Function decorator — wrap in class
             render_func = func_or_class
+            # Capture closure variables with different names to avoid shadowing
+            _names = names
+            _token_type = effective_token_type
+            _contract = contract
+            _options_class = effective_options
+            _preserves_raw = preserves_raw_content
 
             class GeneratedDirective:
-                names = names
-                token_type = effective_token_type
-                contract = contract
-                options_class = effective_options
-                preserves_raw_content = preserves_raw_content
+                names = _names
+                token_type = _token_type
+                contract = _contract
+                options_class = _options_class
+                preserves_raw_content = _preserves_raw
 
-                def parse(self, name, title, opts, content, children, location):
+                def parse(
+                    self,
+                    name: str,
+                    title: str | None,
+                    opts: DirectiveOptions,
+                    content: str,
+                    children: Sequence[Block],
+                    location: SourceLocation,
+                ) -> Directive[Any]:
                     return Directive(
                         location=location,
                         name=name,
                         title=title,
                         options=opts,
                         children=tuple(children),
-                        raw_content=content if preserves_raw_content else None,
+                        raw_content=content if _preserves_raw else None,
                     )
 
-                def render(self, node, rendered_children, sb):
+                def render(
+                    self,
+                    node: Directive[Any],
+                    rendered_children: str,
+                    sb: StringBuilder,
+                ) -> None:
                     return render_func(node, rendered_children, sb)
 
             GeneratedDirective.__name__ = f"{render_func.__name__}_directive"

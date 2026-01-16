@@ -142,7 +142,11 @@ class TableParsingMixin:
 
         Delimiter format: |:---|:---:|---:|
         Returns tuple of alignments ('left', 'center', 'right', None).
-        Returns None if not a valid delimiter row.
+        Returns None if not a valid delimiter row or column count doesn't match.
+
+        Args:
+            line: The delimiter row line
+            expected_cols: Expected number of columns (from header row)
         """
         line = line.strip()
 
@@ -189,6 +193,10 @@ class TableParsingMixin:
 
         # Must have at least one column
         if not alignments:
+            return None
+
+        # Column count must match header row (GFM spec)
+        if len(alignments) != expected_cols:
             return None
 
         return tuple(alignments)

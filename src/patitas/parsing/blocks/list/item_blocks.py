@@ -172,6 +172,8 @@ def parse_fenced_code_from_indented_code(
         A FencedCode node
 
     """
+    from typing import Literal, cast
+
     code_content = start_token.value.lstrip().rstrip()
     fence_char = code_content[0]
     fence_count = len(code_content) - len(code_content.lstrip(fence_char))
@@ -203,12 +205,15 @@ def parse_fenced_code_from_indented_code(
         else:
             break
 
+    # Validate fence character - must be ` or ~
+    validated_marker: Literal["`", "~"] = "`" if fence_char != "~" else "~"
+
     return FencedCode(
         location=start_token.location,
         source_start=source_start or 0,
         source_end=source_end,
         info=info_string,
-        marker=fence_char,
+        marker=validated_marker,
         fence_indent=check_indent,
     )
 
