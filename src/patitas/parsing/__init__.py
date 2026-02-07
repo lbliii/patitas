@@ -28,10 +28,12 @@ BlockParsingMixin: Combined block parsing (lists, tables, etc.)
 
 from patitas.parsing.blocks import BlockParsingMixin
 from patitas.parsing.inline import InlineParsingMixin
+from patitas.parsing.protocols import ParserHost
 from patitas.parsing.token_nav import TokenNavigationMixin
 
 __all__ = [
     "TokenNavigationMixin",
     "InlineParsingMixin",
     "BlockParsingMixin",
+    "ParserHost",
 ]
