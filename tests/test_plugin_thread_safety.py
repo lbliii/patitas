@@ -13,8 +13,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import pytest
 
-from patitas import Markdown
+from patitas import Markdown, parse
 from patitas.plugins import BUILTIN_PLUGINS
+from patitas.renderers.html import HtmlRenderer
 
 
 class TestPluginThreadSafety:
@@ -136,6 +137,49 @@ class TestPluginThreadSafety:
         assert results["tables"]["math_enabled"] is False
         assert results["math"]["tables_enabled"] is False
         assert results["math"]["math_enabled"] is True
+
+
+class TestRendererThreadSafety:
+    """Verify HtmlRenderer.get_headings() is thread-safe via ContextVar."""
+
+    def test_concurrent_render_get_headings(self) -> None:
+        """Concurrent render + get_headings on a shared renderer returns correct per-thread data."""
+        renderer = HtmlRenderer()
+        errors: list[str] = []
+        barrier = threading.Barrier(4)
+
+        def render_and_check(heading_text: str) -> None:
+            source = f"# {heading_text}\n\n## Sub {heading_text}"
+            doc = parse(source)
+            barrier.wait()  # Force all threads to render ~simultaneously
+            renderer.render(doc)
+            headings = renderer.get_headings()
+
+            # Each thread should see its own headings, not another thread's
+            if len(headings) != 2:
+                errors.append(
+                    f"Thread '{heading_text}' expected 2 headings, got {len(headings)}"
+                )
+                return
+            if headings[0].text != heading_text:
+                errors.append(
+                    f"Thread '{heading_text}' got wrong h1: '{headings[0].text}'"
+                )
+            if headings[1].text != f"Sub {heading_text}":
+                errors.append(
+                    f"Thread '{heading_text}' got wrong h2: '{headings[1].text}'"
+                )
+
+        threads = [
+            threading.Thread(target=render_and_check, args=(f"Thread{i}",))
+            for i in range(4)
+        ]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(timeout=5.0)
+
+        assert not errors, f"Thread-safety errors: {errors}"
 
 
 class TestPluginRegistryThreadSafety:

@@ -15,6 +15,7 @@ regex-based post-processing. TOC data is collected during rendering.
 import html
 import logging
 from collections.abc import Callable
+from contextvars import ContextVar
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 from urllib.parse import quote as url_quote
@@ -118,6 +119,12 @@ class RenderContext:
     footnote_refs: list[str] = field(default_factory=list)
 
 
+# Thread-safe storage for the most recent RenderContext per execution context.
+# Each thread/task gets its own value, avoiding the race condition that existed
+# when _last_context was stored as instance state on HtmlRenderer.
+_render_context: ContextVar[RenderContext | None] = ContextVar("_render_context", default=None)
+
+
 class HtmlRenderer:
     """Render AST to HTML using StringBuilder pattern.
 
@@ -145,7 +152,6 @@ class HtmlRenderer:
         "_role_registry",
         "_text_transformer",
         "_slugify",
-        "_last_context",
     )
 
     def __init__(
@@ -174,7 +180,6 @@ class HtmlRenderer:
         self._role_registry = role_registry
         self._text_transformer = text_transformer
         self._slugify = slugify or default_slugify
-        self._last_context: RenderContext | None = None
 
     def render(self, node: Document) -> str:
         """Render document AST to HTML string.
@@ -204,8 +209,8 @@ class HtmlRenderer:
         if ctx.footnote_refs:
             self._render_footnotes_section(sb, ctx)
 
-        # Store context for get_headings() (note: not thread-safe for get_headings)
-        self._last_context = ctx
+        # Store context for get_headings() via ContextVar (thread-safe)
+        _render_context.set(ctx)
 
         return sb.build()
 
@@ -216,14 +221,14 @@ class HtmlRenderer:
             List of HeadingInfo from the last render() call.
             Empty if render() hasn't been called.
 
-        Note:
-            This method returns data from the most recent render() call.
-            In multi-threaded scenarios, use the returned value immediately
-            after render() in the same thread for accurate results.
+        Thread Safety:
+            Uses ContextVar to store per-thread/task render context.
+            Safe to call from concurrent threads sharing a single renderer.
         """
-        if self._last_context is None:
+        ctx = _render_context.get()
+        if ctx is None:
             return []
-        return self._last_context.headings.copy()
+        return ctx.headings.copy()
 
     # =========================================================================
     # Block rendering
