@@ -279,42 +279,6 @@ class Lexer(
             self._consumed_newline = True
 
     # =========================================================================
-    # Character navigation helpers (kept for compatibility)
-    # =========================================================================
-
-    def _peek(self) -> str:
-        """Peek at current character without advancing.
-
-        Returns:
-            Current character or empty string at end of input.
-        """
-        if self._pos >= self._source_len:
-            return ""
-        return self._source[self._pos]
-
-    def _advance(self) -> str:
-        """Advance position by one character.
-
-        Updates line/column tracking.
-
-        Returns:
-            The consumed character.
-        """
-        if self._pos >= self._source_len:
-            return ""
-
-        char = self._source[self._pos]
-        self._pos += 1
-
-        if char == "\n":
-            self._lineno += 1
-            self._col = 1
-        else:
-            self._col += 1
-
-        return char
-
-    # =========================================================================
     # Location tracking
     # =========================================================================
 
