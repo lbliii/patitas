@@ -61,6 +61,23 @@ markers = [
     "property: property-based tests (may take longer)",
 ]
 
+[tool.coverage.run]
+source = ["src/patitas"]
+omit = ["*/tests/*", "*/benchmarks/*"]
+
+[tool.coverage.report]
+fail_under = 75
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.",
+    "if TYPE_CHECKING:",
+    "pass",
+]
+show_missing = true
+
 [tool.ty.environment]
 python-version = "3.14"
 
