@@ -1,7 +1,5 @@
 """Directive classifier mixin."""
 
-from __future__ import annotations
-
 from collections.abc import Iterator
 
 from patitas.lexer.modes import LexerMode

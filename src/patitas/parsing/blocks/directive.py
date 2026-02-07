@@ -3,8 +3,6 @@
 Handles MyST-style directive blocks with contract validation.
 """
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 from patitas.nodes import Block, Directive

@@ -7,8 +7,6 @@ Run with:
     uv run python benchmarks/benchmark_by_section.py
 """
 
-from __future__ import annotations
-
 import json
 import time
 from collections import defaultdict

@@ -11,8 +11,6 @@ All state is instance-local; no shared mutable state.
 
 """
 
-from __future__ import annotations
-
 from collections.abc import Callable, Iterator
 
 from patitas.lexer.classifiers import (

@@ -3,8 +3,6 @@
 Provides standardized exceptions for error handling throughout Patitas.
 """
 
-from __future__ import annotations
-
 
 class PatitasError(Exception):
     """Base exception for all Patitas errors.

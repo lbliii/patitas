@@ -28,8 +28,6 @@ This plugin is stateless and thread-safe.
 
 """
 
-from __future__ import annotations
-
 from patitas.plugins import register_plugin
 
 

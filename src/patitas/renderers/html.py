@@ -12,8 +12,6 @@ Heading IDs are generated during the AST walk, eliminating the need for
 regex-based post-processing. TOC data is collected during rendering.
 """
 
-from __future__ import annotations
-
 import html
 import logging
 from collections.abc import Callable

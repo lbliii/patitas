@@ -41,8 +41,6 @@ Example:
     ...         sb.append(f'<video src="{node.title}"></video>')
 """
 
-from __future__ import annotations
-
 from patitas.directives.contracts import (
     CARD_CONTRACT,
     CARDS_CONTRACT,

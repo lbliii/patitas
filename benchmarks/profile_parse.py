@@ -8,8 +8,6 @@ Or for direct profiling:
     uv run python benchmarks/profile_parse.py
 """
 
-from __future__ import annotations
-
 import cProfile
 import io
 import json

@@ -1,7 +1,5 @@
 """Verify package imports work correctly."""
 
-from __future__ import annotations
-
 
 def test_import_patitas() -> None:
     """Test that patitas can be imported."""

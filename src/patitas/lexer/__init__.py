@@ -36,8 +36,6 @@ Token(EOF, '', 3:6)
 
 """
 
-from __future__ import annotations
-
 from patitas.lexer.core import Lexer
 from patitas.lexer.modes import LexerMode
 

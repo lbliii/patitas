@@ -1,7 +1,5 @@
 """Tests for Patitas utility modules."""
 
-from __future__ import annotations
-
 
 class TestSlugify:
     """Tests for slugify function."""

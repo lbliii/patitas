@@ -16,8 +16,6 @@ Example (class):
     ...         ...
 """
 
-from __future__ import annotations
-
 from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING, Any, TypeVar
 

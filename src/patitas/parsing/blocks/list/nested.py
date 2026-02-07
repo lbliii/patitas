@@ -3,8 +3,6 @@
 Handles detection and parsing of nested lists within list items.
 """
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, Protocol
 
 from patitas.nodes import List, ListItem, Paragraph

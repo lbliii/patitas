@@ -5,8 +5,6 @@ Handles the complex logic for blank lines within and between list items.
 Phase 4: Uses ContainerStack for indent queries (stack is source of truth).
 """
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 from patitas.parsing.blocks.list.marker import (

@@ -4,8 +4,6 @@ Provides inline SVG icon support via {icon}`name` syntax.
 The icon resolver can be configured per-instance for registry isolation.
 """
 
-from __future__ import annotations
-
 from collections.abc import Callable
 from typing import TYPE_CHECKING, ClassVar
 

@@ -8,8 +8,6 @@ Example:
     >>> logger.info("Parsing document")
 """
 
-from __future__ import annotations
-
 import logging
 
 

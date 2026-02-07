@@ -4,8 +4,6 @@ Tests the NamedTuple-based inline token types that provide
 type safety and memory efficiency.
 """
 
-from __future__ import annotations
-
 import pytest
 
 from patitas.parsing.inline.tokens import (

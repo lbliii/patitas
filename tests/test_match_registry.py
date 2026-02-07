@@ -4,8 +4,6 @@ Tests the external delimiter match tracking system that enables
 immutable inline tokens.
 """
 
-from __future__ import annotations
-
 from patitas.parsing.inline.match_registry import (
     DelimiterMatch,
     MatchRegistry,

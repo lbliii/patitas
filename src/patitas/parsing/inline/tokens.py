@@ -24,8 +24,6 @@ match token:
 
 """
 
-from __future__ import annotations
-
 from typing import Literal, NamedTuple
 
 # Inline token type tags for O(1) dispatch

@@ -1,7 +1,5 @@
 """Verify core module imports work correctly."""
 
-from __future__ import annotations
-
 
 def test_import_location() -> None:
     """Test SourceLocation import and instantiation."""

@@ -7,8 +7,6 @@ The equation {math}`E = mc^2` is famous.
 
 """
 
-from __future__ import annotations
-
 from html import escape as html_escape
 from typing import TYPE_CHECKING, ClassVar
 

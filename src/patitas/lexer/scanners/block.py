@@ -1,7 +1,5 @@
 """Block mode scanner mixin."""
 
-from __future__ import annotations
-
 from collections.abc import Callable, Iterator
 
 from patitas.parsing.charsets import (

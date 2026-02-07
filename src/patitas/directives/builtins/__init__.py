@@ -7,8 +7,6 @@ Provides commonly-used directives out of the box:
 - Container: generic wrapper div with custom classes
 """
 
-from __future__ import annotations
-
 from patitas.directives.builtins.admonition import AdmonitionDirective
 from patitas.directives.builtins.container import ContainerDirective
 from patitas.directives.builtins.dropdown import DropdownDirective

@@ -7,8 +7,6 @@ the proper closing delimiter.
 Regression tests for: HTML block types 1-5 content loss at EOF.
 """
 
-from __future__ import annotations
-
 import pytest
 
 from patitas.lexer import Lexer

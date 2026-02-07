@@ -14,8 +14,6 @@ E = mc{sup}`2`.
 
 """
 
-from __future__ import annotations
-
 from html import escape as html_escape
 from typing import TYPE_CHECKING, ClassVar
 

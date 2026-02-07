@@ -12,8 +12,6 @@ Usage:
     trace("handle_blank_line", token=tok.value, indent=check_indent, result="EndItem")
 """
 
-from __future__ import annotations
-
 import os
 from typing import Any
 

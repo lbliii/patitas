@@ -8,8 +8,6 @@ These tests verify invariants that should hold for any combination of plugins:
 Property-based testing finds edge cases that example-based tests miss.
 """
 
-from __future__ import annotations
-
 from hypothesis import given, settings, assume
 from hypothesis import strategies as st
 

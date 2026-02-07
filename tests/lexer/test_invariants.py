@@ -4,8 +4,6 @@ These tests verify that certain properties always hold regardless
 of the input, helping catch edge cases that example-based tests miss.
 """
 
-from __future__ import annotations
-
 import pytest
 from hypothesis import given, settings, strategies as st
 

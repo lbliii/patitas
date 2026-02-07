@@ -15,8 +15,6 @@ For a 1000-line document with 500 rendered fragments:
 
 """
 
-from __future__ import annotations
-
 
 class StringBuilder:
     """Efficient string accumulator.

@@ -36,8 +36,6 @@ Thread Safety:
 Stateless handlers. Safe for concurrent use across threads.
 """
 
-from __future__ import annotations
-
 import re
 from collections.abc import Sequence
 from dataclasses import dataclass

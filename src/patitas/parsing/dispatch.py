@@ -12,8 +12,6 @@ Complexity Levels:
 This pre-classification enables 3-10x speedups for simple documents.
 """
 
-from __future__ import annotations
-
 from enum import IntEnum
 from typing import TYPE_CHECKING
 

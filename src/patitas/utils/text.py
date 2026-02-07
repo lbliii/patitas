@@ -8,8 +8,6 @@ Example:
     'hello-world'
 """
 
-from __future__ import annotations
-
 import html as html_module
 import re
 

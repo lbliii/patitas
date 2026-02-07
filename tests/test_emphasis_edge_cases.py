@@ -4,8 +4,6 @@ These tests exercise the delimiter stack algorithm with various token types
 to ensure proper type handling (would have revealed the mypy type narrowing issues).
 """
 
-from __future__ import annotations
-
 import pytest
 
 from patitas import Markdown

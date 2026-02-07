@@ -8,8 +8,6 @@ Outputs:
     benchmarks/results/latest.md
 """
 
-from __future__ import annotations
-
 import json
 import platform
 import sys

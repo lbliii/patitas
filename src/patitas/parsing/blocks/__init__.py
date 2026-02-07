@@ -20,8 +20,6 @@ Block parsing is split into logical modules:
 
 """
 
-from __future__ import annotations
-
 from patitas.parsing.blocks.core import BlockParsingCoreMixin
 from patitas.parsing.blocks.directive import DirectiveParsingMixin
 from patitas.parsing.blocks.footnote import FootnoteParsingMixin

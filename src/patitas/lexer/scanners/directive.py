@@ -1,7 +1,5 @@
 """Directive mode scanner mixin."""
 
-from __future__ import annotations
-
 from collections.abc import Iterator
 
 from patitas.parsing.charsets import (

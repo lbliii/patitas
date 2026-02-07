@@ -4,8 +4,6 @@ Validates thread isolation, context manager behavior, and config inheritance
 for sub-parsers.
 """
 
-from __future__ import annotations
-
 from threading import Thread
 
 import pytest

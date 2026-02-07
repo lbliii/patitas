@@ -10,8 +10,6 @@ Example:
     'b94d27b9934d3e08'
 """
 
-from __future__ import annotations
-
 import hashlib
 
 

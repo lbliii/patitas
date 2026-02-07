@@ -3,8 +3,6 @@
 Provides mixin for token stream navigation and basic parsing operations.
 """
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 from patitas.tokens import Token, TokenType

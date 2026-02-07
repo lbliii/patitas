@@ -10,8 +10,6 @@ These tests would have caught:
 - The "tables" vs "table" typo in documentation
 """
 
-from __future__ import annotations
-
 import ast
 import re
 from pathlib import Path

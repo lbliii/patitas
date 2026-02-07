@@ -9,8 +9,6 @@ These tests cover scenarios that revealed bugs during code review:
 - Image alt text in heading slugs
 """
 
-from __future__ import annotations
-
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import TYPE_CHECKING

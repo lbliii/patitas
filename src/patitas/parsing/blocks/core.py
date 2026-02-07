@@ -3,8 +3,6 @@
 Provides block dispatch and basic block parsing (headings, code, quotes, paragraphs).
 """
 
-from __future__ import annotations
-
 import re
 from typing import TYPE_CHECKING
 

@@ -15,8 +15,6 @@ Simple List Criteria (v2 - Extended):
 Performance: ~30-50% improvement for list-heavy documents.
 """
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, Callable
 
 from patitas.nodes import List, ListItem, Paragraph

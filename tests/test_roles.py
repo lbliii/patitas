@@ -8,8 +8,6 @@ Tests cover:
 - Property-based edge case discovery
 """
 
-from __future__ import annotations
-
 import pytest
 from hypothesis import given, settings, strategies as st
 

@@ -3,8 +3,6 @@
 Provides functions for detecting and classifying list markers.
 """
 
-from __future__ import annotations
-
 from patitas.parsing.blocks.list.types import ListMarkerInfo
 
 

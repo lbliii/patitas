@@ -7,8 +7,6 @@ Or for basic memory stats:
     uv run python benchmarks/memory_bench.py
 """
 
-from __future__ import annotations
-
 import gc
 import json
 import sys

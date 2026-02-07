@@ -1,7 +1,5 @@
 """Tests for HtmlRenderer."""
 
-from __future__ import annotations
-
 
 class TestHtmlRenderer:
     """Tests for the HTML renderer."""

@@ -4,8 +4,6 @@ Defines the contracts for sub-lexers and delegates.
 Used for zero-copy handoff (ZCLH) to external highlighters.
 """
 
-from __future__ import annotations
-
 from collections.abc import Iterator
 from typing import Any, Protocol
 

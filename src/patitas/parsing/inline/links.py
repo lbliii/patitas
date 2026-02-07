@@ -9,8 +9,6 @@ CommonMark 0.31.2 compliance:
 - Backslash escapes work in destinations and titles
 """
 
-from __future__ import annotations
-
 import re
 from typing import TYPE_CHECKING
 

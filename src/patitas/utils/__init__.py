@@ -6,8 +6,6 @@ Provides:
 - logger: get_logger for logging
 """
 
-from __future__ import annotations
-
 from patitas.utils.hashing import hash_bytes, hash_str
 from patitas.utils.logger import get_logger
 from patitas.utils.text import escape_html, slugify

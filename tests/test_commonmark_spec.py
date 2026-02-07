@@ -17,17 +17,12 @@ Baseline Tracking:
 The baseline pass rate is tracked in this file. Update after each sprint.
 """
 
-from __future__ import annotations
-
 import json
 import re
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import Any
 
 import pytest
-
-if TYPE_CHECKING:
-    from typing import Any
 
 
 # Load the CommonMark spec

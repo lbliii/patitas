@@ -1,7 +1,5 @@
 """Thematic break classifier mixin."""
 
-from __future__ import annotations
-
 from patitas.tokens import Token, TokenType
 
 

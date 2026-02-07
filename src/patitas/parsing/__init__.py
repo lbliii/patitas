@@ -26,8 +26,6 @@ BlockParsingMixin: Combined block parsing (lists, tables, etc.)
 
 """
 
-from __future__ import annotations
-
 from patitas.parsing.blocks import BlockParsingMixin
 from patitas.parsing.inline import InlineParsingMixin
 from patitas.parsing.token_nav import TokenNavigationMixin

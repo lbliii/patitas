@@ -30,8 +30,6 @@ Installation:
     pip install patitas[syntax]      # + Syntax highlighting via Rosettes
 """
 
-from __future__ import annotations
-
 from patitas.config import (
     ParseConfig,
     get_parse_config,

@@ -8,8 +8,6 @@ These tests ensure that:
 This would have caught the "table" vs "tables" bug immediately.
 """
 
-from __future__ import annotations
-
 import ast
 import inspect
 from pathlib import Path

@@ -1,7 +1,5 @@
 """Tests for the high-level Patitas API."""
 
-from __future__ import annotations
-
 
 class TestParseFunction:
     """Tests for the parse() function."""

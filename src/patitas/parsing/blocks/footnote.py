@@ -3,8 +3,6 @@
 Handles footnote definition parsing.
 """
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 from patitas.nodes import Block, FootnoteDef, Inline, Paragraph

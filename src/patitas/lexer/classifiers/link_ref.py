@@ -4,8 +4,6 @@ Handles multi-line definitions, escaped characters, and strict validation
 according to CommonMark 0.31.2 spec.
 """
 
-from __future__ import annotations
-
 import re
 
 from patitas.tokens import Token, TokenType

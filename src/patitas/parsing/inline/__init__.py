@@ -16,8 +16,6 @@ See: https://spec.commonmark.org/0.31.2/#emphasis-and-strong-emphasis
 
 """
 
-from __future__ import annotations
-
 from patitas.parsing.inline.core import InlineParsingCoreMixin
 from patitas.parsing.inline.emphasis import EmphasisMixin
 from patitas.parsing.inline.links import LinkParsingMixin

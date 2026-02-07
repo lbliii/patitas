@@ -8,8 +8,6 @@ The plugin documentation claims thread safety. These tests verify that:
 These tests use real threading to catch actual concurrency bugs.
 """
 
-from __future__ import annotations
-
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 

@@ -17,8 +17,6 @@ Performance:
 Future: Could generate Cython/mypyc code for even faster dispatch.
 """
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, Callable, TypeAlias
 
 from patitas.tokens import TokenType

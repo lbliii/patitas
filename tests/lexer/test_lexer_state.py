@@ -4,8 +4,6 @@ These tests verify that the lexer properly cleans up internal state
 after emitting tokens, preventing state leakage between blocks.
 """
 
-from __future__ import annotations
-
 from patitas.lexer import Lexer, LexerMode
 from patitas.tokens import TokenType
 

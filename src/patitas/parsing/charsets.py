@@ -14,8 +14,6 @@ Usage:
         ...
 """
 
-from __future__ import annotations
-
 import unicodedata
 
 # CommonMark: ASCII punctuation characters

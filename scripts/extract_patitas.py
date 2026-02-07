@@ -12,8 +12,6 @@ Options:
     --dry-run  Show what would be copied without copying
 """
 
-from __future__ import annotations
-
 import argparse
 import re
 from pathlib import Path

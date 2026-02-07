@@ -1,7 +1,5 @@
 """Fenced code block classifier mixin."""
 
-from __future__ import annotations
-
 from patitas.lexer.modes import LexerMode
 from patitas.tokens import Token, TokenType
 

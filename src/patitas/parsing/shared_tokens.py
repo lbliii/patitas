@@ -19,8 +19,6 @@ Thread Safety:
 - Cursors are not shared across threads
 """
 
-from __future__ import annotations
-
 from contextvars import ContextVar, Token as ContextVarToken
 from typing import TYPE_CHECKING, Iterator
 

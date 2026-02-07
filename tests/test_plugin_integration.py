@@ -8,8 +8,6 @@ These tests verify that:
 These tests would have caught the "table" vs "tables" naming mismatch.
 """
 
-from __future__ import annotations
-
 import pytest
 
 from patitas import Markdown, ParseConfig

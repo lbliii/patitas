@@ -3,8 +3,6 @@
 Provides functions for calculating and managing indentation levels.
 """
 
-from __future__ import annotations
-
 from patitas.parsing.blocks.list.marker import get_marker_indent
 
 

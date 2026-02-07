@@ -9,8 +9,6 @@ Safe for concurrent use when each parser instance is used by one thread.
 
 """
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 from patitas.parsing.charsets import (

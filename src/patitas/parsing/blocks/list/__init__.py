@@ -20,8 +20,6 @@ List parsing is split into focused modules:
 
 """
 
-from __future__ import annotations
-
 from patitas.parsing.blocks.list.mixin import ListParsingMixin
 
 __all__ = ["ListParsingMixin"]

@@ -4,8 +4,6 @@ Handles parsing of block elements (thematic breaks, fenced code, block quotes,
 indented code) that appear within list items.
 """
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, Protocol
 
 from patitas.nodes import (

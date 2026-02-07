@@ -4,8 +4,6 @@ This module defines the finite state machine modes for the lexer
 and constant sets used for HTML block classification.
 """
 
-from __future__ import annotations
-
 from enum import Enum, auto
 
 

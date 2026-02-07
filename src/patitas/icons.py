@@ -20,8 +20,6 @@ Thread Safety:
     by a lock for safe updates in multi-threaded environments.
 """
 
-from __future__ import annotations
-
 import threading
 from collections.abc import Callable
 from typing import Protocol

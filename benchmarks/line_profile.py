@@ -7,8 +7,6 @@ Or install line_profiler:
     uv add line-profiler
 """
 
-from __future__ import annotations
-
 import json
 from pathlib import Path
 

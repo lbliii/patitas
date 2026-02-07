@@ -12,8 +12,6 @@ Provides commonly-used roles out of the box:
 
 """
 
-from __future__ import annotations
-
 from patitas.roles.builtins.formatting import (
     AbbrRole,
     KbdRole,

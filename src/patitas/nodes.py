@@ -36,8 +36,6 @@ All nodes are frozen (immutable) and safe to share across threads.
 
 """
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 from typing import Literal
 

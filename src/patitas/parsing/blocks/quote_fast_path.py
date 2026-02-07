@@ -11,8 +11,6 @@ Simple block quote criteria (all must be true):
 Performance: ~3-5% improvement for block quote-heavy documents.
 """
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 from patitas.nodes import BlockQuote, Paragraph

@@ -6,8 +6,6 @@ directly interprets existing tokens for block quote content.
 This eliminates the re-tokenization overhead for block quotes.
 """
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, Callable
 
 from patitas.nodes import BlockQuote, Paragraph

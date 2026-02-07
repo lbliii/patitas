@@ -16,8 +16,6 @@ Top 10 patterns cover 79.1% of CommonMark spec:
 10. (INDENTED_CODE,)                                     2.0%  ← parse_indented_only
 """
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, Callable
 
 from patitas.nodes import (

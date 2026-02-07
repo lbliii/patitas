@@ -1,7 +1,5 @@
 """Tests for the directive system."""
 
-from __future__ import annotations
-
 import concurrent.futures
 import threading
 from dataclasses import dataclass

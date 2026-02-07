@@ -31,8 +31,6 @@ Example:
 
 """
 
-from __future__ import annotations
-
 from patitas.roles.protocol import (
     RoleHandler,
     RoleParseOnly,

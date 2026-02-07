@@ -3,8 +3,6 @@
 Handles GFM (GitHub Flavored Markdown) table parsing.
 """
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 from patitas.nodes import Inline, Table, TableCell, TableRow

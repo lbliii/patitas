@@ -5,8 +5,6 @@ a specific block type. Classifiers are pure functions that determine
 whether a line matches a particular block pattern.
 """
 
-from __future__ import annotations
-
 from patitas.lexer.classifiers.directive import (
     DirectiveClassifierMixin,
 )

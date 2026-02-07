@@ -4,8 +4,6 @@ Provides the ListParsingMixin class that orchestrates list parsing
 using the modular helper functions.
 """
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 from patitas.lexer.modes import (

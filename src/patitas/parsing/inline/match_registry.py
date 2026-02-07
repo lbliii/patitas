@@ -9,8 +9,6 @@ All state is instance-local; no shared mutable state.
 
 """
 
-from __future__ import annotations
-
 from dataclasses import dataclass, field
 
 

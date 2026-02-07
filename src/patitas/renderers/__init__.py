@@ -11,8 +11,6 @@ Safe for concurrent use from multiple threads.
 
 """
 
-from __future__ import annotations
-
 from patitas.renderers.html import HtmlRenderer
 
 __all__ = ["HtmlRenderer"]
