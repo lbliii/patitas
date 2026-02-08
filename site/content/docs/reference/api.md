@@ -141,6 +141,24 @@ config = ParseConfig(
 )
 ```
 
+### ParseConfig.from_dict()
+
+Create a `ParseConfig` from a dictionary. Unknown keys are silently ignored,
+making this safe for framework integration where config may come from YAML
+files or external sources.
+
+```python
+from patitas import ParseConfig
+
+config = ParseConfig.from_dict({
+    "tables_enabled": True,
+    "math_enabled": True,
+    "unknown_key": "silently ignored",
+})
+# config.tables_enabled == True
+# config.math_enabled == True
+```
+
 ### parse_config_context()
 
 Context manager for temporary config changes.

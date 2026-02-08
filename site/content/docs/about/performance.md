@@ -104,3 +104,63 @@ With Python 3.14t (GIL disabled):
 | 8 | 1000 | 0.25s | 6x |
 
 Near-linear scaling due to no shared mutable state.
+
+## Profiling Your Workload
+
+Patitas includes a built-in profiler for measuring parse performance in your
+own application. It adds zero overhead when disabled — the hot path is a
+single `None` check.
+
+### profiled_parse()
+
+Wrap any code that calls `parse()` in a `profiled_parse()` context manager:
+
+```python
+from patitas import parse
+from patitas.profiling import profiled_parse
+
+with profiled_parse() as metrics:
+    doc = parse(source)
+
+summary = metrics.summary()
+print(summary)
+# {"total_ms": 1.2, "source_length": 1774, "node_count": 23, "parse_calls": 1}
+```
+
+The accumulator tracks total time, source length, top-level node count, and
+number of `parse()` calls. Use it to profile batch operations:
+
+```python
+with profiled_parse() as metrics:
+    for path in markdown_files:
+        doc = parse(path.read_text())
+
+summary = metrics.summary()
+print(f"{summary['parse_calls']} files in {summary['total_ms']:.1f} ms")
+print(f"Throughput: {summary['source_length'] / summary['total_ms']:,.0f} chars/ms")
+```
+
+### Thread safety
+
+Each thread gets its own accumulator via `ContextVar`. Profiling in one
+thread never affects another:
+
+```python
+from concurrent.futures import ThreadPoolExecutor
+
+def parse_with_profiling(source: str) -> dict:
+    with profiled_parse() as metrics:
+        parse(source)
+    return metrics.summary()
+
+with ThreadPoolExecutor(max_workers=4) as pool:
+    results = list(pool.map(parse_with_profiling, sources))
+# Each result has independent metrics
+```
+
+### When to use it
+
+- **Site builds** — identify which pages are slow
+- **Live preview** — measure parse latency per keystroke
+- **CI pipelines** — track parse time regressions across commits
+- **Framework integration** — expose timing to build orchestrators
