@@ -78,9 +78,15 @@ from patitas.nodes import (
     Text,
     ThematicBreak,
 )
+from patitas.context import CONTENT_CONTEXT_MAP, context_paths_for
+from patitas.differ import ASTChange, diff_documents
 from patitas.parser import Parser
+from patitas.profiling import ParseAccumulator, get_parse_accumulator, profiled_parse
 from patitas.renderers.html import HtmlRenderer
+from patitas.renderers.protocol import ASTRenderer
+from patitas.serialization import from_dict, from_json, to_dict, to_json
 from patitas.tokens import Token, TokenType
+from patitas.visitor import BaseVisitor, transform
 
 __version__ = "0.1.0"
 
@@ -112,6 +118,8 @@ def parse(
         >>> builder.register(MyDirective())
         >>> doc = parse(source, directive_registry=builder.build())
     """
+    from patitas.profiling import get_parse_accumulator
+
     registry = directive_registry or create_default_registry()
 
     # Build config and set via ContextVar for thread-safety
@@ -129,7 +137,14 @@ def parse(
             end_offset=len(source),
             source_file=source_file,
         )
-        return Document(location=loc, children=tuple(blocks))
+        doc = Document(location=loc, children=tuple(blocks))
+
+        # Record profiling metrics if accumulator is active
+        acc = get_parse_accumulator()
+        if acc is not None:
+            acc.record_parse(source_length=len(source), node_count=len(blocks))
+
+        return doc
     finally:
         reset_parse_config()
 
@@ -301,63 +316,84 @@ class Markdown:
 
 
 __all__ = [
+    # Version
+    "__version__",
+    # Core API
+    "parse",
+    "render",
     # Block nodes
     "Block",
     "BlockQuote",
-    "CodeSpan",
-    "Directive",
-    # Directive extensibility
-    "DirectiveRegistry",
-    "DirectiveRegistryBuilder",
     "Document",
-    "Emphasis",
     "FencedCode",
     "FootnoteDef",
-    "FootnoteRef",
     "Heading",
     "HtmlBlock",
-    "HtmlInline",
-    "HtmlRenderer",
-    "Image",
     "IndentedCode",
-    # Inline nodes
-    "Inline",
-    "Lexer",
-    "LineBreak",
-    "Link",
     "List",
     "ListItem",
-    "Markdown",
-    "Math",
     "MathBlock",
     "Paragraph",
-    # Configuration (ContextVar-based)
-    "ParseConfig",
-    # Parser components
-    "Parser",
-    "Role",
-    "SoftBreak",
-    # Location
-    "SourceLocation",
-    "Strikethrough",
-    "Strong",
     "Table",
     "TableCell",
     "TableRow",
-    "Text",
     "ThematicBreak",
+    # Inline nodes
+    "Inline",
+    "CodeSpan",
+    "Emphasis",
+    "FootnoteRef",
+    "HtmlInline",
+    "Image",
+    "LineBreak",
+    "Link",
+    "Math",
+    "Role",
+    "SoftBreak",
+    "Strikethrough",
+    "Strong",
+    "Text",
+    # Directive extensibility
+    "Directive",
+    "DirectiveRegistry",
+    "DirectiveRegistryBuilder",
+    "create_default_registry",
+    "create_registry_with_defaults",
+    # Parser components
+    "Lexer",
+    "Parser",
+    # Renderer
+    "HtmlRenderer",
+    "ASTRenderer",
+    # Visitor + Transform
+    "BaseVisitor",
+    "transform",
+    # Differ
+    "ASTChange",
+    "diff_documents",
+    # Context mapping
+    "CONTENT_CONTEXT_MAP",
+    "context_paths_for",
+    # Profiling
+    "ParseAccumulator",
+    "profiled_parse",
+    "get_parse_accumulator",
+    # Serialization
+    "to_dict",
+    "from_dict",
+    "to_json",
+    "from_json",
+    # Configuration (ContextVar-based)
+    "ParseConfig",
+    "get_parse_config",
+    "set_parse_config",
+    "reset_parse_config",
+    "parse_config_context",
+    # Location
+    "SourceLocation",
     # Tokens
     "Token",
     "TokenType",
-    # Version
-    "__version__",
-    "create_default_registry",
-    "create_registry_with_defaults",
-    "get_parse_config",
-    # Core API
-    "parse",
-    "parse_config_context",
-    "render",
-    "reset_parse_config",
-    "set_parse_config",
+    # High-level
+    "Markdown",
 ]
