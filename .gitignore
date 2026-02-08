@@ -90,3 +90,7 @@ uv.lock
 
 # Benchmark results
 .benchmarks/
+
+# DORI (local/ephemeral)
+.dori/local/
+.dori/events/

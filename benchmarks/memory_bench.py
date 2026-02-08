@@ -14,6 +14,7 @@ from pathlib import Path
 
 try:
     import tracemalloc
+
     TRACEMALLOC_AVAILABLE = True
 except ImportError:
     TRACEMALLOC_AVAILABLE = False
@@ -21,9 +22,7 @@ except ImportError:
 
 def get_commonmark_corpus() -> list[str]:
     """Load CommonMark spec examples."""
-    spec_file = (
-        Path(__file__).parent.parent / "tests" / "fixtures" / "commonmark_spec_0_31_2.json"
-    )
+    spec_file = Path(__file__).parent.parent / "tests" / "fixtures" / "commonmark_spec_0_31_2.json"
     if not spec_file.exists():
         raise FileNotFoundError(f"CommonMark spec not found: {spec_file}")
     examples = json.loads(spec_file.read_text())

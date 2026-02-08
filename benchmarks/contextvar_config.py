@@ -13,10 +13,10 @@ import gc
 import statistics
 import sys
 import timeit
+from collections.abc import Callable
 from contextvars import ContextVar
 from dataclasses import dataclass
 from threading import Thread
-from typing import Callable
 
 
 @dataclass(frozen=True, slots=True)
@@ -45,24 +45,24 @@ class ParserBefore:
     """Current: 18 slots with instance config."""
 
     __slots__ = (
-        "_source",
-        "_tokens",
-        "_pos",
-        "_current",
-        "_source_file",
-        "_text_transformer",
-        "_tables_enabled",
-        "_strikethrough_enabled",
-        "_task_lists_enabled",
-        "_footnotes_enabled",
-        "_math_enabled",
-        "_autolinks_enabled",
-        "_directive_registry",
-        "_strict_contracts",
-        "_directive_stack",
-        "_link_refs",
-        "_containers",
         "_allow_setext_headings",
+        "_autolinks_enabled",
+        "_containers",
+        "_current",
+        "_directive_registry",
+        "_directive_stack",
+        "_footnotes_enabled",
+        "_link_refs",
+        "_math_enabled",
+        "_pos",
+        "_source",
+        "_source_file",
+        "_strict_contracts",
+        "_strikethrough_enabled",
+        "_tables_enabled",
+        "_task_lists_enabled",
+        "_text_transformer",
+        "_tokens",
     )
 
     def __init__(self, source: str) -> None:
@@ -90,15 +90,15 @@ class ParserAfter:
     """Proposed: 9 slots with ContextVar config."""
 
     __slots__ = (
-        "_source",
-        "_tokens",
-        "_pos",
+        "_allow_setext_headings",
+        "_containers",
         "_current",
-        "_source_file",
         "_directive_stack",
         "_link_refs",
-        "_containers",
-        "_allow_setext_headings",
+        "_pos",
+        "_source",
+        "_source_file",
+        "_tokens",
     )
 
     def __init__(self, source: str) -> None:
@@ -157,16 +157,16 @@ class ParserAfterCached:
     """Alternative: Cache config reference to avoid repeated ContextVar lookups."""
 
     __slots__ = (
-        "_source",
-        "_tokens",
-        "_pos",
-        "_current",
-        "_source_file",
-        "_directive_stack",
-        "_link_refs",
-        "_containers",
         "_allow_setext_headings",
         "_cached_config",  # Cache the config at init time
+        "_containers",
+        "_current",
+        "_directive_stack",
+        "_link_refs",
+        "_pos",
+        "_source",
+        "_source_file",
+        "_tokens",
     )
 
     def __init__(self, source: str) -> None:
@@ -192,7 +192,7 @@ class ParserAfterCached:
 
 def benchmark_instantiation(n: int = 100_000) -> dict[str, float]:
     """Benchmark parser instantiation."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Parser Instantiation Benchmark (n={n:,})")
     print("=" * 60)
 
@@ -203,7 +203,7 @@ def benchmark_instantiation(n: int = 100_000) -> dict[str, float]:
     after_times = []
 
     # Run multiple trials
-    for trial in range(5):
+    for _trial in range(5):
         before = timeit.timeit(lambda: ParserBefore("# Test"), number=n)
         after = timeit.timeit(lambda: ParserAfter("# Test"), number=n)
         before_times.append(before)
@@ -214,17 +214,23 @@ def benchmark_instantiation(n: int = 100_000) -> dict[str, float]:
     before_avg = statistics.mean(before_times)
     after_avg = statistics.mean(after_times)
 
-    print(f"\nBefore (18 slots): {before_avg*1000:.2f}ms (±{statistics.stdev(before_times)*1000:.2f}ms)")
-    print(f"After (9 slots):   {after_avg*1000:.2f}ms (±{statistics.stdev(after_times)*1000:.2f}ms)")
-    print(f"Speedup: {before_avg/after_avg:.2f}x")
-    print(f"Per-instance: {before_avg/n*1e9:.1f}ns → {after_avg/n*1e9:.1f}ns")
+    before_std = statistics.stdev(before_times) * 1000
+    after_std = statistics.stdev(after_times) * 1000
+    print(f"\nBefore (18 slots): {before_avg * 1000:.2f}ms (±{before_std:.2f}ms)")
+    print(f"After (9 slots):   {after_avg * 1000:.2f}ms (±{after_std:.2f}ms)")
+    print(f"Speedup: {before_avg / after_avg:.2f}x")
+    print(f"Per-instance: {before_avg / n * 1e9:.1f}ns → {after_avg / n * 1e9:.1f}ns")
 
-    return {"before_ms": before_avg * 1000, "after_ms": after_avg * 1000, "speedup": before_avg / after_avg}
+    return {
+        "before_ms": before_avg * 1000,
+        "after_ms": after_avg * 1000,
+        "speedup": before_avg / after_avg,
+    }
 
 
 def benchmark_config_access(n: int = 1_000_000) -> dict[str, float]:
     """Benchmark config attribute access."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Config Access Benchmark (n={n:,})")
     print("=" * 60)
 
@@ -243,11 +249,11 @@ def benchmark_config_access(n: int = 1_000_000) -> dict[str, float]:
 
     gc.enable()
 
-    print(f"\nInstance attr:    {before*1000:.2f}ms ({before/n*1e9:.1f}ns/access)")
-    print(f"ContextVar:       {after*1000:.2f}ms ({after/n*1e9:.1f}ns/access)")
-    print(f"Cached config:    {after_cached*1000:.2f}ms ({after_cached/n*1e9:.1f}ns/access)")
-    print(f"ContextVar overhead: {after/before:.2f}x")
-    print(f"Cached overhead:     {after_cached/before:.2f}x")
+    print(f"\nInstance attr:    {before * 1000:.2f}ms ({before / n * 1e9:.1f}ns/access)")
+    print(f"ContextVar:       {after * 1000:.2f}ms ({after / n * 1e9:.1f}ns/access)")
+    print(f"Cached config:    {after_cached * 1000:.2f}ms ({after_cached / n * 1e9:.1f}ns/access)")
+    print(f"ContextVar overhead: {after / before:.2f}x")
+    print(f"Cached overhead:     {after_cached / before:.2f}x")
 
     return {
         "instance_attr_ms": before * 1000,
@@ -260,7 +266,7 @@ def benchmark_config_access(n: int = 1_000_000) -> dict[str, float]:
 
 def benchmark_sub_parser_creation(n: int = 50_000) -> dict[str, float]:
     """Benchmark sub-parser creation (simulates nested content parsing)."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Sub-Parser Creation Benchmark (n={n:,})")
     print("=" * 60)
 
@@ -299,16 +305,16 @@ def benchmark_sub_parser_creation(n: int = 50_000) -> dict[str, float]:
 
     gc.enable()
 
-    print(f"\nBefore (copy 9 fields): {before*1000:.2f}ms")
-    print(f"After (no copy):        {after*1000:.2f}ms")
-    print(f"Speedup: {before/after:.2f}x")
+    print(f"\nBefore (copy 9 fields): {before * 1000:.2f}ms")
+    print(f"After (no copy):        {after * 1000:.2f}ms")
+    print(f"Speedup: {before / after:.2f}x")
 
     return {"before_ms": before * 1000, "after_ms": after * 1000, "speedup": before / after}
 
 
 def benchmark_thread_isolation() -> None:
     """Verify config isolation across threads."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("Thread Isolation Test")
     print("=" * 60)
 
@@ -345,7 +351,8 @@ def benchmark_thread_isolation() -> None:
     ]
 
     print("\nResults:")
-    for i, (exp, got) in enumerate(zip(expected, [results.get(i, {}) for i in range(4)], strict=True)):
+    result_list = [results.get(i, {}) for i in range(4)]
+    for i, (exp, got) in enumerate(zip(expected, result_list, strict=True)):
         status = "✅" if exp == got else "❌"
         print(f"  Thread {i}: expected={exp}, got={got} {status}")
         if exp != got:
@@ -359,7 +366,7 @@ def benchmark_thread_isolation() -> None:
 
 def benchmark_memory_footprint() -> None:
     """Compare memory footprint of parsers."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("Memory Footprint Comparison")
     print("=" * 60)
 
@@ -367,15 +374,16 @@ def benchmark_memory_footprint() -> None:
     after_slots = len(ParserAfter.__slots__)
     after_cached_slots = len(ParserAfterCached.__slots__)
 
-    print(f"\nSlot counts:")
+    print("\nSlot counts:")
     print(f"  Before:       {before_slots} slots")
     print(f"  After:        {after_slots} slots")
     print(f"  After+cache:  {after_cached_slots} slots")
-    print(f"\nReduction: {before_slots} → {after_slots} ({(1 - after_slots/before_slots)*100:.0f}% smaller)")
+    pct = (1 - after_slots / before_slots) * 100
+    print(f"\nReduction: {before_slots} → {after_slots} ({pct:.0f}% smaller)")
 
     # Estimate memory per instance (rough approximation)
     # Each slot is ~8 bytes for the pointer + object overhead
-    print(f"\nEstimated per-instance overhead:")
+    print("\nEstimated per-instance overhead:")
     print(f"  Before: ~{before_slots * 8} bytes for slot pointers")
     print(f"  After:  ~{after_slots * 8} bytes for slot pointers")
 
@@ -401,7 +409,7 @@ def main() -> None:
     results["sub_parser"] = benchmark_sub_parser_creation()
 
     # Summary
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("Summary")
     print("=" * 60)
     print(f"\nInstantiation speedup: {results['instantiation']['speedup']:.2f}x")
@@ -410,7 +418,7 @@ def main() -> None:
     print(f"  (cached variant):     {results['config_access']['cached_overhead']:.2f}x")
 
     # RFC validation
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("RFC Claim Validation")
     print("=" * 60)
     inst_speedup = results["instantiation"]["speedup"]

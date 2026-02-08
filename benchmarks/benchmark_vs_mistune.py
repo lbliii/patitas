@@ -89,7 +89,13 @@ def benchmark_markdown_it(docs: list[str], iterations: int = 10) -> float:
     return elapsed / iterations
 
 
-def benchmark_threaded(name: str, make_parser, docs: list[str], num_threads: int = 4, iterations: int = 5) -> float | None:
+def benchmark_threaded(
+    name: str,
+    make_parser,
+    docs: list[str],
+    num_threads: int = 4,
+    iterations: int = 5,
+) -> float | None:
     """Benchmark parser with multiple threads (Python 3.14t free-threading)."""
     import concurrent.futures
     import sys
@@ -172,8 +178,9 @@ def main() -> None:
         print("RESULTS: Parse 652 CommonMark examples (4 threads)")
         print("=" * 60)
 
-        from patitas import Markdown
         import mistune
+
+        from patitas import Markdown
 
         patitas_threaded = benchmark_threaded("Patitas", Markdown, docs)
         mistune_threaded = benchmark_threaded("mistune", mistune.create_markdown, docs)
@@ -181,14 +188,17 @@ def main() -> None:
         # markdown-it-py crashes under free-threading
         try:
             from markdown_it import MarkdownIt
+
             mdit_threaded = benchmark_threaded("markdown-it-py", MarkdownIt, docs)
         except Exception:
             mdit_threaded = None
 
         if patitas_threaded:
-            print(f"{'Patitas':20} {patitas_threaded * 1000:8.2f}ms  (speedup: {patitas_time / patitas_threaded:.1f}x)")
+            speedup = patitas_time / patitas_threaded
+            print(f"{'Patitas':20} {patitas_threaded * 1000:8.2f}ms  (speedup: {speedup:.1f}x)")
         if mistune_threaded:
-            print(f"{'mistune':20} {mistune_threaded * 1000:8.2f}ms  (speedup: {mistune_time / mistune_threaded:.1f}x)")
+            speedup = mistune_time / mistune_threaded
+            print(f"{'mistune':20} {mistune_threaded * 1000:8.2f}ms  (speedup: {speedup:.1f}x)")
         if mdit_threaded:
             print(f"{'markdown-it-py':20} {mdit_threaded * 1000:8.2f}ms")
         else:

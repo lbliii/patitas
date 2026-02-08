@@ -14,7 +14,7 @@ Usage:
 
     # Direct parser usage (advanced)
     from patitas.config import set_parse_config, reset_parse_config, ParseConfig
-    
+
     set_parse_config(ParseConfig(tables_enabled=True))
     try:
         parser = Parser(source)
@@ -29,11 +29,11 @@ Usage:
 
 """
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Iterator
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from patitas.directives.registry import DirectiveRegistry
@@ -73,7 +73,7 @@ class ParseConfig:
     text_transformer: Callable[[str], str] | None = None
 
     @classmethod
-    def from_dict(cls, config_dict: dict) -> "ParseConfig":
+    def from_dict(cls, config_dict: dict) -> ParseConfig:
         """Create ParseConfig from dictionary.
 
         Useful for framework integration where config may come from external
@@ -189,7 +189,7 @@ def parse_config_context(config: ParseConfig) -> Iterator[None]:
 __all__ = [
     "ParseConfig",
     "get_parse_config",
-    "set_parse_config",
-    "reset_parse_config",
     "parse_config_context",
+    "reset_parse_config",
+    "set_parse_config",
 ]

@@ -9,10 +9,11 @@ Tests cover:
 """
 
 import pytest
-from hypothesis import given, settings, strategies as st
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 from patitas.location import SourceLocation
-from patitas.roles import RoleRegistry, RoleRegistryBuilder, create_default_registry
+from patitas.roles import RoleRegistryBuilder, create_default_registry
 from patitas.roles.builtins import (
     AbbrRole,
     DocRole,
@@ -24,7 +25,6 @@ from patitas.roles.builtins import (
     SupRole,
 )
 from patitas.stringbuilder import StringBuilder
-
 
 # =============================================================================
 # Fixtures
@@ -144,7 +144,7 @@ class TestRefRole:
 
     def test_escapes_html(self, role: RefRole, loc: SourceLocation) -> None:
         """Target and display should be HTML escaped."""
-        node = role.parse("ref", '<script> <"target">',loc)
+        node = role.parse("ref", '<script> <"target">', loc)
         sb = StringBuilder()
         role.render(node, sb)
         result = sb.build()
@@ -294,7 +294,7 @@ class TestAbbrRole:
         sb = StringBuilder()
         role.render(node, sb)
         result = sb.build()
-        assert "<abbr>API</abbr>" == result
+        assert result == "<abbr>API</abbr>"
 
     def test_escapes_html_in_expansion(self, role: AbbrRole, loc: SourceLocation) -> None:
         """Expansion text should be HTML escaped."""
@@ -409,7 +409,7 @@ class TestIconRoleBasic:
         node = icon.parse("icon", "check", loc)
         sb = StringBuilder()
         icon.render(node, sb)
-        assert "<svg data-icon='check'></svg>" == sb.build()
+        assert sb.build() == "<svg data-icon='check'></svg>"
 
     def test_resolver_returning_none_falls_back(self, loc: SourceLocation) -> None:
         """Resolver returning None should fall back to placeholder."""
@@ -437,9 +437,7 @@ class TestIconRoleBasic:
 class TestIconRoleIsolation:
     """Tests for registry isolation - ensures no shared state between instances."""
 
-    def test_separate_instances_have_separate_resolvers(
-        self, loc: SourceLocation
-    ) -> None:
+    def test_separate_instances_have_separate_resolvers(self, loc: SourceLocation) -> None:
         """Different IconRole instances should have independent resolvers."""
 
         def resolver_a(name: str) -> str | None:
@@ -464,9 +462,7 @@ class TestIconRoleIsolation:
         assert "b-check" in sb_b.build()
         assert sb_a.build() != sb_b.build()
 
-    def test_one_instance_with_resolver_other_without(
-        self, loc: SourceLocation
-    ) -> None:
+    def test_one_instance_with_resolver_other_without(self, loc: SourceLocation) -> None:
         """One instance with resolver shouldn't affect instance without."""
 
         def resolver(name: str) -> str | None:

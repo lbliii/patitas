@@ -30,9 +30,7 @@ def get_commonmark_corpus_by_section() -> dict[str, list[tuple[int, str]]]:
     Returns:
         Dict mapping section name to list of (example_number, markdown_content).
     """
-    spec_file = (
-        Path(__file__).parent.parent / "tests" / "fixtures" / "commonmark_spec_0_31_2.json"
-    )
+    spec_file = Path(__file__).parent.parent / "tests" / "fixtures" / "commonmark_spec_0_31_2.json"
     if not spec_file.exists():
         raise FileNotFoundError(f"CommonMark spec not found: {spec_file}")
 
@@ -106,7 +104,7 @@ def main() -> None:
     results: list[SectionTiming] = []
 
     for section_name, docs in sections.items():
-        total_time, per_doc = benchmark_section(docs, iterations)
+        total_time, _per_doc = benchmark_section(docs, iterations)
         avg_time = total_time / len(docs) if docs else 0
 
         results.append(
@@ -136,7 +134,9 @@ def main() -> None:
     for r in results:
         ratio = r.avg_time_us / overall_avg if overall_avg else 0
         bar = "█" * min(int(ratio * 5), 20)
-        print(f"{r.section:40} {r.avg_time_us:6.1f}µs/doc ({r.doc_count:3} docs) [{ratio:.1f}x] {bar}")
+        print(
+            f"{r.section:40} {r.avg_time_us:6.1f}µs/doc ({r.doc_count:3} docs) [{ratio:.1f}x] {bar}"
+        )
 
     # Summary of slowest sections
     print("\n" + "=" * 60)

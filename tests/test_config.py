@@ -119,10 +119,12 @@ class TestParseConfigContext:
 
     def test_context_restores_on_exception(self) -> None:
         """Context manager restores config even if exception is raised."""
-        with pytest.raises(ValueError, match="test"):
-            with parse_config_context(ParseConfig(tables_enabled=True)):
-                assert get_parse_config().tables_enabled is True
-                raise ValueError("test")
+        with (
+            pytest.raises(ValueError, match="test"),
+            parse_config_context(ParseConfig(tables_enabled=True)),
+        ):
+            assert get_parse_config().tables_enabled is True
+            raise ValueError("test")
 
         # Config is restored despite exception
         assert get_parse_config().tables_enabled is False
@@ -258,7 +260,7 @@ class TestMarkdownConfigIntegration:
         assert get_parse_config().tables_enabled is False
 
         # parse() sets config
-        doc = parse("# Hello")
+        parse("# Hello")
 
         # After parse, config is reset
         assert get_parse_config().tables_enabled is False

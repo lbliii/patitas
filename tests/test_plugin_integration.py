@@ -8,7 +8,7 @@ These tests verify that:
 These tests would have caught the "table" vs "tables" naming mismatch.
 """
 
-import pytest
+from typing import ClassVar
 
 from patitas import Markdown, ParseConfig
 from patitas.nodes import (
@@ -16,7 +16,6 @@ from patitas.nodes import (
     FootnoteRef,
     List,
     Math,
-    MathBlock,
     Strikethrough,
     Table,
 )
@@ -27,7 +26,7 @@ class TestPluginNameConsistency:
     """Verify plugin names are consistent across the codebase."""
 
     # Mapping of plugin names to their corresponding ParseConfig fields
-    PLUGIN_CONFIG_MAPPING = {
+    PLUGIN_CONFIG_MAPPING: ClassVar[dict[str, str]] = {
         "table": "tables_enabled",
         "strikethrough": "strikethrough_enabled",
         "task_lists": "task_lists_enabled",
@@ -65,16 +64,11 @@ class TestPluginNameConsistency:
     def test_all_config_fields_have_plugins(self) -> None:
         """Every boolean config field should have a corresponding plugin."""
         config = ParseConfig()
-        boolean_fields = [
-            name for name in config.__dataclass_fields__
-            if name.endswith("_enabled")
-        ]
-        
+        boolean_fields = [name for name in config.__dataclass_fields__ if name.endswith("_enabled")]
+
         mapped_fields = set(self.PLUGIN_CONFIG_MAPPING.values())
         for field in boolean_fields:
-            assert field in mapped_fields, (
-                f"ParseConfig.{field} has no corresponding plugin"
-            )
+            assert field in mapped_fields, f"ParseConfig.{field} has no corresponding plugin"
 
 
 class TestPluginProtocolCompliance:
@@ -93,9 +87,7 @@ class TestPluginProtocolCompliance:
         """All plugins must have a name property that returns a string."""
         for name, plugin_class in BUILTIN_PLUGINS.items():
             instance = plugin_class()
-            assert hasattr(instance, "name"), (
-                f"Plugin '{name}' missing 'name' property"
-            )
+            assert hasattr(instance, "name"), f"Plugin '{name}' missing 'name' property"
             assert isinstance(instance.name, str), (
                 f"Plugin '{name}'.name should be str, got {type(instance.name)}"
             )
@@ -108,7 +100,7 @@ class TestPluginFeatureEnablement:
         """Table plugin should enable GFM table parsing."""
         md = Markdown(plugins=["table"])
         doc = md.parse("| a | b |\n|---|---|\n| 1 | 2 |")
-        
+
         assert len(doc.children) == 1
         assert isinstance(doc.children[0], Table), (
             f"Expected Table, got {type(doc.children[0]).__name__}"
@@ -118,35 +110,29 @@ class TestPluginFeatureEnablement:
         """Strikethrough plugin should enable ~~text~~ parsing."""
         md = Markdown(plugins=["strikethrough"])
         doc = md.parse("~~deleted~~")
-        
+
         para = doc.children[0]
-        assert any(
-            isinstance(child, Strikethrough) for child in para.children
-        ), "Strikethrough not parsed"
+        assert any(isinstance(child, Strikethrough) for child in para.children), (
+            "Strikethrough not parsed"
+        )
 
     def test_math_plugin_enables_inline_math(self) -> None:
         """Math plugin should enable $math$ parsing."""
         md = Markdown(plugins=["math"])
         doc = md.parse("$E = mc^2$")
-        
+
         para = doc.children[0]
-        assert any(
-            isinstance(child, Math) for child in para.children
-        ), "Inline math not parsed"
+        assert any(isinstance(child, Math) for child in para.children), "Inline math not parsed"
 
     def test_footnotes_plugin_enables_footnotes(self) -> None:
         """Footnotes plugin should enable [^ref] parsing."""
         md = Markdown(plugins=["footnotes"])
         doc = md.parse("Text[^1]\n\n[^1]: Footnote")
-        
+
         # Should have both reference and definition
         para = doc.children[0]
-        has_ref = any(
-            isinstance(child, FootnoteRef) for child in para.children
-        )
-        has_def = any(
-            isinstance(child, FootnoteDef) for child in doc.children
-        )
+        has_ref = any(isinstance(child, FootnoteRef) for child in para.children)
+        has_def = any(isinstance(child, FootnoteDef) for child in doc.children)
         assert has_ref, "Footnote reference not parsed"
         assert has_def, "Footnote definition not parsed"
 
@@ -154,13 +140,11 @@ class TestPluginFeatureEnablement:
         """Task lists plugin should enable - [ ] parsing."""
         md = Markdown(plugins=["task_lists"])
         doc = md.parse("- [ ] todo\n- [x] done")
-        
+
         list_node = doc.children[0]
         assert isinstance(list_node, List), f"Expected List, got {type(list_node)}"
         checked_values = [item.checked for item in list_node.items]
-        assert checked_values == [False, True], (
-            f"Expected [False, True], got {checked_values}"
-        )
+        assert checked_values == [False, True], f"Expected [False, True], got {checked_values}"
 
 
 class TestPluginCombinations:
@@ -168,11 +152,10 @@ class TestPluginCombinations:
 
     def test_all_plugins_together(self) -> None:
         """All plugins should work when enabled together."""
-        md = Markdown(plugins=[
-            "table", "strikethrough", "math", 
-            "footnotes", "task_lists", "autolinks"
-        ])
-        
+        md = Markdown(
+            plugins=["table", "strikethrough", "math", "footnotes", "task_lists", "autolinks"]
+        )
+
         # Verify all are enabled
         config = md._config
         assert config.tables_enabled
@@ -185,7 +168,7 @@ class TestPluginCombinations:
     def test_all_plugin_shortcut(self) -> None:
         """Using plugins=["all"] should enable all built-in plugins."""
         md = Markdown(plugins=["all"])
-        
+
         # Verify all are enabled
         config = md._config
         assert config.tables_enabled
@@ -194,7 +177,7 @@ class TestPluginCombinations:
         assert config.footnotes_enabled
         assert config.task_lists_enabled
         assert config.autolinks_enabled
-        
+
         # Verify table parsing actually works
         doc = md.parse("| a | b |\n|---|---|\n| 1 | 2 |")
         assert isinstance(doc.children[0], Table)
@@ -203,11 +186,11 @@ class TestPluginCombinations:
         """Enabling one plugin shouldn't affect others."""
         md1 = Markdown(plugins=["table"])
         md2 = Markdown(plugins=["math"])
-        
+
         # Table should only be enabled in md1
         assert md1._config.tables_enabled is True
         assert md1._config.math_enabled is False
-        
+
         # Math should only be enabled in md2
         assert md2._config.tables_enabled is False
         assert md2._config.math_enabled is True
@@ -229,7 +212,7 @@ class TestPluginErrorHandling:
         """Empty plugin list should work (default config)."""
         md = Markdown(plugins=[])
         config = md._config
-        
+
         # All should be disabled
         assert config.tables_enabled is False
         assert config.strikethrough_enabled is False

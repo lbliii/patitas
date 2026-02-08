@@ -78,9 +78,15 @@ from patitas.nodes import (
     Text,
     ThematicBreak,
 )
+from patitas.context import CONTENT_CONTEXT_MAP, context_paths_for
+from patitas.differ import ASTChange, diff_documents
 from patitas.parser import Parser
+from patitas.profiling import ParseAccumulator, get_parse_accumulator, profiled_parse
 from patitas.renderers.html import HtmlRenderer
+from patitas.renderers.protocol import ASTRenderer
+from patitas.serialization import from_dict, from_json, to_dict, to_json
 from patitas.tokens import Token, TokenType
+from patitas.visitor import BaseVisitor, transform
 
 __version__ = "0.1.0"
 
@@ -112,6 +118,8 @@ def parse(
         >>> builder.register(MyDirective())
         >>> doc = parse(source, directive_registry=builder.build())
     """
+    from patitas.profiling import get_parse_accumulator
+
     registry = directive_registry or create_default_registry()
 
     # Build config and set via ContextVar for thread-safety
@@ -129,7 +137,14 @@ def parse(
             end_offset=len(source),
             source_file=source_file,
         )
-        return Document(location=loc, children=tuple(blocks))
+        doc = Document(location=loc, children=tuple(blocks))
+
+        # Record profiling metrics if accumulator is active
+        acc = get_parse_accumulator()
+        if acc is not None:
+            acc.record_parse(source_length=len(source), node_count=len(blocks))
+
+        return doc
     finally:
         reset_parse_config()
 
@@ -188,7 +203,7 @@ class Markdown:
 
     """
 
-    __slots__ = ("_highlight", "_plugins", "_directive_registry", "_config")
+    __slots__ = ("_config", "_directive_registry", "_highlight", "_plugins")
 
     def __init__(
         self,
@@ -212,6 +227,7 @@ class Markdown:
         raw_plugins = plugins or []
         if "all" in raw_plugins:
             from patitas.plugins import BUILTIN_PLUGINS
+
             self._plugins = list(BUILTIN_PLUGINS.keys())
         else:
             self._plugins = raw_plugins
@@ -305,58 +321,79 @@ __all__ = [
     # Core API
     "parse",
     "render",
-    "Markdown",
+    # Block nodes
+    "Block",
+    "BlockQuote",
+    "Document",
+    "FencedCode",
+    "FootnoteDef",
+    "Heading",
+    "HtmlBlock",
+    "IndentedCode",
+    "List",
+    "ListItem",
+    "MathBlock",
+    "Paragraph",
+    "Table",
+    "TableCell",
+    "TableRow",
+    "ThematicBreak",
+    # Inline nodes
+    "Inline",
+    "CodeSpan",
+    "Emphasis",
+    "FootnoteRef",
+    "HtmlInline",
+    "Image",
+    "LineBreak",
+    "Link",
+    "Math",
+    "Role",
+    "SoftBreak",
+    "Strikethrough",
+    "Strong",
+    "Text",
+    # Directive extensibility
+    "Directive",
+    "DirectiveRegistry",
+    "DirectiveRegistryBuilder",
+    "create_default_registry",
+    "create_registry_with_defaults",
     # Parser components
-    "Parser",
     "Lexer",
+    "Parser",
+    # Renderer
     "HtmlRenderer",
+    "ASTRenderer",
+    # Visitor + Transform
+    "BaseVisitor",
+    "transform",
+    # Differ
+    "ASTChange",
+    "diff_documents",
+    # Context mapping
+    "CONTENT_CONTEXT_MAP",
+    "context_paths_for",
+    # Profiling
+    "ParseAccumulator",
+    "profiled_parse",
+    "get_parse_accumulator",
+    # Serialization
+    "to_dict",
+    "from_dict",
+    "to_json",
+    "from_json",
     # Configuration (ContextVar-based)
     "ParseConfig",
     "get_parse_config",
     "set_parse_config",
     "reset_parse_config",
     "parse_config_context",
-    # Directive extensibility
-    "DirectiveRegistry",
-    "DirectiveRegistryBuilder",
-    "create_default_registry",
-    "create_registry_with_defaults",
     # Location
     "SourceLocation",
     # Tokens
     "Token",
     "TokenType",
-    # Block nodes
-    "Block",
-    "Document",
-    "Heading",
-    "Paragraph",
-    "FencedCode",
-    "IndentedCode",
-    "BlockQuote",
-    "List",
-    "ListItem",
-    "ThematicBreak",
-    "HtmlBlock",
-    "Directive",
-    "Table",
-    "TableRow",
-    "TableCell",
-    "MathBlock",
-    "FootnoteDef",
-    # Inline nodes
-    "Inline",
-    "Text",
-    "Emphasis",
-    "Strong",
-    "Strikethrough",
-    "Link",
-    "Image",
-    "CodeSpan",
-    "LineBreak",
-    "SoftBreak",
-    "HtmlInline",
-    "Role",
-    "Math",
-    "FootnoteRef",
+    # High-level
+    "Markdown",
 ]

@@ -39,4 +39,16 @@ Extend Patitas with custom functionality.
 :description: Bundle extensions into plugins
 :::{/card}
 
+:::{card} AST Diffing
+:icon: git-compare
+:link: ./diffing
+:description: Structural diff on frozen AST trees
+:::{/card}
+
+:::{card} AST Processing
+:icon: tree
+:link: ./ast-processing
+:description: Visit and transform the Markdown AST
+:::{/card}
+
 :::{/cards}

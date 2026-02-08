@@ -19,7 +19,6 @@ from patitas.parsing.inline.match_registry import (
     MatchRegistry,
 )
 from patitas.parsing.inline.tokens import (
-    TOKEN_DELIMITER,
     DelimiterToken,
     InlineToken,
 )
@@ -140,9 +139,12 @@ class EmphasisMixin:
                     both_can_open_close = (opener.can_open and opener.can_close) or (
                         closer.can_open and closer.can_close
                     )
-                    if both_can_open_close and (opener_remaining + closer_remaining) % 3 == 0:
-                        if opener_remaining % 3 != 0 or closer_remaining % 3 != 0:
-                            continue  # Rule 3 fail
+                    if (
+                        both_can_open_close
+                        and (opener_remaining + closer_remaining) % 3 == 0
+                        and (opener_remaining % 3 != 0 or closer_remaining % 3 != 0)
+                    ):
+                        continue  # Rule 3 fail
 
                     # Match found!
                     found_opener = True
@@ -189,7 +191,7 @@ class EmphasisMixin:
                 delim_index.get(closer.char, []).append(closer_idx)
                 closer_idx += 1
             else:
-                # Delimiter can neither open nor close (should be rare/impossible per CM flanking rules)
+                # Can neither open nor close (rare/impossible per CM flanking rules)
                 closer_idx += 1
 
         return registry

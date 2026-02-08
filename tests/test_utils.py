@@ -160,7 +160,7 @@ class TestEscapeHtml:
     def test_escape_quotes(self) -> None:
         from patitas.utils.text import escape_html
 
-        assert escape_html('a="b"') == 'a=&quot;b&quot;'
+        assert escape_html('a="b"') == "a=&quot;b&quot;"
         assert escape_html("a='b'") == "a=&#x27;b&#x27;"
 
     def test_escape_ampersand(self) -> None:

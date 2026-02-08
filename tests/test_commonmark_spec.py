@@ -24,7 +24,6 @@ from typing import Any
 
 import pytest
 
-
 # Load the CommonMark spec
 SPEC_PATH = Path(__file__).parent / "fixtures" / "commonmark_spec_0_31_2.json"
 

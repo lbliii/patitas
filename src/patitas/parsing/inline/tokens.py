@@ -131,12 +131,12 @@ type InlineToken = (
 
 
 __all__ = [
+    "CodeSpanToken",
     "DelimiterChar",
     "DelimiterToken",
-    "TextToken",
-    "CodeSpanToken",
-    "NodeToken",
     "HardBreakToken",
-    "SoftBreakToken",
     "InlineToken",
+    "NodeToken",
+    "SoftBreakToken",
+    "TextToken",
 ]

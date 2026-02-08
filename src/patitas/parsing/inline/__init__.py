@@ -55,25 +55,23 @@ class InlineParsingMixin(
 
     """
 
-    pass
-
 
 __all__ = [
+    "CodeSpanToken",
+    "DelimiterMatch",
+    "DelimiterToken",
+    "EmphasisMixin",
+    "HardBreakToken",
+    "InlineParsingCoreMixin",
     # Mixins
     "InlineParsingMixin",
-    "InlineParsingCoreMixin",
-    "EmphasisMixin",
-    "LinkParsingMixin",
-    "SpecialInlineMixin",
-    # Match registry
-    "MatchRegistry",
-    "DelimiterMatch",
     # Typed tokens
     "InlineToken",
-    "DelimiterToken",
-    "TextToken",
-    "CodeSpanToken",
+    "LinkParsingMixin",
+    # Match registry
+    "MatchRegistry",
     "NodeToken",
-    "HardBreakToken",
     "SoftBreakToken",
+    "SpecialInlineMixin",
+    "TextToken",
 ]

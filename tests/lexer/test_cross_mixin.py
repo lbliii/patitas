@@ -5,8 +5,6 @@ together when blocks are nested inside other blocks (e.g., headings
 inside block quotes, lists inside block quotes, etc.).
 """
 
-import pytest
-
 from patitas.lexer import Lexer
 from patitas.tokens import TokenType
 
@@ -34,7 +32,7 @@ class TestBlockQuoteNestedBlocks:
 
     def test_blockquote_with_code_fence(self) -> None:
         """Block quote should correctly identify code fence start inside.
-        
+
         Note: Code fence detection in block quotes is line-based. The fence
         must start at the beginning of the quoted content (after > marker).
         """
@@ -74,11 +72,11 @@ class TestBlockQuoteNestedBlocks:
     def test_blockquote_containing_all_block_types(self) -> None:
         """Block quote should correctly delegate to all classifiers."""
         source = """> # Heading
-> 
+>
 > - list item
-> 
+>
 > ```python
-> 
+>
 > ---
 """
         tokens = list(Lexer(source).tokenize())
@@ -114,7 +112,7 @@ class TestListNestedBlocks:
 
     def test_list_with_thematic_break(self) -> None:
         """List item should correctly identify thematic break inside.
-        
+
         Note: '- ---' on its own line is parsed as a single thematic break
         (dash followed by more dashes). To get a list item containing a
         thematic break, we need clearer separation.
@@ -128,7 +126,7 @@ class TestListNestedBlocks:
 
     def test_list_with_code_fence(self) -> None:
         """List item should correctly identify code fence inside.
-        
+
         Note: Code fences need to be properly formatted - the opening
         backticks should be on their own or followed only by info string.
         """

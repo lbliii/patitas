@@ -109,17 +109,20 @@ class ListParsingMixin:
 
         # Fast path: simple lists at indent 0 with no nesting/block quotes
         # Bypasses ContainerStack overhead for ~5-8% performance gain
-        if parent_indent == -1 and not self._containers._stack:
-            if is_simple_list(self._tokens, self._pos):
-                list_node, new_pos = parse_simple_list(
-                    self._tokens,
-                    self._pos,
-                    self._parse_inline,
-                )
-                # Update parser position
-                self._pos = new_pos
-                self._current = self._tokens[new_pos] if new_pos < len(self._tokens) else None
-                return list_node
+        if (
+            parent_indent == -1
+            and not self._containers._stack
+            and is_simple_list(self._tokens, self._pos)
+        ):
+            list_node, new_pos = parse_simple_list(
+                self._tokens,
+                self._pos,
+                self._parse_inline,
+            )
+            # Update parser position
+            self._pos = new_pos
+            self._current = self._tokens[new_pos] if new_pos < len(self._tokens) else None
+            return list_node
 
         # Extract marker info
         marker_info = extract_marker_info(start_token.value)
@@ -600,7 +603,7 @@ class ListParsingMixin:
                             continue
 
                         # Fenced code at content indent
-                        if stripped.startswith("```") or stripped.startswith("~~~"):
+                        if stripped.startswith(("```", "~~~")):
                             fc = parse_fenced_code_from_indented_code(next_tok, self, check_indent)
                             item_children.append(fc)
                             continue
@@ -874,7 +877,7 @@ class ListParsingMixin:
                 return (content_lines, item_children)
 
             # Check for fenced code at content indent
-            if stripped.startswith("```") or stripped.startswith("~~~"):
+            if stripped.startswith(("```", "~~~")):
                 if content_lines:
                     content = "\n".join(content_lines)
                     inlines = self._parse_inline(content, marker_token.location)

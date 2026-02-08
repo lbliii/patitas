@@ -10,7 +10,6 @@ SourceLocation is frozen (immutable) and safe to share across threads.
 
 from dataclasses import dataclass
 
-
 # Module-level singleton (created once at import or on first use)
 _UNKNOWN_LOCATION: SourceLocation | None = None
 

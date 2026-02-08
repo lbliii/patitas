@@ -3,11 +3,9 @@
 Handles GFM (GitHub Flavored Markdown) table parsing.
 """
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from patitas.nodes import Inline, Table, TableCell, TableRow
-
-from typing import Literal
 
 if TYPE_CHECKING:
     from patitas.location import SourceLocation

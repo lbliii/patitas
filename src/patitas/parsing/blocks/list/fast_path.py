@@ -15,7 +15,8 @@ Simple List Criteria (v2 - Extended):
 Performance: ~30-50% improvement for list-heavy documents.
 """
 
-from typing import TYPE_CHECKING, Callable
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from patitas.nodes import List, ListItem, Paragraph
 from patitas.parsing.blocks.list.marker import extract_marker_info
@@ -24,7 +25,6 @@ from patitas.tokens import TokenType
 if TYPE_CHECKING:
     from patitas.location import SourceLocation
     from patitas.nodes import Inline
-    from patitas.tokens import Token
 
 
 def is_simple_list(tokens: list, start_pos: int) -> bool:
@@ -234,9 +234,8 @@ def _is_complex_content(content: str) -> bool:
         return True
 
     # Rule 5: Nested list marker (unordered)
-    if first_char in "-*+":
-        if len(content) > 1 and content[1] in " \t":
-            return True
+    if first_char in "-*+" and len(content) > 1 and content[1] in " \t":
+        return True
 
     # Rule 5: Ordered list marker (digit followed by . or ))
     if first_char.isdigit():
@@ -250,7 +249,7 @@ def _is_complex_content(content: str) -> bool:
                 return True
 
     # Rule 7: Code fence markers
-    if content.startswith("```") or content.startswith("~~~"):
+    if content.startswith(("```", "~~~")):
         return True
 
     # Rule 7: Potential setext underline (at least 3 chars)

@@ -5,7 +5,8 @@ of the input, helping catch edge cases that example-based tests miss.
 """
 
 import pytest
-from hypothesis import given, settings, strategies as st
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 from patitas.lexer import Lexer
 from patitas.tokens import TokenType
@@ -123,7 +124,7 @@ class TestContentPreservation:
             return  # Skip empty/whitespace-only
 
         tokens = list(Lexer(source).tokenize())
-        combined = "".join(t.value for t in tokens if t.type != TokenType.EOF)
+        "".join(t.value for t in tokens if t.type != TokenType.EOF)
 
         # Check that alphanumeric characters are preserved
         for char in source:

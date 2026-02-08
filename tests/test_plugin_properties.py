@@ -8,12 +8,11 @@ These tests verify invariants that should hold for any combination of plugins:
 Property-based testing finds edge cases that example-based tests miss.
 """
 
-from hypothesis import given, settings, assume
+from hypothesis import assume, given, settings
 from hypothesis import strategies as st
 
 from patitas import Markdown
 from patitas.plugins import BUILTIN_PLUGINS
-
 
 # Strategy for generating plugin lists
 plugin_names = st.sampled_from(list(BUILTIN_PLUGINS.keys()))
@@ -21,7 +20,7 @@ plugin_lists = st.lists(plugin_names, max_size=len(BUILTIN_PLUGINS), unique=True
 plugin_lists_with_all = st.one_of(
     plugin_lists,
     st.just(["all"]),
-    st.lists(st.sampled_from(list(BUILTIN_PLUGINS.keys()) + ["all"]), max_size=7, unique=True),
+    st.lists(st.sampled_from([*list(BUILTIN_PLUGINS.keys()), "all"]), max_size=7, unique=True),
 )
 
 
@@ -33,7 +32,7 @@ class TestPluginCombinationProperties:
     def test_any_plugin_combination_creates_valid_markdown(self, plugins: list[str]) -> None:
         """Any combination of valid plugins should create a working Markdown instance."""
         md = Markdown(plugins=plugins)
-        
+
         # Should be able to parse basic markdown
         result = md("# Hello\n\nWorld")
         assert "<h1" in result
@@ -45,7 +44,7 @@ class TestPluginCombinationProperties:
         """Same plugins should always produce same config."""
         md1 = Markdown(plugins=plugins)
         md2 = Markdown(plugins=plugins)
-        
+
         # Compare all _enabled fields
         for field in md1._config.__dataclass_fields__:
             if field.endswith("_enabled"):
@@ -58,12 +57,13 @@ class TestPluginCombinationProperties:
     def test_enabled_count_matches_plugin_count(self, plugins: list[str]) -> None:
         """Number of enabled features should match number of plugins."""
         md = Markdown(plugins=plugins)
-        
+
         enabled_count = sum(
-            1 for field in md._config.__dataclass_fields__
+            1
+            for field in md._config.__dataclass_fields__
             if field.endswith("_enabled") and getattr(md._config, field)
         )
-        
+
         assert enabled_count == len(plugins), (
             f"Enabled {enabled_count} features but passed {len(plugins)} plugins: {plugins}"
         )
@@ -73,9 +73,9 @@ class TestPluginCombinationProperties:
     def test_all_plugin_with_others_enables_all(self, plugins: list[str]) -> None:
         """If 'all' is in plugins, all features should be enabled."""
         assume("all" in plugins)
-        
+
         md = Markdown(plugins=plugins)
-        
+
         # All _enabled fields should be True
         for field in md._config.__dataclass_fields__:
             if field.endswith("_enabled"):
@@ -93,7 +93,7 @@ class TestConfigWithRandomPlugins:
     def test_config_correctly_set(self, plugins: list[str]) -> None:
         """Config should be correctly set regardless of plugin combination."""
         md = Markdown(plugins=plugins)
-        
+
         # If "all" is in plugins, everything should be enabled
         if "all" in plugins:
             assert md._config.tables_enabled
@@ -120,10 +120,10 @@ class TestPluginOrderIndependence:
     def test_plugin_order_doesnt_matter_for_config(self, plugins: list[str]) -> None:
         """Plugin order should not affect which features are enabled."""
         assume(len(plugins) > 1)
-        
+
         md_forward = Markdown(plugins=plugins)
         md_reverse = Markdown(plugins=list(reversed(plugins)))
-        
+
         # Compare all _enabled fields
         for field in md_forward._config.__dataclass_fields__:
             if field.endswith("_enabled"):

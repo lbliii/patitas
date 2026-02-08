@@ -147,8 +147,6 @@ class LineBreak(Node):
 
     """
 
-    pass
-
 
 @dataclass(frozen=True, slots=True)
 class SoftBreak(Node):
@@ -157,8 +155,6 @@ class SoftBreak(Node):
     Typically rendered as a space or newline depending on renderer settings.
 
     """
-
-    pass
 
 
 @dataclass(frozen=True, slots=True)
@@ -400,8 +396,6 @@ class ThematicBreak(Node):
     HTML: <hr />
 
     """
-
-    pass
 
 
 @dataclass(frozen=True, slots=True)

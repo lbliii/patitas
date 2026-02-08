@@ -9,7 +9,7 @@ from patitas.nodes import Block, Directive
 from patitas.tokens import TokenType
 
 if TYPE_CHECKING:
-    from patitas.tokens import Token
+    pass
 
 
 class DirectiveParsingMixin:

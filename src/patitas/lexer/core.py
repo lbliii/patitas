@@ -76,30 +76,30 @@ class Lexer(
     """
 
     __slots__ = (
-        "_source",
-        "_source_len",  # Cached len(source) to avoid repeated calls
-        "_pos",
-        "_lineno",
         "_col",
-        "_mode",
-        "_source_file",
-        "_fence_char",
-        "_fence_count",
-        "_fence_info",  # Language hint from fence start
-        "_fence_indent",  # Leading spaces on opening fence for CommonMark stripping
         "_consumed_newline",
-        "_saved_lineno",
-        "_saved_col",
         # Directive state
         "_directive_stack",  # Stack of (colon_count, name) for nested directives
-        # Transformation
-        "_text_transformer",
+        "_fence_char",
+        "_fence_count",
+        "_fence_indent",  # Leading spaces on opening fence for CommonMark stripping
+        "_fence_info",  # Language hint from fence start
+        "_html_block_content",  # Accumulated HTML content
+        "_html_block_indent",  # Indent of opening line for line_indent
+        "_html_block_start",  # Start position for location
         # HTML block state
         "_html_block_type",  # 1-7 per CommonMark spec
-        "_html_block_content",  # Accumulated HTML content
-        "_html_block_start",  # Start position for location
-        "_html_block_indent",  # Indent of opening line for line_indent
+        "_lineno",
+        "_mode",
+        "_pos",
         "_previous_line_blank",  # Track blank lines for inline HTML block decisions
+        "_saved_col",
+        "_saved_lineno",
+        "_source",
+        "_source_file",
+        "_source_len",  # Cached len(source) to avoid repeated calls
+        # Transformation
+        "_text_transformer",
     )
 
     def __init__(

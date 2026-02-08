@@ -132,9 +132,7 @@ class DirectiveClassifierMixin:
             yield self._make_token(
                 TokenType.DIRECTIVE_OPEN, ":" * colon_count, line_start, line_indent=indent
             )
-            yield self._make_token(
-                TokenType.DIRECTIVE_NAME, name, line_start, line_indent=indent
-            )
+            yield self._make_token(TokenType.DIRECTIVE_NAME, name, line_start, line_indent=indent)
             if title:
                 yield self._make_token(
                     TokenType.DIRECTIVE_TITLE, title, line_start, line_indent=indent
@@ -215,7 +213,7 @@ class DirectiveClassifierMixin:
             )
             return
 
-        stack_count, stack_name = self._directive_stack[-1]
+        stack_count, _stack_name = self._directive_stack[-1]
 
         # Check if this closes the current directive or an outer one
         if name is not None:

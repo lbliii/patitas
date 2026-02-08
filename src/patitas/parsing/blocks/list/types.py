@@ -75,13 +75,9 @@ class ListParsingContext:
 class ContinueAction:
     """Sentinel for continuing the parsing loop."""
 
-    pass
-
 
 class BreakAction:
     """Sentinel for breaking out of the parsing loop."""
-
-    pass
 
 
 @dataclass
@@ -102,14 +98,10 @@ class BlockAction:
 class NestedListAction:
     """Action indicating a nested list should be parsed."""
 
-    pass
-
 
 @dataclass
 class LooseListAction:
     """Action to mark the list as loose (has blank lines between items)."""
-
-    pass
 
 
 # Type alias for parsing action results

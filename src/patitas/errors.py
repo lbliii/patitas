@@ -10,8 +10,6 @@ class PatitasError(Exception):
     Subclass this for specific error categories.
     """
 
-    pass
-
 
 class ParseError(PatitasError):
     """Error during Markdown parsing.
@@ -86,8 +84,6 @@ class RenderError(PatitasError):
     Raised when the renderer encounters an invalid AST node
     or fails to produce valid output.
     """
-
-    pass
 
 
 class PluginError(PatitasError):

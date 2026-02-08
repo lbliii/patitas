@@ -173,6 +173,6 @@ def extract_task_marker(line: str) -> tuple[bool | None, str]:
     """
     if line.startswith("[ ] "):
         return (False, line[4:])
-    elif line.startswith("[x] ") or line.startswith("[X] "):
+    elif line.startswith(("[x] ", "[X] ")):
         return (True, line[4:])
     return (None, line)

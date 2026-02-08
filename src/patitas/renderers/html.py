@@ -146,12 +146,12 @@ class HtmlRenderer:
     """
 
     __slots__ = (
-        "_source",
-        "_highlight",
         "_directive_registry",
+        "_highlight",
         "_role_registry",
-        "_text_transformer",
         "_slugify",
+        "_source",
+        "_text_transformer",
     )
 
     def __init__(
@@ -475,9 +475,7 @@ class HtmlRenderer:
                     return
             except Exception:
                 # Log directive rendering errors for debugging
-                logger.debug(
-                    "Directive handler %r failed", directive.name, exc_info=True
-                )
+                logger.debug("Directive handler %r failed", directive.name, exc_info=True)
 
         # Default: render as container
         title_html = html_escape(directive.title) if directive.title else ""
@@ -552,7 +550,9 @@ class HtmlRenderer:
                 ctx.footnote_refs.append(inline.identifier)
                 ref_num = len(ctx.footnote_refs)
                 esc_id = html_escape(inline.identifier)
-                sb.append(f'<sup><a href="#fn-{esc_id}" id="fnref-{esc_id}-{ref_num}">{ref_num}</a></sup>')
+                sb.append(
+                    f'<sup><a href="#fn-{esc_id}" id="fnref-{esc_id}-{ref_num}">{ref_num}</a></sup>'
+                )
             case Role():
                 self._render_role(inline, sb)
 
@@ -562,8 +562,7 @@ class HtmlRenderer:
             try:
                 handler = self._role_registry.get(role.name)
                 if handler:
-                    result = handler.render(role.content, role.location)
-                    sb.append(result)
+                    handler.render(role, sb)
                     return
             except Exception:
                 # Log role rendering errors for debugging

@@ -17,9 +17,7 @@ from patitas.nodes import BlockQuote, Paragraph
 from patitas.tokens import TokenType
 
 if TYPE_CHECKING:
-    from patitas.location import SourceLocation
-    from patitas.nodes import Inline
-    from patitas.tokens import Token
+    pass
 
 
 def is_simple_block_quote(tokens: list, start_pos: int) -> bool:

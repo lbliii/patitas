@@ -22,7 +22,7 @@ Stateless handler. Safe for concurrent use across threads.
 from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from html import escape as html_escape
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from patitas.directives.contracts import DirectiveContract
 from patitas.directives.options import StyledOptions
@@ -42,7 +42,7 @@ class ContainerOptions(StyledOptions):
     those specified in the title.
     """
 
-    pass  # Uses class_ from StyledOptions
+    # Uses class_ from StyledOptions
 
 
 class ContainerDirective:

@@ -24,9 +24,10 @@ Usage:
 """
 
 from collections.abc import Callable
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 
+@runtime_checkable
 class Highlighter(Protocol):
     """Protocol for syntax highlighters.
 
@@ -176,7 +177,7 @@ def highlight(
 
     if _highlighter is not None:
         # Check if it's the full protocol or a simple callable
-        if hasattr(_highlighter, "highlight") and callable(_highlighter.highlight):
+        if isinstance(_highlighter, Highlighter):
             return _highlighter.highlight(
                 code, language, hl_lines=hl_lines, show_linenos=show_linenos
             )
