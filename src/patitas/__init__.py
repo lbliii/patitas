@@ -80,6 +80,7 @@ from patitas.nodes import (
 )
 from patitas.context import CONTENT_CONTEXT_MAP, context_paths_for
 from patitas.differ import ASTChange, diff_documents
+from patitas.incremental import parse_incremental
 from patitas.parser import Parser
 from patitas.profiling import ParseAccumulator, get_parse_accumulator, profiled_parse
 from patitas.renderers.html import HtmlRenderer
@@ -371,6 +372,8 @@ __all__ = [
     # Differ
     "ASTChange",
     "diff_documents",
+    # Incremental
+    "parse_incremental",
     # Context mapping
     "CONTENT_CONTEXT_MAP",
     "context_paths_for",
