@@ -146,12 +146,12 @@ class HtmlRenderer:
     """
 
     __slots__ = (
-        "_source",
-        "_highlight",
         "_directive_registry",
+        "_highlight",
         "_role_registry",
-        "_text_transformer",
         "_slugify",
+        "_source",
+        "_text_transformer",
     )
 
     def __init__(
@@ -552,7 +552,10 @@ class HtmlRenderer:
                 ctx.footnote_refs.append(inline.identifier)
                 ref_num = len(ctx.footnote_refs)
                 esc_id = html_escape(inline.identifier)
-                sb.append(f'<sup><a href="#fn-{esc_id}" id="fnref-{esc_id}-{ref_num}">{ref_num}</a></sup>')
+                sb.append(
+                    f'<sup><a href="#fn-{esc_id}"'
+                    f' id="fnref-{esc_id}-{ref_num}">{ref_num}</a></sup>'
+                )
             case Role():
                 self._render_role(inline, sb)
 

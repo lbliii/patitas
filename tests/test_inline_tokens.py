@@ -61,7 +61,7 @@ class TestDelimiterToken:
     def test_tuple_unpacking(self):
         """Test that NamedTuple supports unpacking."""
         token = DelimiterToken(char="*", run_length=2, can_open=True, can_close=False)
-        char, run_length, can_open, can_close, tag = token
+        char, run_length, can_open, can_close, _tag = token
         assert char == "*"
         assert run_length == 2
         assert can_open is True

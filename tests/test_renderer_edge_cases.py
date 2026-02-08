@@ -437,7 +437,7 @@ class TestHeadingSlugGeneration:
         )
 
         renderer = HtmlRenderer()
-        html = renderer.render(doc)
+        renderer.render(doc)
         headings = renderer.get_headings()
 
         assert headings[0].slug == "hello-world"
@@ -461,7 +461,7 @@ class TestHeadingSlugGeneration:
         )
 
         renderer = HtmlRenderer()
-        html = renderer.render(doc)
+        renderer.render(doc)
         headings = renderer.get_headings()
 
         assert headings[0].slug == "the-main-function"

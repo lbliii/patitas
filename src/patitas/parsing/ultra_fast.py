@@ -7,7 +7,8 @@ This covers 47.5% of CommonMark test cases and likely 60-80% of
 real-world documents (prose, comments, simple READMEs).
 """
 
-from typing import TYPE_CHECKING, Callable
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from patitas.nodes import Paragraph
 from patitas.tokens import TokenType

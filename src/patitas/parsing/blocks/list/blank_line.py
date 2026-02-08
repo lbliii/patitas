@@ -21,7 +21,6 @@ if TYPE_CHECKING:
 class BlankLineResult:
     """Base class for blank line handling results."""
 
-    pass
 
 
 class ContinueList(BlankLineResult):
@@ -42,7 +41,6 @@ class EndItem(BlankLineResult):
 class EndList(BlankLineResult):
     """End the entire list."""
 
-    pass
 
 
 class ParseBlock(BlankLineResult):
@@ -180,7 +178,7 @@ def _handle_blank_then_indented_code(
             return ParseBlock(is_loose=True)
 
         # Fenced code
-        if code_content.startswith("```") or code_content.startswith("~~~"):
+        if code_content.startswith(("```", "~~~")):
             return ParseBlock(is_loose=True)
 
         # Nested list marker

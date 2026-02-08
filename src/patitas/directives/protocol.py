@@ -26,7 +26,6 @@ from typing import TYPE_CHECKING, Any, ClassVar, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
     from patitas.directives.contracts import DirectiveContract
-    from patitas.directives.options import DirectiveOptions
     from patitas.location import SourceLocation
     from patitas.nodes import Block, Directive
     from patitas.stringbuilder import StringBuilder

@@ -16,7 +16,8 @@ Top 10 patterns cover 79.1% of CommonMark spec:
 10. (INDENTED_CODE,)                                     2.0%  ← parse_indented_only
 """
 
-from typing import TYPE_CHECKING, Callable
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from patitas.nodes import (
     Block,
@@ -32,9 +33,7 @@ from patitas.parsing.blocks.list.marker import extract_marker_info
 from patitas.tokens import TokenType
 
 if TYPE_CHECKING:
-    from patitas.location import SourceLocation
-    from patitas.nodes import Inline
-    from patitas.tokens import Token
+    pass
 
 
 def parse_html_only(
@@ -42,13 +41,14 @@ def parse_html_only(
     parse_inline_fn: Callable,
 ) -> tuple[Block, ...]:
     """Pattern 3: (HTML_BLOCK,) - 3.7% of examples.
-    
+
     Just HTML blocks, no other content.
     """
-    blocks: list[Block] = []
-    for tok in tokens:
-        if tok.type == TokenType.HTML_BLOCK:
-            blocks.append(HtmlBlock(location=tok.location, html=tok.value))
+    blocks: list[Block] = [
+        HtmlBlock(location=tok.location, html=tok.value)
+        for tok in tokens
+        if tok.type == TokenType.HTML_BLOCK
+    ]
     return tuple(blocks)
 
 
@@ -57,7 +57,7 @@ def parse_atx_only(
     parse_inline_fn: Callable,
 ) -> tuple[Block, ...]:
     """Pattern 9: (ATX_HEADING,) - 2.1% of examples.
-    
+
     Just ATX headings, no other content.
     """
     blocks: list[Block] = []
@@ -89,13 +89,13 @@ def parse_indented_only(
     parse_inline_fn: Callable,
 ) -> tuple[Block, ...]:
     """Pattern 10: (INDENTED_CODE,) - 2.0% of examples.
-    
+
     Just indented code blocks, no other content.
     """
     blocks: list[Block] = []
     code_lines: list[str] = []
     first_location = None
-    
+
     for tok in tokens:
         if tok.type == TokenType.INDENTED_CODE:
             if first_location is None:
@@ -107,7 +107,7 @@ def parse_indented_only(
                 # Concatenate directly - values already have newlines
                 content = "".join(code_lines)
                 blocks.append(IndentedCode(location=first_location, code=content))
-    
+
     return tuple(blocks)
 
 
@@ -116,7 +116,7 @@ def parse_fenced_code_only(
     parse_inline_fn: Callable,
 ) -> tuple[Block, ...]:
     """Pattern 7: (FENCED_CODE_*) - 2.9% of examples.
-    
+
     Just fenced code blocks, no other content.
     """
     blocks: list[Block] = []
@@ -125,7 +125,7 @@ def parse_fenced_code_only(
     fence_info = ""
     fence_lang = ""
     code_lines: list[str] = []
-    
+
     for tok in tokens:
         if tok.type == TokenType.FENCED_CODE_START:
             in_fence = True
@@ -150,7 +150,7 @@ def parse_fenced_code_only(
                 ))
             in_fence = False
             fence_location = None
-    
+
     return tuple(blocks)
 
 
@@ -159,13 +159,13 @@ def parse_paragraphs_with_blanks(
     parse_inline_fn: Callable,
 ) -> tuple[Block, ...]:
     """Pattern 6: (BLANK_LINE, PARAGRAPH_LINE) - 3.1% of examples.
-    
+
     Paragraphs separated by blank lines.
     """
     blocks: list[Block] = []
     current_lines: list[str] = []
     current_location = None
-    
+
     for tok in tokens:
         if tok.type == TokenType.PARAGRAPH_LINE:
             if current_location is None:
@@ -183,7 +183,7 @@ def parse_paragraphs_with_blanks(
                 content = "\n".join(current_lines).rstrip()
                 inlines = parse_inline_fn(content, current_location)
                 blocks.append(Paragraph(location=current_location, children=inlines))
-    
+
     return tuple(blocks)
 
 
@@ -192,7 +192,7 @@ def parse_simple_flat_list(
     parse_inline_fn: Callable,
 ) -> tuple[Block, ...]:
     """Pattern 4: (LIST_ITEM_MARKER, PARAGRAPH_LINE) - 3.5% of examples.
-    
+
     Simple flat list with no nesting, no blank lines.
     """
     items: list[ListItem] = []
@@ -201,7 +201,7 @@ def parse_simple_flat_list(
     list_location = None
     ordered = False
     start = 1
-    
+
     for tok in tokens:
         if tok.type == TokenType.LIST_ITEM_MARKER:
             # Flush previous item
@@ -209,20 +209,22 @@ def parse_simple_flat_list(
                 if current_content:
                     content = "\n".join(current_content).rstrip()
                     inlines = parse_inline_fn(content, current_marker.location)
-                    children: tuple[Block, ...] = (Paragraph(location=current_marker.location, children=inlines),)
+                    children: tuple[Block, ...] = (
+                        Paragraph(location=current_marker.location, children=inlines),
+                    )
                 else:
                     children = ()
                 items.append(ListItem(location=current_marker.location, children=children))
-            
+
             current_marker = tok
             current_content = []
-            
+
             if list_location is None:
                 list_location = tok.location
                 marker_info = extract_marker_info(tok.value)
                 ordered = marker_info.ordered
                 start = marker_info.start
-                
+
         elif tok.type == TokenType.PARAGRAPH_LINE:
             if current_marker is not None:
                 current_content.append(tok.value.lstrip())
@@ -236,10 +238,10 @@ def parse_simple_flat_list(
                 else:
                     children = ()
                 items.append(ListItem(location=current_marker.location, children=children))
-    
+
     if not items or list_location is None:
         return ()
-    
+
     return (List(
         location=list_location,
         items=tuple(items),
@@ -254,7 +256,7 @@ def parse_simple_list_with_blanks(
     parse_inline_fn: Callable,
 ) -> tuple[Block, ...]:
     """Pattern 8: (BLANK_LINE, LIST_ITEM_MARKER, PARAGRAPH_LINE) - 2.3%.
-    
+
     List with blank lines (loose list).
     """
     items: list[ListItem] = []
@@ -264,7 +266,7 @@ def parse_simple_list_with_blanks(
     ordered = False
     start = 1
     has_blanks = False
-    
+
     for tok in tokens:
         if tok.type == TokenType.LIST_ITEM_MARKER:
             # Flush previous item
@@ -272,20 +274,22 @@ def parse_simple_list_with_blanks(
                 if current_content:
                     content = "\n".join(current_content).rstrip()
                     inlines = parse_inline_fn(content, current_marker.location)
-                    children: tuple[Block, ...] = (Paragraph(location=current_marker.location, children=inlines),)
+                    children: tuple[Block, ...] = (
+                        Paragraph(location=current_marker.location, children=inlines),
+                    )
                 else:
                     children = ()
                 items.append(ListItem(location=current_marker.location, children=children))
-            
+
             current_marker = tok
             current_content = []
-            
+
             if list_location is None:
                 list_location = tok.location
                 marker_info = extract_marker_info(tok.value)
                 ordered = marker_info.ordered
                 start = marker_info.start
-                
+
         elif tok.type == TokenType.PARAGRAPH_LINE:
             if current_marker is not None:
                 current_content.append(tok.value.lstrip())
@@ -300,10 +304,10 @@ def parse_simple_list_with_blanks(
                 else:
                     children = ()
                 items.append(ListItem(location=current_marker.location, children=children))
-    
+
     if not items or list_location is None:
         return ()
-    
+
     return (List(
         location=list_location,
         items=tuple(items),
@@ -335,14 +339,14 @@ PATTERN_PARSERS: dict[frozenset[TokenType], Callable] = {
 
 def get_pattern_parser(tokens: list) -> Callable | None:
     """Get specialized parser for token pattern if available.
-    
+
     Args:
         tokens: Token list from lexer
-        
+
     Returns:
         Specialized parser function, or None if no pattern match
     """
     # Get unique token types (excluding EOF and BLANK_LINE for matching)
     types = frozenset(tok.type for tok in tokens if tok.type != TokenType.EOF)
-    
+
     return PATTERN_PARSERS.get(types)

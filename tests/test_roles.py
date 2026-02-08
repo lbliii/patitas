@@ -9,10 +9,11 @@ Tests cover:
 """
 
 import pytest
-from hypothesis import given, settings, strategies as st
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 from patitas.location import SourceLocation
-from patitas.roles import RoleRegistry, RoleRegistryBuilder, create_default_registry
+from patitas.roles import RoleRegistryBuilder, create_default_registry
 from patitas.roles.builtins import (
     AbbrRole,
     DocRole,
@@ -24,7 +25,6 @@ from patitas.roles.builtins import (
     SupRole,
 )
 from patitas.stringbuilder import StringBuilder
-
 
 # =============================================================================
 # Fixtures
@@ -294,7 +294,7 @@ class TestAbbrRole:
         sb = StringBuilder()
         role.render(node, sb)
         result = sb.build()
-        assert "<abbr>API</abbr>" == result
+        assert result == "<abbr>API</abbr>"
 
     def test_escapes_html_in_expansion(self, role: AbbrRole, loc: SourceLocation) -> None:
         """Expansion text should be HTML escaped."""
@@ -409,7 +409,7 @@ class TestIconRoleBasic:
         node = icon.parse("icon", "check", loc)
         sb = StringBuilder()
         icon.render(node, sb)
-        assert "<svg data-icon='check'></svg>" == sb.build()
+        assert sb.build() == "<svg data-icon='check'></svg>"
 
     def test_resolver_returning_none_falls_back(self, loc: SourceLocation) -> None:
         """Resolver returning None should fall back to placeholder."""

@@ -8,7 +8,8 @@ These tests verify that:
 These tests would have caught the "table" vs "tables" naming mismatch.
 """
 
-import pytest
+
+from typing import ClassVar
 
 from patitas import Markdown, ParseConfig
 from patitas.nodes import (
@@ -16,7 +17,6 @@ from patitas.nodes import (
     FootnoteRef,
     List,
     Math,
-    MathBlock,
     Strikethrough,
     Table,
 )
@@ -27,7 +27,7 @@ class TestPluginNameConsistency:
     """Verify plugin names are consistent across the codebase."""
 
     # Mapping of plugin names to their corresponding ParseConfig fields
-    PLUGIN_CONFIG_MAPPING = {
+    PLUGIN_CONFIG_MAPPING: ClassVar[dict[str, str]] = {
         "table": "tables_enabled",
         "strikethrough": "strikethrough_enabled",
         "task_lists": "task_lists_enabled",
@@ -69,7 +69,7 @@ class TestPluginNameConsistency:
             name for name in config.__dataclass_fields__
             if name.endswith("_enabled")
         ]
-        
+
         mapped_fields = set(self.PLUGIN_CONFIG_MAPPING.values())
         for field in boolean_fields:
             assert field in mapped_fields, (
@@ -108,7 +108,7 @@ class TestPluginFeatureEnablement:
         """Table plugin should enable GFM table parsing."""
         md = Markdown(plugins=["table"])
         doc = md.parse("| a | b |\n|---|---|\n| 1 | 2 |")
-        
+
         assert len(doc.children) == 1
         assert isinstance(doc.children[0], Table), (
             f"Expected Table, got {type(doc.children[0]).__name__}"
@@ -118,7 +118,7 @@ class TestPluginFeatureEnablement:
         """Strikethrough plugin should enable ~~text~~ parsing."""
         md = Markdown(plugins=["strikethrough"])
         doc = md.parse("~~deleted~~")
-        
+
         para = doc.children[0]
         assert any(
             isinstance(child, Strikethrough) for child in para.children
@@ -128,7 +128,7 @@ class TestPluginFeatureEnablement:
         """Math plugin should enable $math$ parsing."""
         md = Markdown(plugins=["math"])
         doc = md.parse("$E = mc^2$")
-        
+
         para = doc.children[0]
         assert any(
             isinstance(child, Math) for child in para.children
@@ -138,7 +138,7 @@ class TestPluginFeatureEnablement:
         """Footnotes plugin should enable [^ref] parsing."""
         md = Markdown(plugins=["footnotes"])
         doc = md.parse("Text[^1]\n\n[^1]: Footnote")
-        
+
         # Should have both reference and definition
         para = doc.children[0]
         has_ref = any(
@@ -154,7 +154,7 @@ class TestPluginFeatureEnablement:
         """Task lists plugin should enable - [ ] parsing."""
         md = Markdown(plugins=["task_lists"])
         doc = md.parse("- [ ] todo\n- [x] done")
-        
+
         list_node = doc.children[0]
         assert isinstance(list_node, List), f"Expected List, got {type(list_node)}"
         checked_values = [item.checked for item in list_node.items]
@@ -169,10 +169,10 @@ class TestPluginCombinations:
     def test_all_plugins_together(self) -> None:
         """All plugins should work when enabled together."""
         md = Markdown(plugins=[
-            "table", "strikethrough", "math", 
+            "table", "strikethrough", "math",
             "footnotes", "task_lists", "autolinks"
         ])
-        
+
         # Verify all are enabled
         config = md._config
         assert config.tables_enabled
@@ -185,7 +185,7 @@ class TestPluginCombinations:
     def test_all_plugin_shortcut(self) -> None:
         """Using plugins=["all"] should enable all built-in plugins."""
         md = Markdown(plugins=["all"])
-        
+
         # Verify all are enabled
         config = md._config
         assert config.tables_enabled
@@ -194,7 +194,7 @@ class TestPluginCombinations:
         assert config.footnotes_enabled
         assert config.task_lists_enabled
         assert config.autolinks_enabled
-        
+
         # Verify table parsing actually works
         doc = md.parse("| a | b |\n|---|---|\n| 1 | 2 |")
         assert isinstance(doc.children[0], Table)
@@ -203,11 +203,11 @@ class TestPluginCombinations:
         """Enabling one plugin shouldn't affect others."""
         md1 = Markdown(plugins=["table"])
         md2 = Markdown(plugins=["math"])
-        
+
         # Table should only be enabled in md1
         assert md1._config.tables_enabled is True
         assert md1._config.math_enabled is False
-        
+
         # Math should only be enabled in md2
         assert md2._config.tables_enabled is False
         assert md2._config.math_enabled is True
@@ -229,7 +229,7 @@ class TestPluginErrorHandling:
         """Empty plugin list should work (default config)."""
         md = Markdown(plugins=[])
         config = md._config
-        
+
         # All should be disabled
         assert config.tables_enabled is False
         assert config.strikethrough_enabled is False

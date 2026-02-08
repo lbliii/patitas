@@ -34,7 +34,7 @@ def is_unicode_punctuation(char: str) -> bool:
         return True
     cat = unicodedata.category(char)
     # P* = Punctuation, S* = Symbol
-    return cat.startswith("P") or cat.startswith("S")
+    return cat.startswith(("P", "S"))
 
 
 # CommonMark: Unicode whitespace (Zs category + control chars)

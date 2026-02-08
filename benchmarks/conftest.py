@@ -23,9 +23,8 @@ def commonmark_corpus() -> list[str]:
 @pytest.fixture
 def large_document() -> str:
     """Generate a large markdown document (~100KB)."""
-    sections = []
-    for i in range(100):
-        sections.append(f"""
+    sections = [
+        f"""
 # Section {i}
 
 This is paragraph {i} with **bold**, *italic*, and `code`.
@@ -49,7 +48,9 @@ def function_{i}():
 Here is a [link](https://example.com/{i}) and an image reference.
 
 ---
-""")
+"""
+        for i in range(100)
+    ]
     return "\n".join(sections)
 
 

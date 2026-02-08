@@ -76,11 +76,11 @@ def directive(
     def decorator(func_or_class: RenderFunc | type) -> type:
         if isinstance(func_or_class, type):
             # Class decorator — add attributes via setattr to satisfy type checker
-            setattr(func_or_class, "names", names)
-            setattr(func_or_class, "token_type", effective_token_type)
-            setattr(func_or_class, "contract", contract)
-            setattr(func_or_class, "options_class", effective_options)
-            setattr(func_or_class, "preserves_raw_content", preserves_raw_content)
+            func_or_class.names = names
+            func_or_class.token_type = effective_token_type
+            func_or_class.contract = contract
+            func_or_class.options_class = effective_options
+            func_or_class.preserves_raw_content = preserves_raw_content
             return func_or_class
         else:
             # Function decorator — wrap in class

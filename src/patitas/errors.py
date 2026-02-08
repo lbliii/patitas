@@ -10,7 +10,6 @@ class PatitasError(Exception):
     Subclass this for specific error categories.
     """
 
-    pass
 
 
 class ParseError(PatitasError):
@@ -87,7 +86,6 @@ class RenderError(PatitasError):
     or fails to produce valid output.
     """
 
-    pass
 
 
 class PluginError(PatitasError):

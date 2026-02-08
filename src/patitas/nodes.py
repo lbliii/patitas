@@ -147,7 +147,6 @@ class LineBreak(Node):
 
     """
 
-    pass
 
 
 @dataclass(frozen=True, slots=True)
@@ -158,7 +157,6 @@ class SoftBreak(Node):
 
     """
 
-    pass
 
 
 @dataclass(frozen=True, slots=True)
@@ -401,7 +399,6 @@ class ThematicBreak(Node):
 
     """
 
-    pass
 
 
 @dataclass(frozen=True, slots=True)

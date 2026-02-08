@@ -5,7 +5,6 @@ after emitting tokens, preventing state leakage between blocks.
 """
 
 from patitas.lexer import Lexer, LexerMode
-from patitas.tokens import TokenType
 
 
 class TestHtmlBlockStateConsistency:
@@ -150,9 +149,9 @@ class TestModeTransitions:
         source = "para\n```\ncode\n```\npara"
         lexer = Lexer(source)
 
-        tokens = []
-        for token in lexer.tokenize():
-            tokens.append((token.type, lexer._mode))
+        # Consume all tokens to drive mode transitions
+        for _ in lexer.tokenize():
+            pass
 
         # Should end in BLOCK mode
         assert lexer._mode == LexerMode.BLOCK

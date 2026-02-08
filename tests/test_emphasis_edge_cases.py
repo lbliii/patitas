@@ -11,7 +11,6 @@ from patitas.nodes import (
     CodeSpan,
     Emphasis,
     Link,
-    List,
     Paragraph,
     Strong,
     Table,
@@ -31,7 +30,7 @@ class TestEmphasisWithMixedContent:
         doc = md.parse("*before `code` after*")
         para = doc.children[0]
         assert isinstance(para, Paragraph)
-        
+
         # Should have emphasis containing text, code, text
         assert len(para.children) == 1
         em = para.children[0]
@@ -41,7 +40,7 @@ class TestEmphasisWithMixedContent:
         """Strong markers around code spans."""
         doc = md.parse("**before `code` after**")
         para = doc.children[0]
-        
+
         assert len(para.children) == 1
         strong = para.children[0]
         assert isinstance(strong, Strong)
@@ -50,11 +49,11 @@ class TestEmphasisWithMixedContent:
         """Emphasis around links."""
         doc = md.parse("*click [here](url) now*")
         para = doc.children[0]
-        
+
         assert len(para.children) == 1
         em = para.children[0]
         assert isinstance(em, Emphasis)
-        
+
         # Link should be inside emphasis
         assert any(isinstance(c, Link) for c in em.children)
 
@@ -62,7 +61,7 @@ class TestEmphasisWithMixedContent:
         """Nested emphasis with code span breaking up the pattern."""
         doc = md.parse("***a*** `code` ***b***")
         para = doc.children[0]
-        
+
         # Should have: strong-em, code, strong-em
         # The code span should not break delimiter matching for separate runs
         assert any(isinstance(c, CodeSpan) for c in para.children)
@@ -71,7 +70,7 @@ class TestEmphasisWithMixedContent:
         """Unmatched delimiters with code spans between them."""
         doc = md.parse("*text `code` text")
         para = doc.children[0]
-        
+
         # Unmatched * should become literal
         text_content = "".join(
             c.content if isinstance(c, Text) else ""
@@ -83,7 +82,7 @@ class TestEmphasisWithMixedContent:
         """Asterisks inside code spans should not create emphasis."""
         doc = md.parse("`*not emphasized*`")
         para = doc.children[0]
-        
+
         # Should be just a code span
         assert len(para.children) == 1
         assert isinstance(para.children[0], CodeSpan)
@@ -113,14 +112,14 @@ class TestDelimiterEdgeCases:
 
     def test_delimiter_run_at_word_boundary(self, md: Markdown) -> None:
         """Delimiters at word boundaries (CommonMark rules).
-        
+
         Note: CommonMark specifies that underscores inside words should not
         create emphasis. This test documents actual Patitas behavior.
         """
         # Underscore emphasis in CommonMark requires word boundaries
         doc = md.parse("foo_bar_baz")
         para = doc.children[0]
-        
+
         # TODO: Per CommonMark spec, this SHOULD be a single Text node.
         # Currently Patitas creates emphasis (5 children: foo, em(bar), baz)
         # This documents the current behavior; a separate issue should track
@@ -136,7 +135,7 @@ class TestDelimiterEdgeCases:
 
     def test_empty_emphasis(self, md: Markdown) -> None:
         """Empty emphasis markers should become literal.
-        
+
         Note: "** **" could be parsed as a thematic break in some parsers.
         We use a different pattern to test empty emphasis behavior.
         """
@@ -157,7 +156,7 @@ class TestDelimiterEdgeCases:
     def test_whitespace_after_opener(self, md: Markdown) -> None:
         """Whitespace after opener prevents emphasis."""
         doc = md.parse("* not emphasis*")
-        para = doc.children[0]
+        doc.children[0]
         # Should be list or literal asterisk, not emphasis
         # (This is actually a list item in CommonMark)
         assert doc.children[0] is not None
@@ -182,7 +181,7 @@ class TestEmphasisWithPlugins:
         md = Markdown(plugins=["strikethrough"])
         doc = md.parse("*~~deleted~~*")
         para = doc.children[0]
-        
+
         # Should have emphasis containing strikethrough
         assert len(para.children) >= 1
 
@@ -191,7 +190,7 @@ class TestEmphasisWithPlugins:
         md = Markdown(plugins=["math"])
         doc = md.parse("*before* $x^2$ *after*")
         para = doc.children[0]
-        
+
         # Should have emphasis, math, emphasis
         assert len(para.children) >= 3
 
@@ -199,6 +198,6 @@ class TestEmphasisWithPlugins:
         """Emphasis inside table cells."""
         md = Markdown(plugins=["table"])
         doc = md.parse("| *em* | **strong** |\n|------|------------|\n| a | b |")
-        
+
         # Table should be parsed with emphasis in cells
         assert isinstance(doc.children[0], Table)

@@ -28,9 +28,9 @@ from patitas.parsing import (
     InlineParsingMixin,
     TokenNavigationMixin,
 )
+from patitas.parsing.compiled_dispatch import get_dispatcher
 from patitas.parsing.containers import ContainerStack
 from patitas.parsing.inline.links import _normalize_label, _process_escapes
-from patitas.parsing.compiled_dispatch import get_dispatcher
 from patitas.parsing.ultra_fast import can_use_ultra_fast, parse_ultra_simple
 from patitas.tokens import Token, TokenType
 
@@ -77,20 +77,20 @@ class Parser(
     """
 
     __slots__ = (
-        # Per-parse state only (9 slots, was 18)
-        "_source",
-        "_tokens",
-        "_pos",
+        # Setext heading control - disabled for blockquote lazy continuation content
+        "_allow_setext_headings",
+        # Container stack for tracking nesting context
+        "_containers",
         "_current",
-        "_source_file",
         # Directive stack (per-parse state)
         "_directive_stack",
         # Link reference definitions (per-document state)
         "_link_refs",
-        # Container stack for tracking nesting context
-        "_containers",
-        # Setext heading control - disabled for blockquote lazy continuation content
-        "_allow_setext_headings",
+        "_pos",
+        # Per-parse state only (9 slots, was 18)
+        "_source",
+        "_source_file",
+        "_tokens",
     )
 
     def __init__(
@@ -203,7 +203,7 @@ class Parser(
         return self._config.autolinks_enabled
 
     @property
-    def _directive_registry(self) -> "DirectiveRegistry | None":
+    def _directive_registry(self) -> DirectiveRegistry | None:
         """Registry for directive handlers."""
         return self._config.directive_registry
 

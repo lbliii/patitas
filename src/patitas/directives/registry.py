@@ -32,7 +32,7 @@ class DirectiveRegistry:
         Immutable after creation. Safe to share across threads.
     """
 
-    __slots__ = ("_handlers", "_by_name", "_by_token_type")
+    __slots__ = ("_by_name", "_by_token_type", "_handlers")
 
     def __init__(
         self,
@@ -106,7 +106,7 @@ class DirectiveRegistryBuilder:
         >>> registry = builder.build()
     """
 
-    __slots__ = ("_handlers", "_by_name", "_by_token_type")
+    __slots__ = ("_by_name", "_by_token_type", "_handlers")
 
     def __init__(self) -> None:
         """Initialize empty builder."""

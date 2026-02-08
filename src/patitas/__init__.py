@@ -188,7 +188,7 @@ class Markdown:
 
     """
 
-    __slots__ = ("_highlight", "_plugins", "_directive_registry", "_config")
+    __slots__ = ("_config", "_directive_registry", "_highlight", "_plugins")
 
     def __init__(
         self,
@@ -300,63 +300,63 @@ class Markdown:
 
 
 __all__ = [
-    # Version
-    "__version__",
-    # Core API
-    "parse",
-    "render",
-    "Markdown",
-    # Parser components
-    "Parser",
-    "Lexer",
-    "HtmlRenderer",
-    # Configuration (ContextVar-based)
-    "ParseConfig",
-    "get_parse_config",
-    "set_parse_config",
-    "reset_parse_config",
-    "parse_config_context",
+    # Block nodes
+    "Block",
+    "BlockQuote",
+    "CodeSpan",
+    "Directive",
     # Directive extensibility
     "DirectiveRegistry",
     "DirectiveRegistryBuilder",
-    "create_default_registry",
-    "create_registry_with_defaults",
+    "Document",
+    "Emphasis",
+    "FencedCode",
+    "FootnoteDef",
+    "FootnoteRef",
+    "Heading",
+    "HtmlBlock",
+    "HtmlInline",
+    "HtmlRenderer",
+    "Image",
+    "IndentedCode",
+    # Inline nodes
+    "Inline",
+    "Lexer",
+    "LineBreak",
+    "Link",
+    "List",
+    "ListItem",
+    "Markdown",
+    "Math",
+    "MathBlock",
+    "Paragraph",
+    # Configuration (ContextVar-based)
+    "ParseConfig",
+    # Parser components
+    "Parser",
+    "Role",
+    "SoftBreak",
     # Location
     "SourceLocation",
+    "Strikethrough",
+    "Strong",
+    "Table",
+    "TableCell",
+    "TableRow",
+    "Text",
+    "ThematicBreak",
     # Tokens
     "Token",
     "TokenType",
-    # Block nodes
-    "Block",
-    "Document",
-    "Heading",
-    "Paragraph",
-    "FencedCode",
-    "IndentedCode",
-    "BlockQuote",
-    "List",
-    "ListItem",
-    "ThematicBreak",
-    "HtmlBlock",
-    "Directive",
-    "Table",
-    "TableRow",
-    "TableCell",
-    "MathBlock",
-    "FootnoteDef",
-    # Inline nodes
-    "Inline",
-    "Text",
-    "Emphasis",
-    "Strong",
-    "Strikethrough",
-    "Link",
-    "Image",
-    "CodeSpan",
-    "LineBreak",
-    "SoftBreak",
-    "HtmlInline",
-    "Role",
-    "Math",
-    "FootnoteRef",
+    # Version
+    "__version__",
+    "create_default_registry",
+    "create_registry_with_defaults",
+    "get_parse_config",
+    # Core API
+    "parse",
+    "parse_config_context",
+    "render",
+    "reset_parse_config",
+    "set_parse_config",
 ]

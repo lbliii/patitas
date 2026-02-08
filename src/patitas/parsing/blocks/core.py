@@ -13,7 +13,6 @@ from patitas.nodes import (
     Heading,
     HtmlBlock,
     IndentedCode,
-    Inline,
     Paragraph,
     Table,
     ThematicBreak,
@@ -26,7 +25,7 @@ from patitas.parsing.blocks.quote_token_reuse import (
     can_use_token_reuse,
     parse_blockquote_with_token_reuse,
 )
-from patitas.tokens import Token, TokenType
+from patitas.tokens import TokenType
 
 if TYPE_CHECKING:
     pass

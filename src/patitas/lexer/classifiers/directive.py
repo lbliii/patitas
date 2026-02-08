@@ -215,7 +215,7 @@ class DirectiveClassifierMixin:
             )
             return
 
-        stack_count, stack_name = self._directive_stack[-1]
+        stack_count, _stack_name = self._directive_stack[-1]
 
         # Check if this closes the current directive or an outer one
         if name is not None:

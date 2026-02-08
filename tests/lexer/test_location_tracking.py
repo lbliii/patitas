@@ -5,7 +5,6 @@ and source mapping. These tests verify that line numbers, column
 offsets, and byte offsets are correctly tracked.
 """
 
-import pytest
 
 from patitas.lexer import Lexer
 from patitas.tokens import TokenType
@@ -73,7 +72,7 @@ class TestMultilineLocations:
         source = "para1\n\npara2"
         tokens = list(Lexer(source).tokenize())
 
-        blank = [t for t in tokens if t.type == TokenType.BLANK_LINE][0]
+        blank = next(t for t in tokens if t.type == TokenType.BLANK_LINE)
         assert blank.location.lineno == 2
 
     def test_code_fence_locations(self) -> None:
@@ -81,9 +80,9 @@ class TestMultilineLocations:
         source = "```python\ncode\n```"
         tokens = list(Lexer(source).tokenize())
 
-        fence_start = [t for t in tokens if t.type == TokenType.FENCED_CODE_START][0]
-        fence_content = [t for t in tokens if t.type == TokenType.FENCED_CODE_CONTENT][0]
-        fence_end = [t for t in tokens if t.type == TokenType.FENCED_CODE_END][0]
+        fence_start = next(t for t in tokens if t.type == TokenType.FENCED_CODE_START)
+        fence_content = next(t for t in tokens if t.type == TokenType.FENCED_CODE_CONTENT)
+        fence_end = next(t for t in tokens if t.type == TokenType.FENCED_CODE_END)
 
         assert fence_start.location.lineno == 1
         assert fence_content.location.lineno == 2
@@ -220,5 +219,5 @@ class TestEndLocationTracking:
         tokens = list(Lexer(source).tokenize())
 
         # The fence end token should be on line 4
-        fence_end = [t for t in tokens if t.type == TokenType.FENCED_CODE_END][0]
+        fence_end = next(t for t in tokens if t.type == TokenType.FENCED_CODE_END)
         assert fence_end.location.lineno == 4

@@ -16,8 +16,9 @@ Example:
 
 """
 
+from collections.abc import Mapping
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Mapping
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from patitas.roles.protocol import RoleHandler
@@ -35,7 +36,7 @@ class RoleRegistry:
 
     """
 
-    __slots__ = ("_handlers", "_by_name", "_by_token_type")
+    __slots__ = ("_by_name", "_by_token_type", "_handlers")
 
     _handlers: tuple[RoleHandler, ...]
     _by_name: Mapping[str, RoleHandler]
@@ -115,7 +116,7 @@ class RoleRegistryBuilder:
 
     """
 
-    __slots__ = ("_handlers", "_by_name", "_by_token_type")
+    __slots__ = ("_by_name", "_by_token_type", "_handlers")
 
     def __init__(self) -> None:
         """Initialize empty builder."""

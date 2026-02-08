@@ -32,8 +32,8 @@ from patitas.parsing.protocols import ParserHost
 from patitas.parsing.token_nav import TokenNavigationMixin
 
 __all__ = [
-    "TokenNavigationMixin",
-    "InlineParsingMixin",
     "BlockParsingMixin",
+    "InlineParsingMixin",
     "ParserHost",
+    "TokenNavigationMixin",
 ]

@@ -10,10 +10,9 @@ import pytest
 from patitas import Markdown, parse, render
 from patitas.errors import DirectiveContractError, ParseError, PatitasError, PluginError
 from patitas.location import SourceLocation
-from patitas.nodes import Document, FencedCode, Heading, Paragraph, Text
+from patitas.nodes import Document, Heading
 from patitas.plugins import get_plugin
 from patitas.renderers.html import HtmlRenderer
-
 
 # =========================================================================
 # ParseError construction and formatting

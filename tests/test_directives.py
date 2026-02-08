@@ -1,6 +1,5 @@
 """Tests for the directive system."""
 
-import concurrent.futures
 import threading
 from dataclasses import dataclass
 
@@ -580,17 +579,16 @@ class TestProtocolCompliance:
         ]
 
         for handler in handlers:
-            assert isinstance(handler, DirectiveHandler), f"{type(handler).__name__} should satisfy DirectiveHandler"
+            assert isinstance(handler, DirectiveHandler), (
+                f"{type(handler).__name__} should satisfy DirectiveHandler"
+            )
 
     def test_custom_handler_with_subclass_options(self) -> None:
         """Custom handlers with specific options should work with registry."""
-        from dataclasses import dataclass
 
         from patitas.directives import DirectiveRegistryBuilder
         from patitas.directives.options import StyledOptions
-        from patitas.location import SourceLocation
         from patitas.nodes import Directive
-        from patitas.stringbuilder import StringBuilder
 
         @dataclass(frozen=True, slots=True)
         class CustomOptions(StyledOptions):
@@ -633,7 +631,7 @@ class TestContractViolationMessages:
 
     def test_missing_child_suggestion(self) -> None:
         """Violation should suggest adding required child."""
-        from patitas.directives import DirectiveContract, ContractViolation
+        from patitas.directives import DirectiveContract
 
         contract = DirectiveContract(requires_children=("item",))
         violations = contract.validate_children("list", [])

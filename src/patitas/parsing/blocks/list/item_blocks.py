@@ -170,7 +170,7 @@ def parse_fenced_code_from_indented_code(
         A FencedCode node
 
     """
-    from typing import Literal, cast
+    from typing import Literal
 
     code_content = start_token.value.lstrip().rstrip()
     fence_char = code_content[0]

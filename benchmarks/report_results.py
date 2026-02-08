@@ -13,7 +13,7 @@ import platform
 import sys
 import time
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 
@@ -69,7 +69,7 @@ def benchmark_patitas(docs: list[str], iterations: int = 10) -> BenchmarkResult:
             md(doc)
     elapsed = time.perf_counter() - start
 
-    total_parses = iterations * len(docs)
+    iterations * len(docs)
     avg_time = elapsed / iterations
 
     return BenchmarkResult(
@@ -143,7 +143,7 @@ def generate_report(results: list[BenchmarkResult]) -> BenchmarkReport:
         summary["patitas_slower_percent"] = (ratio - 1) * 100
 
     return BenchmarkReport(
-        timestamp=datetime.now(timezone.utc).isoformat(),
+        timestamp=datetime.now(UTC).isoformat(),
         python_version=sys.version.split()[0],
         platform=platform.platform(),
         gil_enabled=gil_enabled,

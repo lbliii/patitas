@@ -58,14 +58,13 @@ class BlockParsingMixin(
 
     """
 
-    pass
 
 
 __all__ = [
-    "BlockParsingMixin",
     "BlockParsingCoreMixin",
-    "ListParsingMixin",
-    "TableParsingMixin",
+    "BlockParsingMixin",
     "DirectiveParsingMixin",
     "FootnoteParsingMixin",
+    "ListParsingMixin",
+    "TableParsingMixin",
 ]

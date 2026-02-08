@@ -126,4 +126,4 @@ def get_token_pattern(tokens: list[Token]) -> tuple[TokenType, ...]:
     Returns:
         Sorted tuple of unique TokenTypes
     """
-    return tuple(sorted(set(tok.type for tok in tokens if tok.type != TokenType.EOF)))
+    return tuple(sorted({tok.type for tok in tokens if tok.type != TokenType.EOF}))

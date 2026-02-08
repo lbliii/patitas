@@ -81,7 +81,7 @@ def main() -> None:
             tokenize_source(doc)
 
     # Profile inline parsing on sample content
-    print(f"\nParsing inline content...")
+    print("\nParsing inline content...")
     loc = SourceLocation.unknown()
     sample_texts = [
         "**bold** and *italic* text",

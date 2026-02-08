@@ -40,6 +40,7 @@ Multiple threads can use the same plugin instances concurrently.
 
 """
 
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
@@ -50,10 +51,10 @@ if TYPE_CHECKING:
 # These imports are kept for backward compatibility in apply_plugins signature
 
 __all__ = [
-    "PatitasPlugin",
     "BUILTIN_PLUGINS",
-    "get_plugin",
+    "PatitasPlugin",
     "apply_plugins",
+    "get_plugin",
 ]
 
 
@@ -81,9 +82,6 @@ class PatitasPlugin(Protocol):
 
 # Registry of built-in plugins
 BUILTIN_PLUGINS: dict[str, type[PatitasPlugin]] = {}
-
-
-from collections.abc import Callable
 
 
 def register_plugin(
@@ -151,7 +149,6 @@ def apply_plugins(
     """
     # Configuration is now handled via ParseConfig/ContextVars
     # This function is a no-op for backward compatibility
-    pass
 
 
 # Import built-in plugins to register them
@@ -164,10 +161,10 @@ from patitas.plugins.table import TablePlugin  # noqa: E402
 from patitas.plugins.task_lists import TaskListPlugin  # noqa: E402
 
 __all__ += [
+    "AutolinksPlugin",
+    "FootnotesPlugin",
+    "MathPlugin",
     "StrikethroughPlugin",
     "TablePlugin",
-    "MathPlugin",
     "TaskListPlugin",
-    "FootnotesPlugin",
-    "AutolinksPlugin",
 ]

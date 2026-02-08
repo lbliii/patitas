@@ -18,7 +18,7 @@ class TestParseConfigFromDict:
             "tables_enabled": True,
             "math_enabled": True,
         })
-        
+
         assert config.tables_enabled is True
         assert config.math_enabled is True
         # Defaults should still apply
@@ -31,7 +31,7 @@ class TestParseConfigFromDict:
             "unknown_key": "ignored",
             "another_unknown": 42,
         })
-        
+
         assert config.tables_enabled is True
         # Should not raise, just ignore
 
@@ -39,7 +39,7 @@ class TestParseConfigFromDict:
         """from_dict with empty dict should return default config."""
         config = ParseConfig.from_dict({})
         default = ParseConfig()
-        
+
         assert config.tables_enabled == default.tables_enabled
         assert config.math_enabled == default.math_enabled
         assert config.strikethrough_enabled == default.strikethrough_enabled
@@ -55,7 +55,7 @@ class TestParseConfigFromDict:
             "autolinks_enabled": True,
             "strict_contracts": True,
         })
-        
+
         assert config.tables_enabled is True
         assert config.strikethrough_enabled is True
         assert config.task_lists_enabled is True
@@ -68,28 +68,28 @@ class TestParseConfigFromDict:
         """from_dict should support directive_registry field."""
         # Use a mock registry (just needs to be non-None)
         mock_registry = object()
-        
+
         config = ParseConfig.from_dict({
             "directive_registry": mock_registry,
         })
-        
+
         assert config.directive_registry is mock_registry
 
     def test_from_dict_with_text_transformer(self):
         """from_dict should support text_transformer field."""
         def my_transformer(text: str) -> str:
             return text.upper()
-        
+
         config = ParseConfig.from_dict({
             "text_transformer": my_transformer,
         })
-        
+
         assert config.text_transformer is my_transformer
 
     def test_from_dict_returns_frozen_config(self):
         """from_dict should return immutable (frozen) config."""
         config = ParseConfig.from_dict({"tables_enabled": True})
-        
+
         with pytest.raises(AttributeError):
             config.tables_enabled = False  # type: ignore
 
@@ -99,7 +99,7 @@ class TestParseConfigFromDict:
             "tables_enabled": True,
             # Other fields not specified
         })
-        
+
         # Specified field
         assert config.tables_enabled is True
         # Defaults for unspecified fields
