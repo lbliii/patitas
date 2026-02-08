@@ -562,8 +562,7 @@ class HtmlRenderer:
             try:
                 handler = self._role_registry.get(role.name)
                 if handler:
-                    result = handler.render(role.content, role.location)
-                    sb.append(result)
+                    handler.render(role, sb)
                     return
             except Exception:
                 # Log role rendering errors for debugging

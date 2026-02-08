@@ -125,8 +125,10 @@ def directive(
                 ) -> None:
                     return render_func(node, rendered_children, sb)
 
-            GeneratedDirective.__name__ = f"{render_func.__name__}_directive"
-            GeneratedDirective.__qualname__ = f"{render_func.__qualname__}_directive"
+            func_name = getattr(render_func, "__name__", "anonymous")
+            func_qualname = getattr(render_func, "__qualname__", "anonymous")
+            GeneratedDirective.__name__ = f"{func_name}_directive"
+            GeneratedDirective.__qualname__ = f"{func_qualname}_directive"
             return GeneratedDirective
 
     return decorator

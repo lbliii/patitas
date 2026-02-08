@@ -672,7 +672,8 @@ class InlineParsingCoreMixin:
                                 prev_boundary = closer_idx_in_tokens + 1
 
                             # Add the final wrapped result
-                            result.append(accumulated_children[0])
+                            if accumulated_children:
+                                result.append(accumulated_children[0])
 
                             if outermost_closer_remaining > 0:
                                 result.append(
