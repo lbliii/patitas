@@ -134,148 +134,91 @@ The constraint isn't that their libraries are bad. It's that their **extension p
 
 ---
 
-## Phase 1: Ecosystem Hardening (v0.2.0)
+## Foundation Library Sprint (v0.2.0) — COMPLETED
 
-Make Patitas rock-solid for Bengal and Purr. Stabilize the API boundary. Formalize the Patitas–Kida collaboration points.
+APIs that make Patitas and Rosettes "integration-ready" for the orchestration layer. All items are implemented, tested, and exported from `patitas.__init__`.
 
-### AST Visitor & Transformer
+### Completed
 
-Bengal, Purr, and Kida all walk ASTs manually today using similar patterns (`_visit_{nodetype}` dispatch). A proper `Visitor` protocol and `transform()` function in Patitas eliminates duplicated tree-walking code and opens the door to composable AST pipelines.
+- [x] **`BaseVisitor[T]`** — match-based dispatch to `visit_*` methods, automatic child walking (`patitas.visitor`)
+- [x] **`transform(doc, fn)`** — immutable AST rewriting via `dataclasses.replace()` (`patitas.visitor`)
+- [x] **`diff_documents(old, new)`** — structural diff on frozen ASTs, O(1) unchanged-subtree skip (`patitas.differ`)
+- [x] **`context_paths_for(node)`** — maps AST node types to template context paths (`patitas.context`)
+- [x] **`ParseAccumulator`** — opt-in ContextVar profiling for parse calls (`patitas.profiling`)
+- [x] **`ASTRenderer` protocol** — stable renderer interface, `HtmlRenderer` conforms (`patitas.renderers.protocol`)
+- [x] **JSON serialization** — `to_dict`, `from_dict`, `to_json`, `from_json` with deterministic output (`patitas.serialization`)
+- [x] **Rosettes `HighlightAccumulator`** — opt-in ContextVar profiling for highlight calls (`rosettes.profiling`)
 
-```python
-from patitas import parse
-from patitas.ast import Visitor, transform
+### What This Unblocked
 
-class HeadingCollector(Visitor):
-    def visit_heading(self, node: Heading) -> None:
-        self.headings.append(node)
+After this sprint, the next epic is purely orchestration work in Bengal and Purr:
 
-# Walk without modifying
-collector = HeadingCollector()
-collector.visit(doc)
+- **Bengal**: register patitas `is` tests in kida via `env.add_test()`, register rosettes `highlight` as kida filter, implement block-level caching keyed on frozen AST hash, wire `ParseAccumulator` + `RenderAccumulator` + `HighlightAccumulator` into unified profiling
+- **Purr**: replace its own differ/mapper with `from patitas import diff_documents, context_paths_for`, use kida `is_cacheable()` + patitas AST equality to skip pure block re-renders, implement AST-keyed block caching
 
-# Transform (returns new immutable AST)
-new_doc = transform(doc, shift_headings(by=1))
-```
+---
+
+## Next Epic: Orchestration (Bengal + Purr)
+
+No library-level work remaining — purely wiring the foundation libraries together.
+
+### Bengal Orchestration
+
+- [ ] Register patitas node `is` tests in kida environment (`env.add_test("heading", ...)`)
+- [ ] Register rosettes `highlight` as kida filter (`env.add_filter("highlight", ...)`)
+- [ ] Block-level caching keyed on frozen AST subtree hash
+- [ ] Unified profiling: wire `ParseAccumulator` + `RenderAccumulator` + `HighlightAccumulator`
+- [ ] Stable dependency contract (use only `patitas.__init__` public API)
+
+### Purr Orchestration
+
+- [ ] Replace `purr.content.differ` with `from patitas import diff_documents, ASTChange`
+- [ ] Replace `purr.reactive.mapper.CONTENT_CONTEXT_MAP` with `from patitas import context_paths_for`
+- [ ] AST-keyed block caching via kida `is_cacheable()` + patitas frozen equality
+- [ ] Skip pure block re-renders when AST subtree unchanged
+- [ ] End-to-end profiling across content-to-template boundary
+
+---
+
+## Future: Standalone Value (v0.3.0)
+
+Make Patitas attractive outside the Bengal ecosystem.
+
+### Additional Renderers
+
+- [ ] `TerminalRenderer` — ANSI-colored Markdown for CLI tools
+- [ ] `MarkdownRenderer` — round-trip (AST back to Markdown)
+
+### Common Extensions
+
+- [ ] **Definition lists** — `term\n: definition` syntax
+- [ ] **Abbreviations** — `*[HTML]: Hyper Text Markup Language`
+- [ ] **Attributes** — `{.class #id key=value}` on blocks and spans
+- [ ] **Smart quotes and typography** — configurable, off by default
+
+### Source Maps
+
+Map rendered HTML positions back to source Markdown positions for in-browser editing, error reporting, and content validation.
 
 ### Public API Boundary
 
-Bengal currently imports internal modules directly (`patitas.lexer`, `patitas.parser`, `patitas.config`, `patitas.location`, `patitas.stringbuilder`). Define the contract:
-
-- **Public** — everything in `patitas.__init__`, `patitas.nodes`, `patitas.config`
-- **Stable** — `patitas.directives`, `patitas.roles`, `patitas.plugins`
-- **Internal** — `patitas.lexer`, `patitas.parser`, `patitas.parsing`, `patitas.stringbuilder`
-
-Ship a deprecation warning for direct internal imports. Give Bengal one release cycle to migrate.
-
-### GFM Spec Compliance Tracking
-
-Tables, strikethrough, task lists, and autolinks are already implemented as plugins. Run them against the [GFM spec](https://github.github.com/gfm/) and report compliance numbers. Many users think in terms of "GitHub Markdown" not "CommonMark."
-
-### Performance Messaging Alignment
-
-The pyproject.toml description claims "40-50% faster than mistune" but spec benchmarks show mistune winning (11ms vs 17ms). The honest framing is stronger: Patitas wins on large documents, wins massively on pathological input, and is the only safe option under free-threading. Align all messaging to that narrative.
-
-### Content-Aware Context Mapping
-
-Purr's `CONTENT_CONTEXT_MAP` (mapping `Heading → page.toc`, `FootnoteDef → page.footnotes`, etc.) is currently hardcoded in Purr. Move it into Patitas as a first-class API so any consumer can ask "what template context does this node type affect?"
-
-```python
-from patitas.context import context_paths_for
-
-paths = context_paths_for(heading_node)
-# frozenset({"page.toc", "page.headings", "page.body"})
-```
-
-This decouples the mapping from Purr and makes it reusable for Bengal's content validation, future Chirp Markdown rendering, or any tool that needs to understand the semantic impact of a content change.
-
-### Milestone Checklist
-
-- [ ] `Visitor` protocol with typed `visit_*` dispatch
-- [ ] `transform()` returning new immutable AST
-- [ ] Content-aware context mapping API (`patitas.context`)
+- [ ] Deprecation warnings for direct internal imports (`patitas.lexer`, `patitas.parser`, etc.)
 - [ ] Document public vs internal API boundary
-- [ ] Deprecation warnings for internal imports
-- [ ] GFM spec test suite integration
+
+### GFM Spec Compliance
+
+- [ ] Run GFM spec tests and report compliance numbers
 - [ ] Align performance claims across README, pyproject.toml, docs
 
 ---
 
-## Phase 2: Standalone Value (v0.3.0)
-
-Make Patitas attractive outside the Bengal ecosystem. Add capabilities no other Python parser offers.
-
-### Pluggable Renderers
-
-An `ASTRenderer` protocol so consumers can render to anything — not just HTML.
-
-```python
-from typing import Protocol
-from patitas.nodes import Document
-
-class ASTRenderer(Protocol):
-    def render(self, doc: Document) -> str: ...
-```
-
-Target renderers:
-- `HtmlRenderer` — existing, becomes the reference implementation
-- `TerminalRenderer` — ANSI-colored Markdown for CLI tools
-- `MarkdownRenderer` — round-trip (AST back to Markdown)
-- `JsonRenderer` — structured output for APIs and tooling
-
-### AST Serialization
-
-Enable AST caching between processes. Bengal could cache parsed ASTs to disk. Purr could send AST diffs over SSE. Pounce could serve pre-parsed content.
-
-- JSON serialization/deserialization of the full AST
-- Optional MessagePack for compact binary format
-- Deterministic output for cache key stability
-
-### Common Extensions
-
-Extensions that are table stakes for documentation sites:
-
-- **Definition lists** — `term\n: definition` syntax
-- **Abbreviations** — `*[HTML]: Hyper Text Markup Language`
-- **Attributes** — `{.class #id key=value}` on blocks and spans
-- **Smart quotes and typography** — configurable, off by default
-
-### Source Maps
-
-Map rendered HTML positions back to source Markdown positions. The `SourceLocation` data already exists on every AST node — expose it in rendered output for:
-
-- In-browser editing with live preview
-- Error reporting with source line numbers
-- Bengal's content validation with precise locations
-
-### Milestone Checklist
-
-- [ ] `ASTRenderer` protocol defined
-- [ ] `TerminalRenderer` for CLI output
-- [ ] `MarkdownRenderer` for round-tripping
-- [ ] `JsonRenderer` for API output
-- [ ] AST JSON serialization/deserialization
-- [ ] Definition lists plugin
-- [ ] Attributes plugin (`{.class #id}`)
-- [ ] Source map emission in HTML renderer
-
----
-
-## Phase 3: Platform Differentiator (v0.4.0+)
+## Future: Platform Differentiator (v0.4.0+)
 
 Things only Patitas can do because of its typed, immutable, thread-safe architecture.
 
 ### Content Linting Framework
 
 A `ruff`-for-Markdown powered by the typed AST. Pattern matching on frozen dataclasses makes rule authoring trivial compared to regex-based linters.
-
-Built-in rules:
-- Heading hierarchy violations (h1 -> h3 skip)
-- Broken internal links
-- Duplicate heading IDs
-- Accessibility checks (images without alt text)
-- Style rules (line length, trailing whitespace)
-- Custom rules via `LintRule` protocol
 
 ```python
 from patitas.lint import lint, LintRule
@@ -288,17 +231,6 @@ class NoSkippedHeadings(LintRule):
             return Diagnostic(node.location, f"Heading skips from h{prev_level} to h{node.level}")
 ```
 
-### AST Diffing API
-
-Purr already does ad-hoc AST diffing. Promote it to a first-class API. Useful for CMSes, collaborative editing, content versioning, and Purr's reactive updates.
-
-```python
-from patitas.diff import diff, Change
-
-changes: list[Change] = diff(old_doc, new_doc)
-# [Change(kind="modified", path="/children/2", old=Paragraph(...), new=Paragraph(...))]
-```
-
 ### Incremental Parsing
 
 Re-parse only changed blocks. When a user edits line 47 of a 500-line document, don't re-parse from scratch. This unlocks:
@@ -307,31 +239,11 @@ Re-parse only changed blocks. When a user edits line 47 of a 500-line document, 
 - Efficient large-document handling in Bengal
 - Foundation for a language server
 
-### Cross-AST Profiling with Kida
-
-Kida already has `RenderAccumulator` (opt-in profiling that tracks block timings, macro calls, filter usage). Patitas should expose a matching `ParseAccumulator` so the full content pipeline can be profiled end-to-end:
-
-```python
-from patitas.profiling import ParseAccumulator, profiled_parse
-
-with profiled_parse() as stats:
-    doc = parse(source)
-
-stats.total_ms        # 2.1ms
-stats.lexer_ms        # 0.8ms
-stats.parser_ms       # 1.1ms
-stats.fast_path_hits  # 47 of 93 blocks
-stats.plugin_ms       # {"tables": 0.2ms}
-```
-
-Combined with Kida's `profiled_render()`, a framework like Bengal or Purr can answer: "This page took 50ms — 3ms parsing (patitas), 47ms rendering (kida), of which 30ms was the sidebar block." That's actionable profiling across the content-to-template boundary.
-
 ### AST-Native Template Expressions
 
-Today, Bengal converts Patitas AST → HTML string → passes string to Kida template. The AST is discarded after rendering. In an AST-native model, Kida templates could directly access Patitas AST nodes:
+Templates that operate on content structure directly:
 
 ```jinja
-{# Instead of page.html_content (opaque string) #}
 {% for node in page.ast.children %}
   {% if node is heading %}
     <h{{ node.level }} id="{{ node.id }}">{{ node | render_inline }}</h{{ node.level }}>
@@ -341,12 +253,7 @@ Today, Bengal converts Patitas AST → HTML string → passes string to Kida tem
 {% end %}
 ```
 
-This requires:
-- Kida `is` tests that understand Patitas node types
-- Patitas filters registered in Kida's environment (`render_inline`, `highlight`)
-- A shared protocol for "renderable AST node" that both libraries agree on
-
-This is the deepest possible collaboration — templates that operate on content structure, not content strings. It would enable per-block caching (Kida caches the sidebar block because its AST inputs haven't changed), content-aware streaming (stream heading blocks first), and eliminates the HTML-string bottleneck entirely.
+This is the deepest possible collaboration — eliminating the HTML-string bottleneck entirely via Kida `is` tests and filters that understand Patitas node types.
 
 ### Language Server Protocol
 
@@ -377,15 +284,16 @@ How each roadmap item connects back to the ecosystem:
 
 | Roadmap Item | Bengal | Purr | Kida | Chirp | Pounce |
 |---|---|---|---|---|---|
-| Visitor/Transformer | AST transforms in render pipeline | Cleaner diff walks | Shared visitor pattern | — | — |
-| Context Mapping API | Content validation | Replaces hardcoded mapper | Block metadata consumer | — | — |
-| API Boundary | Stable dependency contract | Stable dependency contract | — | — | — |
-| Pluggable Renderers | Per-format output | — | — | MD fragments in responses | — |
-| AST Serialization | Disk caching for builds | AST diffs over SSE | — | — | Serve pre-parsed content |
+| ~~Visitor/Transformer~~ | AST transforms in render pipeline | Cleaner diff walks | Shared visitor pattern | — | — |
+| ~~Context Mapping~~ | Content validation | Replaces hardcoded mapper | Block metadata consumer | — | — |
+| ~~AST Differ~~ | — | Core reactive engine | Per-block cache invalidation | — | — |
+| ~~Profiling APIs~~ | End-to-end page timing | Bottleneck identification | `RenderAccumulator` pairing | — | — |
+| ~~ASTRenderer Protocol~~ | Stable renderer contract | — | — | — | — |
+| ~~AST Serialization~~ | Disk caching for builds | AST diffs over SSE | — | — | Serve pre-parsed content |
+| Orchestration wiring | `is` tests + filters + caching | AST-keyed block caching | Extension points consumed | — | — |
+| Additional Renderers | Per-format output | — | — | MD fragments in responses | — |
 | Source Maps | Validation with line numbers | Live preview editing | Error traces to source MD | — | — |
 | Content Linting | `bengal lint` command | Real-time lint-on-save | — | — | — |
-| AST Diffing | — | Core reactive engine | Per-block cache invalidation | — | — |
-| Cross-AST Profiling | End-to-end page timing | Bottleneck identification | `RenderAccumulator` pairing | — | — |
 | AST-Native Templates | Eliminates HTML bottleneck | Per-block AST caching | `is` tests + filters for nodes | — | — |
 | Incremental Parse | Faster incremental builds | Sub-ms reactive updates | — | — | — |
 | Language Server | — | — | — | — | — (standalone) |
@@ -394,11 +302,11 @@ How each roadmap item connects back to the ecosystem:
 
 ## Version Targets
 
-| Version | Theme | Target |
+| Version | Theme | Status |
 |---|---|---|
-| **0.2.0** | Ecosystem hardening | Q1 2026 |
-| **0.3.0** | Standalone value | Q2 2026 |
-| **0.4.0** | Platform differentiator | Q3 2026 |
+| **0.2.0** | Foundation library sprint | **Done** — visitor, differ, context, profiling, renderer protocol, serialization |
+| **0.3.0** | Standalone value | Planned — additional renderers, extensions, source maps |
+| **0.4.0** | Platform differentiator | Planned — linting framework, incremental parsing, LSP |
 | **1.0.0** | Stable API, full GFM, linting | When ready |
 
 The 1.0.0 milestone means: public API is frozen, all internal imports are gated, GFM compliance is tracked, and the linting framework is usable. No rush — ship it when the contract is right.
