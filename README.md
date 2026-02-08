@@ -55,6 +55,7 @@ pip install patitas[all]         # All optional features
 | Function | Description |
 |----------|-------------|
 | `parse(source)` | Parse Markdown to typed AST |
+| `parse_incremental(new, prev, ...)` | Re-parse only the changed region (O(change)) |
 | `render(doc)` | Render AST to HTML |
 | `Markdown()` | All-in-one parser and renderer |
 
@@ -116,6 +117,7 @@ Patitas prioritizes **safety over raw speed**: O(n) guaranteed parsing, typed AS
 | **Plugins** | Tables, footnotes, math, strikethrough, task lists |
 | **Directives** | MyST-style blocks (admonition, dropdown, tabs) |
 | **Roles** | Inline semantic markup |
+| **Incremental** | Re-parse only changed blocks — O(change) not O(document) |
 | **Thread-safe** | Zero shared mutable state, free-threading ready |
 
 ---

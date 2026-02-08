@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Incremental re-parsing** — `parse_incremental(new_source, previous, edit_start,
+  edit_end, new_length)` accepts a previous AST and an edit range, identifies which
+  top-level blocks overlap the edit, re-parses only that region, and splices new blocks
+  back into the existing AST. Unaffected blocks are reused with adjusted offsets. Cost
+  is O(change) rather than O(document). Falls back to full re-parse on failure.
+  Exported from `patitas.incremental` and `patitas` top-level.
+
 ## [0.1.1] - 2026-01-13
 
 ### Added
