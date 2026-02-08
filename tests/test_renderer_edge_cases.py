@@ -103,17 +103,13 @@ class TestThreadSafety:
         doc1 = Document(
             location=loc,
             children=(
-                Heading(
-                    location=loc, level=1, children=(Text(location=loc, content="Title"),)
-                ),
+                Heading(location=loc, level=1, children=(Text(location=loc, content="Title"),)),
             ),
         )
         doc2 = Document(
             location=loc,
             children=(
-                Heading(
-                    location=loc, level=1, children=(Text(location=loc, content="Title"),)
-                ),
+                Heading(location=loc, level=1, children=(Text(location=loc, content="Title"),)),
             ),
         )
 
@@ -147,9 +143,7 @@ class TestThreadSafety:
                     location=loc,
                     identifier="fn1",
                     children=(
-                        Paragraph(
-                            location=loc, children=(Text(location=loc, content="Note"),)
-                        ),
+                        Paragraph(location=loc, children=(Text(location=loc, content="Note"),)),
                     ),
                 ),
             ),
@@ -157,9 +151,7 @@ class TestThreadSafety:
         doc_without_footnote = Document(
             location=loc,
             children=(
-                Paragraph(
-                    location=loc, children=(Text(location=loc, content="Plain text"),)
-                ),
+                Paragraph(location=loc, children=(Text(location=loc, content="Plain text"),)),
             ),
         )
 
@@ -193,9 +185,7 @@ class TestStandaloneListItem:
                 ListItem(
                     location=loc,
                     children=(
-                        Paragraph(
-                            location=loc, children=(Text(location=loc, content="Item"),)
-                        ),
+                        Paragraph(location=loc, children=(Text(location=loc, content="Item"),)),
                     ),
                 ),
             ),
@@ -217,9 +207,7 @@ class TestStandaloneListItem:
                     location=loc,
                     checked=True,
                     children=(
-                        Paragraph(
-                            location=loc, children=(Text(location=loc, content="Done"),)
-                        ),
+                        Paragraph(location=loc, children=(Text(location=loc, content="Done"),)),
                     ),
                 ),
             ),
@@ -234,9 +222,7 @@ class TestStandaloneListItem:
 class TestFootnoteEdgeCases:
     """Tests for footnote rendering edge cases."""
 
-    def test_duplicate_footnote_references_single_definition(
-        self, loc: SourceLocation
-    ) -> None:
+    def test_duplicate_footnote_references_single_definition(self, loc: SourceLocation) -> None:
         """Same footnote referenced multiple times produces valid HTML."""
         doc = Document(
             location=loc,
@@ -529,15 +515,9 @@ class TestHeadingSlugGeneration:
         doc = Document(
             location=loc,
             children=(
-                Heading(
-                    location=loc, level=2, children=(Text(location=loc, content="Section"),)
-                ),
-                Heading(
-                    location=loc, level=2, children=(Text(location=loc, content="Section"),)
-                ),
-                Heading(
-                    location=loc, level=2, children=(Text(location=loc, content="Section"),)
-                ),
+                Heading(location=loc, level=2, children=(Text(location=loc, content="Section"),)),
+                Heading(location=loc, level=2, children=(Text(location=loc, content="Section"),)),
+                Heading(location=loc, level=2, children=(Text(location=loc, content="Section"),)),
             ),
         )
 

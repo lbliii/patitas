@@ -22,7 +22,6 @@ class BlankLineResult:
     """Base class for blank line handling results."""
 
 
-
 class ContinueList(BlankLineResult):
     """Continue parsing the current list (may mark as loose)."""
 
@@ -40,7 +39,6 @@ class EndItem(BlankLineResult):
 
 class EndList(BlankLineResult):
     """End the entire list."""
-
 
 
 class ParseBlock(BlankLineResult):

@@ -56,7 +56,6 @@ class InlineParsingMixin(
     """
 
 
-
 __all__ = [
     "CodeSpanToken",
     "DelimiterMatch",

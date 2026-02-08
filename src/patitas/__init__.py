@@ -212,6 +212,7 @@ class Markdown:
         raw_plugins = plugins or []
         if "all" in raw_plugins:
             from patitas.plugins import BUILTIN_PLUGINS
+
             self._plugins = list(BUILTIN_PLUGINS.keys())
         else:
             self._plugins = raw_plugins

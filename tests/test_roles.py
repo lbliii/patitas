@@ -144,7 +144,7 @@ class TestRefRole:
 
     def test_escapes_html(self, role: RefRole, loc: SourceLocation) -> None:
         """Target and display should be HTML escaped."""
-        node = role.parse("ref", '<script> <"target">',loc)
+        node = role.parse("ref", '<script> <"target">', loc)
         sb = StringBuilder()
         role.render(node, sb)
         result = sb.build()
@@ -437,9 +437,7 @@ class TestIconRoleBasic:
 class TestIconRoleIsolation:
     """Tests for registry isolation - ensures no shared state between instances."""
 
-    def test_separate_instances_have_separate_resolvers(
-        self, loc: SourceLocation
-    ) -> None:
+    def test_separate_instances_have_separate_resolvers(self, loc: SourceLocation) -> None:
         """Different IconRole instances should have independent resolvers."""
 
         def resolver_a(name: str) -> str | None:
@@ -464,9 +462,7 @@ class TestIconRoleIsolation:
         assert "b-check" in sb_b.build()
         assert sb_a.build() != sb_b.build()
 
-    def test_one_instance_with_resolver_other_without(
-        self, loc: SourceLocation
-    ) -> None:
+    def test_one_instance_with_resolver_other_without(self, loc: SourceLocation) -> None:
         """One instance with resolver shouldn't affect instance without."""
 
         def resolver(name: str) -> str | None:

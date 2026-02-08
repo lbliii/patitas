@@ -188,6 +188,7 @@ def main() -> None:
         # markdown-it-py crashes under free-threading
         try:
             from markdown_it import MarkdownIt
+
             mdit_threaded = benchmark_threaded("markdown-it-py", MarkdownIt, docs)
         except Exception:
             mdit_threaded = None

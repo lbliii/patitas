@@ -62,10 +62,7 @@ class PatternDispatcher:
         Signature computation is very cheap (just type checks).
         """
         # Compute pattern signature (exclude EOF)
-        pattern = frozenset(
-            tok.type for tok in tokens
-            if tok.type != TokenType.EOF
-        )
+        pattern = frozenset(tok.type for tok in tokens if tok.type != TokenType.EOF)
 
         # Track stats for optimization tuning
         self._stats["patterns_seen"].add(pattern)

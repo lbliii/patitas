@@ -132,9 +132,7 @@ class DirectiveClassifierMixin:
             yield self._make_token(
                 TokenType.DIRECTIVE_OPEN, ":" * colon_count, line_start, line_indent=indent
             )
-            yield self._make_token(
-                TokenType.DIRECTIVE_NAME, name, line_start, line_indent=indent
-            )
+            yield self._make_token(TokenType.DIRECTIVE_NAME, name, line_start, line_indent=indent)
             if title:
                 yield self._make_token(
                     TokenType.DIRECTIVE_TITLE, title, line_start, line_indent=indent

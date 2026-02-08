@@ -5,7 +5,6 @@ and source mapping. These tests verify that line numbers, column
 offsets, and byte offsets are correctly tracked.
 """
 
-
 from patitas.lexer import Lexer
 from patitas.tokens import TokenType
 

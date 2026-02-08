@@ -5,7 +5,6 @@ together when blocks are nested inside other blocks (e.g., headings
 inside block quotes, lists inside block quotes, etc.).
 """
 
-
 from patitas.lexer import Lexer
 from patitas.tokens import TokenType
 

@@ -59,7 +59,8 @@ class TestPluginCombinationProperties:
         md = Markdown(plugins=plugins)
 
         enabled_count = sum(
-            1 for field in md._config.__dataclass_fields__
+            1
+            for field in md._config.__dataclass_fields__
             if field.endswith("_enabled") and getattr(md._config, field)
         )
 

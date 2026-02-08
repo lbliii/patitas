@@ -651,10 +651,7 @@ class BlockParsingCoreMixin:
                     # End of tokens
                     break
                 # If we didn't find more INDENTED_CODE, exit
-                if (
-                    next_pos >= tokens_len
-                    or tokens[next_pos].type != TokenType.INDENTED_CODE
-                ):
+                if next_pos >= tokens_len or tokens[next_pos].type != TokenType.INDENTED_CODE:
                     break
             else:
                 break

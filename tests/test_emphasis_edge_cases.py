@@ -72,10 +72,7 @@ class TestEmphasisWithMixedContent:
         para = doc.children[0]
 
         # Unmatched * should become literal
-        text_content = "".join(
-            c.content if isinstance(c, Text) else ""
-            for c in para.children
-        )
+        text_content = "".join(c.content if isinstance(c, Text) else "" for c in para.children)
         assert "*" in text_content
 
     def test_code_span_prevents_emphasis(self, md: Markdown) -> None:
@@ -166,10 +163,7 @@ class TestDelimiterEdgeCases:
         doc = md.parse("*not emphasis *")
         para = doc.children[0]
         # Unmatched
-        text_content = "".join(
-            c.content if isinstance(c, Text) else ""
-            for c in para.children
-        )
+        text_content = "".join(c.content if isinstance(c, Text) else "" for c in para.children)
         assert "*" in text_content
 
 

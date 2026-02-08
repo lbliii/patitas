@@ -192,7 +192,7 @@ class ParserAfterCached:
 
 def benchmark_instantiation(n: int = 100_000) -> dict[str, float]:
     """Benchmark parser instantiation."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Parser Instantiation Benchmark (n={n:,})")
     print("=" * 60)
 
@@ -216,10 +216,10 @@ def benchmark_instantiation(n: int = 100_000) -> dict[str, float]:
 
     before_std = statistics.stdev(before_times) * 1000
     after_std = statistics.stdev(after_times) * 1000
-    print(f"\nBefore (18 slots): {before_avg*1000:.2f}ms (±{before_std:.2f}ms)")
-    print(f"After (9 slots):   {after_avg*1000:.2f}ms (±{after_std:.2f}ms)")
-    print(f"Speedup: {before_avg/after_avg:.2f}x")
-    print(f"Per-instance: {before_avg/n*1e9:.1f}ns → {after_avg/n*1e9:.1f}ns")
+    print(f"\nBefore (18 slots): {before_avg * 1000:.2f}ms (±{before_std:.2f}ms)")
+    print(f"After (9 slots):   {after_avg * 1000:.2f}ms (±{after_std:.2f}ms)")
+    print(f"Speedup: {before_avg / after_avg:.2f}x")
+    print(f"Per-instance: {before_avg / n * 1e9:.1f}ns → {after_avg / n * 1e9:.1f}ns")
 
     return {
         "before_ms": before_avg * 1000,
@@ -230,7 +230,7 @@ def benchmark_instantiation(n: int = 100_000) -> dict[str, float]:
 
 def benchmark_config_access(n: int = 1_000_000) -> dict[str, float]:
     """Benchmark config attribute access."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Config Access Benchmark (n={n:,})")
     print("=" * 60)
 
@@ -249,11 +249,11 @@ def benchmark_config_access(n: int = 1_000_000) -> dict[str, float]:
 
     gc.enable()
 
-    print(f"\nInstance attr:    {before*1000:.2f}ms ({before/n*1e9:.1f}ns/access)")
-    print(f"ContextVar:       {after*1000:.2f}ms ({after/n*1e9:.1f}ns/access)")
-    print(f"Cached config:    {after_cached*1000:.2f}ms ({after_cached/n*1e9:.1f}ns/access)")
-    print(f"ContextVar overhead: {after/before:.2f}x")
-    print(f"Cached overhead:     {after_cached/before:.2f}x")
+    print(f"\nInstance attr:    {before * 1000:.2f}ms ({before / n * 1e9:.1f}ns/access)")
+    print(f"ContextVar:       {after * 1000:.2f}ms ({after / n * 1e9:.1f}ns/access)")
+    print(f"Cached config:    {after_cached * 1000:.2f}ms ({after_cached / n * 1e9:.1f}ns/access)")
+    print(f"ContextVar overhead: {after / before:.2f}x")
+    print(f"Cached overhead:     {after_cached / before:.2f}x")
 
     return {
         "instance_attr_ms": before * 1000,
@@ -266,7 +266,7 @@ def benchmark_config_access(n: int = 1_000_000) -> dict[str, float]:
 
 def benchmark_sub_parser_creation(n: int = 50_000) -> dict[str, float]:
     """Benchmark sub-parser creation (simulates nested content parsing)."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Sub-Parser Creation Benchmark (n={n:,})")
     print("=" * 60)
 
@@ -305,16 +305,16 @@ def benchmark_sub_parser_creation(n: int = 50_000) -> dict[str, float]:
 
     gc.enable()
 
-    print(f"\nBefore (copy 9 fields): {before*1000:.2f}ms")
-    print(f"After (no copy):        {after*1000:.2f}ms")
-    print(f"Speedup: {before/after:.2f}x")
+    print(f"\nBefore (copy 9 fields): {before * 1000:.2f}ms")
+    print(f"After (no copy):        {after * 1000:.2f}ms")
+    print(f"Speedup: {before / after:.2f}x")
 
     return {"before_ms": before * 1000, "after_ms": after * 1000, "speedup": before / after}
 
 
 def benchmark_thread_isolation() -> None:
     """Verify config isolation across threads."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("Thread Isolation Test")
     print("=" * 60)
 
@@ -366,7 +366,7 @@ def benchmark_thread_isolation() -> None:
 
 def benchmark_memory_footprint() -> None:
     """Compare memory footprint of parsers."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("Memory Footprint Comparison")
     print("=" * 60)
 
@@ -409,7 +409,7 @@ def main() -> None:
     results["sub_parser"] = benchmark_sub_parser_creation()
 
     # Summary
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("Summary")
     print("=" * 60)
     print(f"\nInstantiation speedup: {results['instantiation']['speedup']:.2f}x")
@@ -418,7 +418,7 @@ def main() -> None:
     print(f"  (cached variant):     {results['config_access']['cached_overhead']:.2f}x")
 
     # RFC validation
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("RFC Claim Validation")
     print("=" * 60)
     inst_speedup = results["instantiation"]["speedup"]

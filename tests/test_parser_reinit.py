@@ -4,7 +4,6 @@ The _reinit() method enables parser pooling by allowing reuse of Parser
 instances without reallocation.
 """
 
-
 from patitas.config import ParseConfig, parse_config_context
 from patitas.parser import Parser
 

@@ -11,7 +11,6 @@ class PatitasError(Exception):
     """
 
 
-
 class ParseError(PatitasError):
     """Error during Markdown parsing.
 
@@ -85,7 +84,6 @@ class RenderError(PatitasError):
     Raised when the renderer encounters an invalid AST node
     or fails to produce valid output.
     """
-
 
 
 class PluginError(PatitasError):

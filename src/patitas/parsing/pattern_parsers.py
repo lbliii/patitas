@@ -75,12 +75,14 @@ def parse_atx_only(
             # Extract content after hashes (strip whitespace only)
             content = value[level:].strip()
             inlines = parse_inline_fn(content, tok.location)
-            blocks.append(Heading(
-                location=tok.location,
-                level=level,
-                children=inlines,
-                style="atx",
-            ))
+            blocks.append(
+                Heading(
+                    location=tok.location,
+                    level=level,
+                    children=inlines,
+                    style="atx",
+                )
+            )
     return tuple(blocks)
 
 
@@ -142,12 +144,14 @@ def parse_fenced_code_only(
                 content = "\n".join(code_lines)
                 if code_lines and not content.endswith("\n"):
                     content += "\n"
-                blocks.append(FencedCode(
-                    location=fence_location,
-                    content=content,
-                    info_string=fence_info,
-                    language=fence_lang,
-                ))
+                blocks.append(
+                    FencedCode(
+                        location=fence_location,
+                        content=content,
+                        info_string=fence_info,
+                        language=fence_lang,
+                    )
+                )
             in_fence = False
             fence_location = None
 
@@ -242,13 +246,15 @@ def parse_simple_flat_list(
     if not items or list_location is None:
         return ()
 
-    return (List(
-        location=list_location,
-        items=tuple(items),
-        ordered=ordered,
-        start=start,
-        tight=True,
-    ),)
+    return (
+        List(
+            location=list_location,
+            items=tuple(items),
+            ordered=ordered,
+            start=start,
+            tight=True,
+        ),
+    )
 
 
 def parse_simple_list_with_blanks(
@@ -308,13 +314,15 @@ def parse_simple_list_with_blanks(
     if not items or list_location is None:
         return ()
 
-    return (List(
-        location=list_location,
-        items=tuple(items),
-        ordered=ordered,
-        start=start,
-        tight=not has_blanks,
-    ),)
+    return (
+        List(
+            location=list_location,
+            items=tuple(items),
+            ordered=ordered,
+            start=start,
+            tight=not has_blanks,
+        ),
+    )
 
 
 # Pattern signature → parser function mapping
@@ -322,18 +330,22 @@ PATTERN_PARSERS: dict[frozenset[TokenType], Callable] = {
     frozenset({TokenType.HTML_BLOCK}): parse_html_only,
     frozenset({TokenType.ATX_HEADING}): parse_atx_only,
     frozenset({TokenType.INDENTED_CODE}): parse_indented_only,
-    frozenset({
-        TokenType.FENCED_CODE_START,
-        TokenType.FENCED_CODE_CONTENT,
-        TokenType.FENCED_CODE_END,
-    }): parse_fenced_code_only,
+    frozenset(
+        {
+            TokenType.FENCED_CODE_START,
+            TokenType.FENCED_CODE_CONTENT,
+            TokenType.FENCED_CODE_END,
+        }
+    ): parse_fenced_code_only,
     frozenset({TokenType.BLANK_LINE, TokenType.PARAGRAPH_LINE}): parse_paragraphs_with_blanks,
     frozenset({TokenType.LIST_ITEM_MARKER, TokenType.PARAGRAPH_LINE}): parse_simple_flat_list,
-    frozenset({
-        TokenType.BLANK_LINE,
-        TokenType.LIST_ITEM_MARKER,
-        TokenType.PARAGRAPH_LINE,
-    }): parse_simple_list_with_blanks,
+    frozenset(
+        {
+            TokenType.BLANK_LINE,
+            TokenType.LIST_ITEM_MARKER,
+            TokenType.PARAGRAPH_LINE,
+        }
+    ): parse_simple_list_with_blanks,
 }
 
 

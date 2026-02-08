@@ -121,9 +121,7 @@ class LinkRefClassifierMixin:
 
         # Value format: label|url|title
         value = f"{label_content}|{url}|{title}"
-        return self._make_token(
-            TokenType.LINK_REFERENCE_DEF, value, line_start, line_indent=indent
-        )
+        return self._make_token(TokenType.LINK_REFERENCE_DEF, value, line_start, line_indent=indent)
 
     def _parse_label_multiline(self, first_line: str, line_start: int) -> tuple[str, int, bool]:
         """Parse link label, possibly spanning multiple lines."""

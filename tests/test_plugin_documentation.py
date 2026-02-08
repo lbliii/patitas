@@ -59,7 +59,7 @@ class TestDocumentationCodeBlocks:
     """
 
     # Pattern to find plugins=["..."] in code
-    PLUGIN_PATTERN = re.compile(r'plugins\s*=\s*\[([^\]]+)\]')
+    PLUGIN_PATTERN = re.compile(r"plugins\s*=\s*\[([^\]]+)\]")
 
     # Known valid plugin names (including "all")
     VALID_PLUGINS = set(BUILTIN_PLUGINS.keys()) | {"all"}
@@ -152,13 +152,16 @@ class TestCommonTypoRegression:
     which documents the expected behavior and catches regressions.
     """
 
-    @pytest.mark.parametrize("typo,correct", [
-        ("tables", "table"),
-        ("tasklists", "task_lists"),
-        ("task_list", "task_lists"),
-        ("footnote", "footnotes"),
-        ("autolink", "autolinks"),
-    ])
+    @pytest.mark.parametrize(
+        "typo,correct",
+        [
+            ("tables", "table"),
+            ("tasklists", "task_lists"),
+            ("task_list", "task_lists"),
+            ("footnote", "footnotes"),
+            ("autolink", "autolinks"),
+        ],
+    )
     def test_common_typos_do_not_enable_features(self, typo: str, correct: str) -> None:
         """Common typos should not accidentally enable plugins."""
         md_typo = Markdown(plugins=[typo])
@@ -169,7 +172,8 @@ class TestCommonTypoRegression:
         if typo not in BUILTIN_PLUGINS:
             # Count enabled features
             typo_enabled = sum(
-                1 for field in md_typo._config.__dataclass_fields__
+                1
+                for field in md_typo._config.__dataclass_fields__
                 if field.endswith("_enabled") and getattr(md_typo._config, field)
             )
             assert typo_enabled == 0, (
@@ -179,7 +183,8 @@ class TestCommonTypoRegression:
 
         # The correct version should have exactly one plugin enabled
         correct_enabled = sum(
-            1 for field in md_correct._config.__dataclass_fields__
+            1
+            for field in md_correct._config.__dataclass_fields__
             if field.endswith("_enabled") and getattr(md_correct._config, field)
         )
         assert correct_enabled == 1, (

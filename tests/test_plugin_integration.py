@@ -8,7 +8,6 @@ These tests verify that:
 These tests would have caught the "table" vs "tables" naming mismatch.
 """
 
-
 from typing import ClassVar
 
 from patitas import Markdown, ParseConfig
@@ -65,16 +64,11 @@ class TestPluginNameConsistency:
     def test_all_config_fields_have_plugins(self) -> None:
         """Every boolean config field should have a corresponding plugin."""
         config = ParseConfig()
-        boolean_fields = [
-            name for name in config.__dataclass_fields__
-            if name.endswith("_enabled")
-        ]
+        boolean_fields = [name for name in config.__dataclass_fields__ if name.endswith("_enabled")]
 
         mapped_fields = set(self.PLUGIN_CONFIG_MAPPING.values())
         for field in boolean_fields:
-            assert field in mapped_fields, (
-                f"ParseConfig.{field} has no corresponding plugin"
-            )
+            assert field in mapped_fields, f"ParseConfig.{field} has no corresponding plugin"
 
 
 class TestPluginProtocolCompliance:
@@ -93,9 +87,7 @@ class TestPluginProtocolCompliance:
         """All plugins must have a name property that returns a string."""
         for name, plugin_class in BUILTIN_PLUGINS.items():
             instance = plugin_class()
-            assert hasattr(instance, "name"), (
-                f"Plugin '{name}' missing 'name' property"
-            )
+            assert hasattr(instance, "name"), f"Plugin '{name}' missing 'name' property"
             assert isinstance(instance.name, str), (
                 f"Plugin '{name}'.name should be str, got {type(instance.name)}"
             )
@@ -120,9 +112,9 @@ class TestPluginFeatureEnablement:
         doc = md.parse("~~deleted~~")
 
         para = doc.children[0]
-        assert any(
-            isinstance(child, Strikethrough) for child in para.children
-        ), "Strikethrough not parsed"
+        assert any(isinstance(child, Strikethrough) for child in para.children), (
+            "Strikethrough not parsed"
+        )
 
     def test_math_plugin_enables_inline_math(self) -> None:
         """Math plugin should enable $math$ parsing."""
@@ -130,9 +122,7 @@ class TestPluginFeatureEnablement:
         doc = md.parse("$E = mc^2$")
 
         para = doc.children[0]
-        assert any(
-            isinstance(child, Math) for child in para.children
-        ), "Inline math not parsed"
+        assert any(isinstance(child, Math) for child in para.children), "Inline math not parsed"
 
     def test_footnotes_plugin_enables_footnotes(self) -> None:
         """Footnotes plugin should enable [^ref] parsing."""
@@ -141,12 +131,8 @@ class TestPluginFeatureEnablement:
 
         # Should have both reference and definition
         para = doc.children[0]
-        has_ref = any(
-            isinstance(child, FootnoteRef) for child in para.children
-        )
-        has_def = any(
-            isinstance(child, FootnoteDef) for child in doc.children
-        )
+        has_ref = any(isinstance(child, FootnoteRef) for child in para.children)
+        has_def = any(isinstance(child, FootnoteDef) for child in doc.children)
         assert has_ref, "Footnote reference not parsed"
         assert has_def, "Footnote definition not parsed"
 
@@ -158,9 +144,7 @@ class TestPluginFeatureEnablement:
         list_node = doc.children[0]
         assert isinstance(list_node, List), f"Expected List, got {type(list_node)}"
         checked_values = [item.checked for item in list_node.items]
-        assert checked_values == [False, True], (
-            f"Expected [False, True], got {checked_values}"
-        )
+        assert checked_values == [False, True], f"Expected [False, True], got {checked_values}"
 
 
 class TestPluginCombinations:
@@ -168,10 +152,9 @@ class TestPluginCombinations:
 
     def test_all_plugins_together(self) -> None:
         """All plugins should work when enabled together."""
-        md = Markdown(plugins=[
-            "table", "strikethrough", "math",
-            "footnotes", "task_lists", "autolinks"
-        ])
+        md = Markdown(
+            plugins=["table", "strikethrough", "math", "footnotes", "task_lists", "autolinks"]
+        )
 
         # Verify all are enabled
         config = md._config

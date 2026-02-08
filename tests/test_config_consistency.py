@@ -51,8 +51,7 @@ class TestConfigPluginConsistency:
         """Every *_enabled config field should be settable by some plugin."""
         # Collect all enabled fields
         enabled_fields = {
-            name for name in ParseConfig.__dataclass_fields__
-            if name.endswith("_enabled")
+            name for name in ParseConfig.__dataclass_fields__ if name.endswith("_enabled")
         }
 
         # Collect fields that plugins can set
@@ -64,9 +63,7 @@ class TestConfigPluginConsistency:
                     settable_fields.add(field_name)
 
         missing = enabled_fields - settable_fields
-        assert not missing, (
-            f"Config fields {missing} have no corresponding plugin to enable them"
-        )
+        assert not missing, f"Config fields {missing} have no corresponding plugin to enable them"
 
     def test_no_orphan_plugins(self) -> None:
         """All registered plugins should affect at least one config field."""
@@ -151,16 +148,12 @@ class TestPluginNamingConventions:
     def test_plugin_names_are_lowercase(self) -> None:
         """All plugin names should be lowercase."""
         for name in BUILTIN_PLUGINS:
-            assert name == name.lower(), (
-                f"Plugin name '{name}' should be lowercase"
-            )
+            assert name == name.lower(), f"Plugin name '{name}' should be lowercase"
 
     def test_plugin_names_use_underscores(self) -> None:
         """Multi-word plugin names should use underscores, not hyphens."""
         for name in BUILTIN_PLUGINS:
-            assert "-" not in name, (
-                f"Plugin name '{name}' uses hyphens; use underscores instead"
-            )
+            assert "-" not in name, f"Plugin name '{name}' uses hyphens; use underscores instead"
 
     def test_plugin_name_matches_module_name(self) -> None:
         """Plugin names should match their module names where possible."""
@@ -183,6 +176,7 @@ class TestRegressionPluginNameMismatch:
 
         # Should parse as table, not paragraph
         from patitas.nodes import Table
+
         assert isinstance(doc.children[0], Table)
 
     def test_tables_plural_does_nothing(self) -> None:

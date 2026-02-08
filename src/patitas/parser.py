@@ -245,9 +245,7 @@ class Parser(
         pattern_parser = dispatcher.get_parser(self._tokens)
         if pattern_parser is not None:
             # Check if pattern needs link refs (has LINK_REFERENCE_DEF tokens)
-            has_link_refs = any(
-                tok.type == TokenType.LINK_REFERENCE_DEF for tok in self._tokens
-            )
+            has_link_refs = any(tok.type == TokenType.LINK_REFERENCE_DEF for tok in self._tokens)
             if not has_link_refs:
                 # Fast path: use pattern-specific parser
                 return pattern_parser(self._tokens, self._parse_inline)

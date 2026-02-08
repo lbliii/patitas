@@ -49,9 +49,9 @@ class TokenStream:
         """Get unique token types (cached)."""
         if self._type_cache is None:
             from patitas.tokens import TokenType
+
             self._type_cache = frozenset(
-                tok.type for tok in self.tokens
-                if tok.type != TokenType.EOF
+                tok.type for tok in self.tokens if tok.type != TokenType.EOF
             )
         return self._type_cache
 
@@ -82,9 +82,7 @@ class TokenCursor:
         self.stream = stream
         self.pos = start
         self.end = end if end is not None else stream.length
-        self._current: PatitasToken | None = (
-            stream.tokens[start] if start < self.end else None
-        )
+        self._current: PatitasToken | None = stream.tokens[start] if start < self.end else None
 
     @property
     def current(self) -> PatitasToken | None:
@@ -99,11 +97,7 @@ class TokenCursor:
         """Move to next token, return previous."""
         prev = self._current
         self.pos += 1
-        self._current = (
-            self.stream.tokens[self.pos]
-            if self.pos < self.end
-            else None
-        )
+        self._current = self.stream.tokens[self.pos] if self.pos < self.end else None
         return prev
 
     def peek(self, offset: int = 0) -> PatitasToken | None:
@@ -130,10 +124,7 @@ class TokenCursor:
 
 
 # ContextVar for thread-local token stream
-_token_stream: ContextVar[TokenStream | None] = ContextVar(
-    "patitas_token_stream",
-    default=None
-)
+_token_stream: ContextVar[TokenStream | None] = ContextVar("patitas_token_stream", default=None)
 
 
 def set_token_stream(stream: TokenStream) -> None:

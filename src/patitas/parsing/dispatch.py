@@ -31,34 +31,42 @@ class ComplexityLevel(IntEnum):
 
 
 # Token types that indicate container structures
-CONTAINER_TYPES = frozenset({
-    TokenType.LIST_ITEM_MARKER,
-    TokenType.BLOCK_QUOTE_MARKER,
-})
+CONTAINER_TYPES = frozenset(
+    {
+        TokenType.LIST_ITEM_MARKER,
+        TokenType.BLOCK_QUOTE_MARKER,
+    }
+)
 
 # Token types that indicate potential nesting complexity
-NESTING_TYPES = frozenset({
-    TokenType.INDENTED_CODE,  # Could be nested list content
-})
+NESTING_TYPES = frozenset(
+    {
+        TokenType.INDENTED_CODE,  # Could be nested list content
+    }
+)
 
 # Simple leaf block types (no nesting)
-LEAF_BLOCK_TYPES = frozenset({
-    TokenType.ATX_HEADING,
-    TokenType.SETEXT_HEADING_UNDERLINE,
-    TokenType.FENCED_CODE_START,
-    TokenType.FENCED_CODE_CONTENT,
-    TokenType.FENCED_CODE_END,
-    TokenType.HTML_BLOCK,
-    TokenType.THEMATIC_BREAK,
-    TokenType.LINK_REFERENCE_DEF,
-})
+LEAF_BLOCK_TYPES = frozenset(
+    {
+        TokenType.ATX_HEADING,
+        TokenType.SETEXT_HEADING_UNDERLINE,
+        TokenType.FENCED_CODE_START,
+        TokenType.FENCED_CODE_CONTENT,
+        TokenType.FENCED_CODE_END,
+        TokenType.HTML_BLOCK,
+        TokenType.THEMATIC_BREAK,
+        TokenType.LINK_REFERENCE_DEF,
+    }
+)
 
 # Ultra-simple types (pure inline)
-ULTRA_SIMPLE_TYPES = frozenset({
-    TokenType.PARAGRAPH_LINE,
-    TokenType.BLANK_LINE,
-    TokenType.EOF,
-})
+ULTRA_SIMPLE_TYPES = frozenset(
+    {
+        TokenType.PARAGRAPH_LINE,
+        TokenType.BLANK_LINE,
+        TokenType.EOF,
+    }
+)
 
 
 def classify_complexity(tokens: list[Token]) -> ComplexityLevel:

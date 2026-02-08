@@ -50,10 +50,7 @@ class TestPluginThreadSafety:
         threads = []
         for i, plugin in enumerate(BUILTIN_PLUGINS.keys()):
             for j in range(3):  # 3 threads per plugin
-                t = threading.Thread(
-                    target=create_and_parse,
-                    args=(plugin, i * 3 + j)
-                )
+                t = threading.Thread(target=create_and_parse, args=(plugin, i * 3 + j))
                 threads.append(t)
 
         # Start all threads
@@ -155,22 +152,15 @@ class TestRendererThreadSafety:
 
             # Each thread should see its own headings, not another thread's
             if len(headings) != 2:
-                errors.append(
-                    f"Thread '{heading_text}' expected 2 headings, got {len(headings)}"
-                )
+                errors.append(f"Thread '{heading_text}' expected 2 headings, got {len(headings)}")
                 return
             if headings[0].text != heading_text:
-                errors.append(
-                    f"Thread '{heading_text}' got wrong h1: '{headings[0].text}'"
-                )
+                errors.append(f"Thread '{heading_text}' got wrong h1: '{headings[0].text}'")
             if headings[1].text != f"Sub {heading_text}":
-                errors.append(
-                    f"Thread '{heading_text}' got wrong h2: '{headings[1].text}'"
-                )
+                errors.append(f"Thread '{heading_text}' got wrong h2: '{headings[1].text}'")
 
         threads = [
-            threading.Thread(target=render_and_check, args=(f"Thread{i}",))
-            for i in range(4)
+            threading.Thread(target=render_and_check, args=(f"Thread{i}",)) for i in range(4)
         ]
         for t in threads:
             t.start()
