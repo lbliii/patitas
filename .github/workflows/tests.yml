@@ -82,9 +82,9 @@ jobs:
       - name: Install dependencies
         run: uv sync --group dev
 
-      - name: Run mypy
+      - name: Run ty
         run: |
-          uv run mypy src/patitas
+          uv run ty check src/patitas
 
   lint:
     runs-on: ubuntu-latest

@@ -1,7 +1,7 @@
 """Edge case tests for emphasis parsing.
 
 These tests exercise the delimiter stack algorithm with various token types
-to ensure proper type handling (would have revealed the mypy type narrowing issues).
+to ensure proper type handling (would have revealed type narrowing issues).
 """
 
 import pytest

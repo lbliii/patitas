@@ -12,7 +12,7 @@ Usage:
             token = self._current  # type-checked via ParserHost
             ...
 
-    Type checkers (ty, mypy) will verify that the concrete Parser class
+    Type checkers (ty) will verify that the concrete Parser class
     satisfies all protocol requirements at composition time.
 
 Thread Safety:

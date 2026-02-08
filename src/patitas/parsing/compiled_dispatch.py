@@ -14,7 +14,7 @@ Performance:
 - No runtime pattern analysis
 - Specialized parsers eliminate branching
 
-Future: Could generate Cython/mypyc code for even faster dispatch.
+Future: Could generate Cython code for even faster dispatch.
 """
 
 from typing import TYPE_CHECKING, Callable, TypeAlias
