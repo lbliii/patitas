@@ -89,7 +89,7 @@ from patitas.serialization import from_dict, from_json, to_dict, to_json
 from patitas.tokens import Token, TokenType
 from patitas.visitor import BaseVisitor, transform
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 
 def parse(
