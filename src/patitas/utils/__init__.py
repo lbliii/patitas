@@ -6,7 +6,7 @@ Provides:
 - logger: get_logger for logging
 """
 
-from patitas.utils.hashing import hash_bytes, hash_str
+from patitas.utils.hashing import hash_bytes, hash_str, subtree_hash
 from patitas.utils.logger import get_logger
 from patitas.utils.text import escape_html, slugify
 
@@ -16,4 +16,5 @@ __all__ = [
     "hash_bytes",
     "hash_str",
     "slugify",
+    "subtree_hash",
 ]

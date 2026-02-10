@@ -27,6 +27,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 from patitas.nodes import Block, Document
+from patitas.utils.hashing import subtree_hash
 
 
 @dataclass(frozen=True, slots=True)
@@ -48,7 +49,12 @@ class ASTChange:
     new_node: object | None
 
 
-def diff_documents(old: Document, new: Document) -> tuple[ASTChange, ...]:
+def diff_documents(
+    old: Document,
+    new: Document,
+    *,
+    recursive: bool = False,
+) -> tuple[ASTChange, ...]:
     """Structural diff on two Patitas Document trees.
 
     Returns a tuple of ASTChange objects describing the differences.
@@ -68,7 +74,7 @@ def diff_documents(old: Document, new: Document) -> tuple[ASTChange, ...]:
 
     """
     changes: list[ASTChange] = []
-    _diff_children(old.children, new.children, (), changes)
+    _diff_children(old.children, new.children, (), changes, recursive=recursive)
     return tuple(changes)
 
 
@@ -77,6 +83,8 @@ def _diff_children(
     new_children: tuple[Block, ...],
     parent_path: tuple[int, ...],
     changes: list[ASTChange],
+    *,
+    recursive: bool,
 ) -> None:
     """Recursively diff ordered child tuples.
 
@@ -104,14 +112,18 @@ def _diff_children(
             continue
         elif type(old_children[i]) is type(new_children[i]):
             # Same type, different content — modified
+            old_node = old_children[i]
+            new_node = new_children[i]
             changes.append(
                 ASTChange(
                     kind="modified",
                     path=path,
-                    old_node=old_children[i],
-                    new_node=new_children[i],
+                    old_node=old_node,
+                    new_node=new_node,
                 )
             )
+            if recursive:
+                _diff_nested(old_node, new_node, path, changes)
         else:
             # Different types at same position — remove old, add new
             changes.append(
@@ -120,3 +132,35 @@ def _diff_children(
             changes.append(
                 ASTChange(kind="added", path=path, old_node=None, new_node=new_children[i])
             )
+
+
+def _child_blocks(node: Block) -> tuple[Block, ...]:
+    """Extract direct child blocks for supported container nodes."""
+    if hasattr(node, "children"):
+        children = node.children
+        if isinstance(children, tuple) and all(hasattr(item, "location") for item in children):
+            return children
+    if hasattr(node, "items"):
+        items = node.items
+        if isinstance(items, tuple):
+            return items
+    return ()
+
+
+def _diff_nested(
+    old_node: Block,
+    new_node: Block,
+    parent_path: tuple[int, ...],
+    changes: list[ASTChange],
+) -> None:
+    """Recursively diff nested block children for finer-grained invalidation."""
+    old_children = _child_blocks(old_node)
+    new_children = _child_blocks(new_node)
+    if not old_children and not new_children:
+        return
+
+    # Fast path: identical subtree hash, no deeper change records.
+    if subtree_hash(old_node) == subtree_hash(new_node):
+        return
+
+    _diff_children(old_children, new_children, parent_path, changes, recursive=True)

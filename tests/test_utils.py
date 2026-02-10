@@ -118,6 +118,30 @@ class TestHashBytes:
         assert hash_bytes(b"test") == hash_bytes(b"test")
 
 
+class TestSubtreeHash:
+    """Tests for deterministic subtree hashing."""
+
+    def test_same_subtree_same_hash(self) -> None:
+        from patitas.location import SourceLocation
+        from patitas.nodes import Paragraph, Text
+        from patitas.utils.hashing import subtree_hash
+
+        loc = SourceLocation(lineno=1, col_offset=0)
+        a = Paragraph(location=loc, children=(Text(location=loc, content="hello"),))
+        b = Paragraph(location=loc, children=(Text(location=loc, content="hello"),))
+        assert subtree_hash(a) == subtree_hash(b)
+
+    def test_different_subtree_different_hash(self) -> None:
+        from patitas.location import SourceLocation
+        from patitas.nodes import Paragraph, Text
+        from patitas.utils.hashing import subtree_hash
+
+        loc = SourceLocation(lineno=1, col_offset=0)
+        a = Paragraph(location=loc, children=(Text(location=loc, content="hello"),))
+        b = Paragraph(location=loc, children=(Text(location=loc, content="world"),))
+        assert subtree_hash(a) != subtree_hash(b)
+
+
 class TestLogger:
     """Tests for logger module."""
 
@@ -201,6 +225,7 @@ class TestUtilsPublicAPI:
             hash_bytes,
             hash_str,
             slugify,
+            subtree_hash,
         )
 
         # Verify they're callable
@@ -209,6 +234,7 @@ class TestUtilsPublicAPI:
         assert callable(hash_bytes)
         assert callable(hash_str)
         assert callable(slugify)
+        assert callable(subtree_hash)
 
 
 class TestErrors:

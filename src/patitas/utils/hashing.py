@@ -11,6 +11,8 @@ Example:
 """
 
 import hashlib
+from dataclasses import fields, is_dataclass
+from typing import Any
 
 
 def hash_str(
@@ -59,3 +61,50 @@ def hash_bytes(
     hasher.update(content)
     digest = hasher.hexdigest()
     return digest[:truncate] if truncate is not None else digest
+
+
+def subtree_hash(node: Any, *, truncate: int = 16) -> str:
+    """Deterministic structural hash for a Patitas AST node/subtree.
+
+    Uses dataclass field traversal to remain stable across process runs.
+    """
+
+    def update(hasher: Any, value: Any) -> None:
+        if is_dataclass(value):
+            hasher.update(type(value).__name__.encode("utf-8"))
+            for field in fields(value):
+                hasher.update(field.name.encode("utf-8"))
+                update(hasher, getattr(value, field.name))
+            return
+
+        if isinstance(value, tuple):
+            hasher.update(b"tuple[")
+            for item in value:
+                update(hasher, item)
+            hasher.update(b"]")
+            return
+
+        if isinstance(value, list):
+            hasher.update(b"list[")
+            for item in value:
+                update(hasher, item)
+            hasher.update(b"]")
+            return
+
+        if isinstance(value, dict):
+            hasher.update(b"dict{")
+            for key in sorted(value):
+                update(hasher, key)
+                update(hasher, value[key])
+            hasher.update(b"}")
+            return
+
+        if value is None:
+            hasher.update(b"None")
+            return
+
+        hasher.update(repr(value).encode("utf-8"))
+
+    hasher = hashlib.sha256()
+    update(hasher, node)
+    return hasher.hexdigest()[:truncate]

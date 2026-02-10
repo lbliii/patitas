@@ -8,6 +8,8 @@ from patitas.nodes import (
     Document,
     FencedCode,
     Heading,
+    List,
+    ListItem,
     Paragraph,
     Text,
     ThematicBreak,
@@ -156,6 +158,30 @@ class TestDiffDocuments:
         assert isinstance(changes[0].old_node, ThematicBreak)
         assert changes[1].kind == "added"
         assert isinstance(changes[1].new_node, Paragraph)
+
+    def test_recursive_diff_reports_nested_change(self) -> None:
+        old = _doc(
+            List(
+                location=_LOC,
+                items=(
+                    ListItem(location=_LOC, children=(_paragraph("old"),)),
+                ),
+            )
+        )
+        new = _doc(
+            List(
+                location=_LOC,
+                items=(
+                    ListItem(location=_LOC, children=(_paragraph("new"),)),
+                ),
+            )
+        )
+
+        flat = diff_documents(old, new)
+        recursive = diff_documents(old, new, recursive=True)
+        assert len(flat) == 1
+        assert len(recursive) > 1
+        assert any(change.path == (0, 0, 0) for change in recursive)
 
 
 class TestASTChangeDataclass:
