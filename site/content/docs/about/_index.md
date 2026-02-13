@@ -44,4 +44,11 @@ Learn how Patitas works and why it was built.
 :description: Free-threading and concurrency
 :::{/card}
 
+:::{card} Ecosystem
+:icon: layers
+:link: ./ecosystem
+:description: The Bengal stack
+All seven projects in the reactive Python stack.
+:::{/card}
+
 :::{/cards}
