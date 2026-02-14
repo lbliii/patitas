@@ -1,7 +1,7 @@
 # Patitas Development Makefile
 # =============================================================================
 
-.PHONY: help install dev test lint ty format clean build docs benchmark publish release
+.PHONY: help install dev test lint ty format clean build docs benchmark publish release gh-release
 
 # Default target
 help:
@@ -28,6 +28,7 @@ help:
 	@echo "  make build       Build distribution packages"
 	@echo "  make publish     Publish to PyPI (uses .env for token)"
 	@echo "  make release     Build and publish in one step"
+	@echo "  make gh-release  Create GitHub release (triggers PyPI via workflow), uses site release notes"
 	@echo "  make clean       Remove build artifacts"
 	@echo ""
 	@echo "Benchmarks:"
@@ -98,6 +99,21 @@ publish:
 
 release: build publish
 	@echo "✓ Release complete"
+
+# Create GitHub release from site release notes; triggers python-publish workflow → PyPI
+# Strips YAML frontmatter (--- ... ---) from notes before passing to gh
+gh-release:
+	@VERSION=$$(grep '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/'); \
+	PROJECT=$$(grep '^name = ' pyproject.toml | sed 's/name = "\(.*\)"/\1/'); \
+	NOTES="site/content/releases/$$VERSION.md"; \
+	if [ ! -f "$$NOTES" ]; then echo "Error: $$NOTES not found"; exit 1; fi; \
+	echo "Creating release v$$VERSION for $$PROJECT..."; \
+	git push origin main 2>/dev/null || true; \
+	git push origin v$$VERSION 2>/dev/null || true; \
+	awk '/^---$$/{c++;next}c>=2' "$$NOTES" | gh release create v$$VERSION \
+		--title "$$PROJECT $$VERSION" \
+		-F -; \
+	echo "✓ GitHub release v$$VERSION created (PyPI publish will run via workflow)"
 
 clean:
 	rm -rf build/ dist/ *.egg-info src/*.egg-info
