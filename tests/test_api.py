@@ -70,6 +70,18 @@ class TestMarkdownClass:
         doc = md.parse("# Test")
         assert isinstance(doc, Document)
 
+    def test_parse_many(self) -> None:
+        """Test Markdown.parse_many() for batch parsing."""
+        from patitas import Document, Markdown
+
+        md = Markdown()
+        docs = md.parse_many(["# Doc 1", "# Doc 2", "**Doc 3**"])
+        assert len(docs) == 3
+        assert all(isinstance(d, Document) for d in docs)
+        assert docs[0].children[0].level == 1
+        # Doc 3: Paragraph > Strong > Text
+        assert docs[2].children[0].children[0].children[0].content == "Doc 3"
+
     def test_render_method(self) -> None:
         """Test Markdown.render() method."""
         from patitas import Markdown, parse

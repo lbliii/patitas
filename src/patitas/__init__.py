@@ -30,6 +30,8 @@ Installation:
     pip install patitas[syntax]      # + Syntax highlighting via Rosettes
 """
 
+from collections.abc import Iterable
+
 from patitas.config import (
     ParseConfig,
     get_parse_config,
@@ -297,6 +299,46 @@ class Markdown:
             return Document(location=loc, children=tuple(blocks))
         finally:
             # Reset to default (reuses module-level singleton, no allocation)
+            reset_parse_config()
+
+    def parse_many(
+        self,
+        sources: Iterable[str],
+        *,
+        source_file: str | None = None,
+    ) -> list[Document]:
+        """Parse multiple Markdown sources into AST documents.
+
+        Use for batch parsing; avoids per-doc config set/reset.
+        Sets config once, parses all, resets once.
+
+        Args:
+            sources: Iterable of Markdown source strings
+            source_file: Optional source file path for error messages (applies to all)
+
+        Returns:
+            List of Document AST nodes
+
+        Example:
+            >>> md = Markdown()
+            >>> docs = md.parse_many(["# Doc 1", "# Doc 2", "# Doc 3"])
+        """
+        set_parse_config(self._config)
+        try:
+            result: list[Document] = []
+            for source in sources:
+                parser = Parser(source, source_file=source_file)
+                blocks = parser.parse()
+                loc = SourceLocation(
+                    lineno=1,
+                    col_offset=1,
+                    offset=0,
+                    end_offset=len(source),
+                    source_file=source_file,
+                )
+                result.append(Document(location=loc, children=tuple(blocks)))
+            return result
+        finally:
             reset_parse_config()
 
     def render(self, doc: Document, *, source: str = "") -> str:
