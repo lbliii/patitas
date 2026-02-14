@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`examples/`** — Runnable examples showcasing Patitas: basic (hello, Markdown class),
+  notebooks (parse_notebook), AST (visitor, transform), directives (builtin, custom),
+  incremental, differ, plugins (math, tables, footnotes), advanced (parallel parse,
+  serialize). Run with `python examples/basic/hello_markdown.py` etc.
+
+### Fixed
+
+- **`@directive` decorator** — `parse()` now accepts `options` kwarg (was `opts`), matching
+  parser invocation and fixing custom directive registration.
+
+## [0.3.0] - 2026-02-14
+
+### Added
+
+- **`parse_notebook(content, source_path?)`** — Parse Jupyter notebook (.ipynb) JSON to
+  (markdown_content, metadata) in the same shape as Markdown with frontmatter. Zero
+  dependencies (stdlib `json` only). Supports nbformat 4.x. Converts cells to Markdown
+  (fenced code blocks, output rendering). Extracts metadata (title, kernelspec, Jupytext).
+  Exported from `patitas.notebook` and `patitas` top-level.
+
 ### Changed
 
 - **MathRole** — Output raw LaTeX (no `\( \)` delimiters) to match plugin format for
@@ -89,7 +111,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`DelimiterToken`** — Renamed `count` attribute to `run_length` for clarity (vs Bengal's embedded version).
 
-[Unreleased]: https://github.com/lbliii/patitas/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/lbliii/patitas/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/lbliii/patitas/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/lbliii/patitas/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/lbliii/patitas/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/lbliii/patitas/releases/tag/v0.1.0

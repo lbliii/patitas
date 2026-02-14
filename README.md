@@ -55,9 +55,24 @@ pip install patitas[all]         # All optional features
 | Function | Description |
 |----------|-------------|
 | `parse(source)` | Parse Markdown to typed AST |
+| `parse_notebook(content, source_path?)` | Parse Jupyter .ipynb to (markdown, metadata) |
 | `parse_incremental(new, prev, ...)` | Re-parse only the changed region (O(change)) |
 | `render(doc)` | Render AST to HTML |
 | `Markdown()` | All-in-one parser and renderer |
+
+### Notebook support
+
+Parse Jupyter notebooks (.ipynb) to Markdown content and metadata — zero dependencies, stdlib JSON only:
+
+```python
+from patitas import parse_notebook
+
+with open("demo.ipynb") as f:
+    content, metadata = parse_notebook(f.read(), "demo.ipynb")
+
+# content: Markdown string (cells → fenced code, outputs → HTML)
+# metadata: title, type, notebook{kernel_name, cell_count}, etc.
+```
 
 ---
 

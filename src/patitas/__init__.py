@@ -89,7 +89,9 @@ from patitas.serialization import from_dict, from_json, to_dict, to_json
 from patitas.tokens import Token, TokenType
 from patitas.visitor import BaseVisitor, transform
 
-__version__ = "0.2.0"
+from patitas.notebook import parse_notebook
+
+__version__ = "0.3.0"
 
 
 def parse(
@@ -321,6 +323,7 @@ __all__ = [  # noqa: RUF022 — grouped by category for maintainability
     "__version__",
     # Core API
     "parse",
+    "parse_notebook",
     "render",
     # Block nodes
     "Block",

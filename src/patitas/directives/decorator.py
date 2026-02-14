@@ -103,7 +103,7 @@ def directive(
                     self,
                     name: str,
                     title: str | None,
-                    opts: DirectiveOptions,
+                    options: DirectiveOptions,
                     content: str,
                     children: Sequence[Block],
                     location: SourceLocation,
@@ -112,7 +112,7 @@ def directive(
                         location=location,
                         name=name,
                         title=title,
-                        options=opts,
+                        options=options,
                         children=tuple(children),
                         raw_content=content if _preserves_raw else None,
                     )
