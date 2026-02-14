@@ -439,7 +439,7 @@ class InlineParsingCoreMixin:
                     else:
                         decoded = chr(codepoint)
                     return decoded, end + 1
-                except (ValueError, OverflowError):
+                except ValueError, OverflowError:
                     return None
 
             # Decimal: &#digits
@@ -462,7 +462,7 @@ class InlineParsingCoreMixin:
                 else:
                     decoded = chr(codepoint)
                 return decoded, end + 1
-            except (ValueError, OverflowError):
+            except ValueError, OverflowError:
                 return None
 
         # Named entity: &name;
