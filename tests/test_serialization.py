@@ -82,7 +82,12 @@ class TestRoundTrip:
         assert from_dict(to_dict(doc)) == doc
 
     def test_link(self) -> None:
-        link = Link(location=_LOC, url="https://example.com", title="Ex", children=(_text("click"),))
+        link = Link(
+            location=_LOC,
+            url="https://example.com",
+            title="Ex",
+            children=(_text("click"),),
+        )
         doc = _doc(_para(link))
         assert from_dict(to_dict(doc)) == doc
 

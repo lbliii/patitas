@@ -60,6 +60,10 @@ def parse_incremental(
         safe (e.g., the region cannot be determined).
 
     """
+    # Validate edit bounds — invalid input → fall back to full parse
+    if edit_start < 0 or edit_end < edit_start or new_length < 0:
+        return _full_parse(new_source, source_file)
+
     old_blocks = previous.children
 
     # Degenerate case: no blocks → full parse

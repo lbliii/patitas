@@ -37,12 +37,15 @@ from patitas.config import (
     reset_parse_config,
     set_parse_config,
 )
+from patitas.context import CONTENT_CONTEXT_MAP, context_paths_for
+from patitas.differ import ASTChange, diff_documents
 from patitas.directives.registry import (
     DirectiveRegistry,
     DirectiveRegistryBuilder,
     create_default_registry,
     create_registry_with_defaults,
 )
+from patitas.incremental import parse_incremental
 from patitas.lexer import Lexer
 from patitas.location import SourceLocation
 from patitas.nodes import (
@@ -78,9 +81,6 @@ from patitas.nodes import (
     Text,
     ThematicBreak,
 )
-from patitas.context import CONTENT_CONTEXT_MAP, context_paths_for
-from patitas.differ import ASTChange, diff_documents
-from patitas.incremental import parse_incremental
 from patitas.parser import Parser
 from patitas.profiling import ParseAccumulator, get_parse_accumulator, profiled_parse
 from patitas.renderers.html import HtmlRenderer
@@ -316,7 +316,7 @@ class Markdown:
         return renderer.render(doc)
 
 
-__all__ = [
+__all__ = [  # noqa: RUF022 — grouped by category for maintainability
     # Version
     "__version__",
     # Core API

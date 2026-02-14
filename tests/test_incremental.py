@@ -2,8 +2,6 @@
 
 import threading
 
-import pytest
-
 from patitas import parse
 from patitas.incremental import (
     _adjust_offsets,
@@ -13,7 +11,6 @@ from patitas.incremental import (
 )
 from patitas.location import SourceLocation
 from patitas.nodes import Document, Heading, Paragraph, Text
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -39,10 +36,11 @@ def _heading(text: str, offset: int, end_offset: int, *, level: int = 1) -> Head
 
 
 def _doc(*children: object) -> Document:
-    if children:
-        end = max(c.location.end_offset for c in children)  # type: ignore[union-attr]
-    else:
-        end = 0
+    end = (
+        max(c.location.end_offset for c in children)  # type: ignore[union-attr]
+        if children
+        else 0
+    )
     return Document(
         location=SourceLocation(lineno=1, col_offset=1, offset=0, end_offset=end),
         children=tuple(children),  # type: ignore[arg-type]
@@ -216,6 +214,16 @@ class TestParseIncremental:
 
         full = parse(new_source)
         assert len(result.children) == len(full.children)
+
+    def test_invalid_edit_bounds_falls_back_to_full_parse(self) -> None:
+        """Invalid edit_start/edit_end/new_length → full re-parse."""
+        source = "Hello world.\n"
+        doc = parse(source)
+        # edit_start > edit_end, negative new_length, etc. → fallback
+        result = parse_incremental(source, doc, 5, 3, 0)  # invalid: start > end
+        assert len(result.children) == len(doc.children)
+        result = parse_incremental(source, doc, -1, 5, 0)  # invalid: negative start
+        assert len(result.children) == len(doc.children)
 
     def test_empty_previous_falls_back_to_full_parse(self) -> None:
         new_source = "Hello world.\n"

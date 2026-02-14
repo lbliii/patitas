@@ -130,10 +130,17 @@ class TestExports:
     """Test that all expected symbols are exported."""
 
     def test_version(self) -> None:
-        """Test version is exported."""
+        """Test version is exported and matches pyproject."""
+        import tomllib
+        from pathlib import Path
+
         from patitas import __version__
 
-        assert __version__ == "0.1.0"
+        with (Path(__file__).resolve().parent.parent / "pyproject.toml").open(
+            "rb"
+        ) as f:
+            expected = tomllib.load(f)["project"]["version"]
+        assert __version__ == expected
 
     def test_core_api(self) -> None:
         """Test core API functions are exported."""

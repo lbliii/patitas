@@ -4,7 +4,6 @@ from patitas.context import CONTENT_CONTEXT_MAP, FALLBACK_CONTEXT_PATHS, context
 from patitas.location import SourceLocation
 from patitas.nodes import (
     BlockQuote,
-    CodeSpan,
     Document,
     FencedCode,
     FootnoteDef,
@@ -12,11 +11,9 @@ from patitas.nodes import (
     HtmlBlock,
     IndentedCode,
     List,
-    ListItem,
     MathBlock,
     Paragraph,
     Table,
-    TableRow,
     Text,
     ThematicBreak,
 )

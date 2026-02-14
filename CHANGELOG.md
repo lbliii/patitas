@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-02-13
+
 ### Added
 
 - **Incremental re-parsing** — `parse_incremental(new_source, previous, edit_start,
@@ -15,6 +17,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   back into the existing AST. Unaffected blocks are reused with adjusted offsets. Cost
   is O(change) rather than O(document). Falls back to full re-parse on failure.
   Exported from `patitas.incremental` and `patitas` top-level.
+
+- **AST differ** — `diff_documents(old, new)` returns a tuple of `ASTChange` objects
+  describing structural differences between two Document trees. Supports incremental
+  builds, change detection, and live preview. Frozen-node equality makes identical
+  subtrees O(1). Exported from `patitas.differ` and `patitas` top-level.
+
+- **BaseVisitor and transform()** — `BaseVisitor` for typed AST traversal with
+  `visit_*` dispatch; `transform(doc, fn)` for immutable bottom-up rewriting.
+  Enables heading extraction, link collection, and structural rewrites without
+  mutating the tree. Exported from `patitas.visitor` and `patitas` top-level.
+
+- **Serialization** — `to_dict`, `from_dict`, `to_json`, `from_json` for JSON
+  round-trip of AST nodes. Deterministic output for cache-key stability. Useful
+  for caching parsed ASTs (Bengal incremental builds) and sending diffs over the
+  wire (Purr SSE). Exported from `patitas.serialization` and `patitas` top-level.
+
+- **Profiling** — `profiled_parse()`, `ParseAccumulator`, `get_parse_accumulator()`
+  for parse-time profiling and bottleneck analysis.
+
+- **ParserHost protocol** — Protocol for mixin contracts in the parser, enabling
+  cleaner extension points.
+
+### Fixed
+
+- **`get_headings` thread-safety** — Rendering now uses `ContextVar` for
+  heading context, fixing race conditions under free-threading.
+
+### Changed
+
+- CI type checker switched from mypy to ty.
+- Coverage configuration with fail-under threshold.
+- Removed dead `_peek` and `_advance` lexer methods.
+- Removed unnecessary `from __future__ import annotations` imports.
 
 ## [0.1.1] - 2026-01-13
 
@@ -49,6 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`DelimiterToken`** — Renamed `count` attribute to `run_length` for clarity (vs Bengal's embedded version).
 
-[Unreleased]: https://github.com/lbliii/patitas/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/lbliii/patitas/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/lbliii/patitas/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/lbliii/patitas/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/lbliii/patitas/releases/tag/v0.1.0

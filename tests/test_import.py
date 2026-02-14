@@ -2,10 +2,17 @@
 
 
 def test_import_patitas() -> None:
-    """Test that patitas can be imported."""
+    """Test that patitas can be imported and version matches pyproject."""
+    import tomllib
+    from pathlib import Path
+
     import patitas
 
-    assert patitas.__version__ == "0.1.0"
+    with (Path(__file__).resolve().parent.parent / "pyproject.toml").open(
+        "rb"
+    ) as f:
+        expected = tomllib.load(f)["project"]["version"]
+    assert patitas.__version__ == expected
 
 
 def test_version_format() -> None:
