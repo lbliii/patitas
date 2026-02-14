@@ -163,17 +163,13 @@ class TestDiffDocuments:
         old = _doc(
             List(
                 location=_LOC,
-                items=(
-                    ListItem(location=_LOC, children=(_paragraph("old"),)),
-                ),
+                items=(ListItem(location=_LOC, children=(_paragraph("old"),)),),
             )
         )
         new = _doc(
             List(
                 location=_LOC,
-                items=(
-                    ListItem(location=_LOC, children=(_paragraph("new"),)),
-                ),
+                items=(ListItem(location=_LOC, children=(_paragraph("new"),)),),
             )
         )
 

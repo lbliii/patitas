@@ -1,6 +1,6 @@
 """Typed AST — collect headings for a table of contents."""
 
-from patitas import parse, render
+from patitas import parse
 from patitas.nodes import Heading
 from patitas.visitor import BaseVisitor
 

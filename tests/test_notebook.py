@@ -69,7 +69,12 @@ def test_parse_with_outputs() -> None:
       "source": ["print('hi')"],
       "outputs": [
         {"output_type": "stream", "name": "stdout", "text": "hi\\n"},
-        {"output_type": "execute_result", "execution_count": 1, "data": {"text/plain": "42"}, "metadata": {}}
+        {
+          "output_type": "execute_result",
+          "execution_count": 1,
+          "data": {"text/plain": "42"},
+          "metadata": {}
+        }
       ]
     }
   ],
@@ -78,7 +83,7 @@ def test_parse_with_outputs() -> None:
   "nbformat_minor": 5
 }
 """
-    content, metadata = parse_notebook(nb_content)
+    content, _metadata = parse_notebook(nb_content)
 
     assert "<pre>hi" in content or "hi" in content
     assert "42" in content
@@ -94,7 +99,12 @@ def test_parse_with_error_output() -> None:
       "metadata": {},
       "source": ["1/0"],
       "outputs": [
-        {"output_type": "error", "ename": "ZeroDivisionError", "evalue": "division by zero", "traceback": []}
+        {
+          "output_type": "error",
+          "ename": "ZeroDivisionError",
+          "evalue": "division by zero",
+          "traceback": []
+        }
       ]
     }
   ],
@@ -103,7 +113,7 @@ def test_parse_with_error_output() -> None:
   "nbformat_minor": 5
 }
 """
-    content, metadata = parse_notebook(nb_content)
+    content, _metadata = parse_notebook(nb_content)
 
     assert "notebook-error" in content
     assert "ZeroDivisionError" in content
@@ -123,7 +133,7 @@ def test_metadata_extraction() -> None:
   "nbformat_minor": 5
 }
 """
-    content, metadata = parse_notebook(nb_content)
+    _content, metadata = parse_notebook(nb_content)
 
     assert metadata["title"] == "My Notebook"
     assert metadata["notebook"]["kernel_name"] == "python3"
@@ -140,7 +150,7 @@ def test_title_fallback_from_source_path() -> None:
   "nbformat_minor": 5
 }
 """
-    content, metadata = parse_notebook(nb_content, source_path=Path("content/demo-notebook.ipynb"))
+    _content, metadata = parse_notebook(nb_content, source_path=Path("content/demo-notebook.ipynb"))
 
     assert metadata["title"] == "Demo Notebook"
 
@@ -161,7 +171,7 @@ def test_infer_code_language() -> None:
   "nbformat_minor": 5
 }
 """
-    content, metadata = parse_notebook(nb_content)
+    content, _metadata = parse_notebook(nb_content)
 
     assert "```javascript" in content
     assert "console.log(1)" in content

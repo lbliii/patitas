@@ -136,9 +136,7 @@ class TestExports:
 
         from patitas import __version__
 
-        with (Path(__file__).resolve().parent.parent / "pyproject.toml").open(
-            "rb"
-        ) as f:
+        with (Path(__file__).resolve().parent.parent / "pyproject.toml").open("rb") as f:
             expected = tomllib.load(f)["project"]["version"]
         assert __version__ == expected
 

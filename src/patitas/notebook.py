@@ -34,9 +34,7 @@ def parse_notebook(
 
     nbformat = nb.get("nbformat", 0)
     if nbformat < 4:
-        raise ValueError(
-            f"Notebook format {nbformat} not supported. Convert to nbformat 4 or 5."
-        )
+        raise ValueError(f"Notebook format {nbformat} not supported. Convert to nbformat 4 or 5.")
 
     metadata = _extract_metadata(nb, source_path)
     markdown_content = _cells_to_markdown(nb)
@@ -110,10 +108,9 @@ def _cells_to_markdown(nb: dict[str, Any]) -> str:
                 if out_md:
                     parts.append(out_md)
                     parts.append("\n\n")
-        elif cell_type == "raw":
-            if text:
-                parts.append(text)
-                parts.append("\n\n")
+        elif cell_type == "raw" and text:
+            parts.append(text)
+            parts.append("\n\n")
 
     return "".join(parts).rstrip()
 
@@ -179,8 +176,5 @@ def _infer_code_language(cell: dict[str, Any]) -> str:
 def _escape_html(text: str) -> str:
     """Escape HTML special characters."""
     return (
-        text.replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-        .replace('"', "&quot;")
+        text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
     )

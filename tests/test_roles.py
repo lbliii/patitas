@@ -323,13 +323,12 @@ class TestMathRole:
         assert node.content == " x + y "  # Not stripped
 
     def test_render_with_delimiters(self, role: MathRole, loc: SourceLocation) -> None:
-        """Render should include \\( \\) delimiters."""
+        """Render should output span with math class and escaped content."""
         node = role.parse("math", "E = mc^2", loc)
         sb = StringBuilder()
         role.render(node, sb)
         result = sb.build()
-        assert "\\(" in result
-        assert "\\)" in result
+        assert 'class="math notranslate nohighlight"' in result
         assert "E = mc^2" in result
 
     def test_escapes_html(self, role: MathRole, loc: SourceLocation) -> None:

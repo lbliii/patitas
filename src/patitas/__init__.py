@@ -81,6 +81,7 @@ from patitas.nodes import (
     Text,
     ThematicBreak,
 )
+from patitas.notebook import parse_notebook
 from patitas.parser import Parser
 from patitas.profiling import ParseAccumulator, get_parse_accumulator, profiled_parse
 from patitas.renderers.html import HtmlRenderer
@@ -88,8 +89,6 @@ from patitas.renderers.protocol import ASTRenderer
 from patitas.serialization import from_dict, from_json, to_dict, to_json
 from patitas.tokens import Token, TokenType
 from patitas.visitor import BaseVisitor, transform
-
-from patitas.notebook import parse_notebook
 
 __version__ = "0.3.0"
 
