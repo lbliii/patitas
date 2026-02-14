@@ -59,10 +59,9 @@ class MathRole:
         """Render math expression.
 
         Uses span with math class for CSS styling and JS rendering.
-        The content is escaped but wrapped in delimiters for the
-        math rendering library.
+        Outputs raw LaTeX (matches plugin format) for KaTeX katex.render().
         """
-        # Use \( \) delimiters for inline math (MathJax/KaTeX compatible)
-        sb.append('<span class="math notranslate nohighlight">\\(')
+        # Raw LaTeX for KaTeX katex.render() (matches plugin output)
+        sb.append('<span class="math notranslate nohighlight">')
         sb.append(html_escape(node.content))
-        sb.append("\\)</span>")
+        sb.append("</span>")

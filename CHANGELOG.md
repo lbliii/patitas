@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **MathRole** — Output raw LaTeX (no `\( \)` delimiters) to match plugin format for
+  KaTeX `katex.render()` compatibility. Both plugin and role now emit identical structure.
+
 ## [0.2.0] - 2026-02-13
 
 ### Added
