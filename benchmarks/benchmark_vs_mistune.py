@@ -266,6 +266,113 @@ try:
 
         benchmark(parse_all)
 
+    @pytest.mark.benchmark(group="parse-large-doc")
+    def test_benchmark_patitas_large_document(benchmark, large_document):
+        """Benchmark Patitas on ~100KB document with tables."""
+        from patitas import Markdown
+
+        md = Markdown(plugins=["table"])
+
+        def parse_doc():
+            md(large_document)
+
+        benchmark(parse_doc)
+
+    @pytest.mark.benchmark(group="parse-large-doc")
+    def test_benchmark_mistune_large_document(benchmark, large_document):
+        """Benchmark mistune on ~100KB document."""
+        try:
+            import mistune
+        except ImportError:
+            pytest.skip("mistune not installed")
+
+        md = mistune.create_markdown()
+
+        def parse_doc():
+            md(large_document)
+
+        benchmark(parse_doc)
+
+    @pytest.mark.benchmark(group="parse-real-world")
+    def test_benchmark_patitas_real_world(benchmark, real_world_docs):
+        """Benchmark Patitas on real-world document patterns."""
+        from patitas import Markdown
+
+        md = Markdown(plugins=["table", "autolinks"])
+
+        def parse_all():
+            for doc in real_world_docs:
+                md(doc)
+
+        benchmark(parse_all)
+
+    @pytest.mark.benchmark(group="parse-real-world")
+    def test_benchmark_mistune_real_world(benchmark, real_world_docs):
+        """Benchmark mistune on real-world document patterns."""
+        try:
+            import mistune
+        except ImportError:
+            pytest.skip("mistune not installed")
+
+        md = mistune.create_markdown()
+
+        def parse_all():
+            for doc in real_world_docs:
+                md(doc)
+
+        benchmark(parse_all)
+
+    @pytest.mark.benchmark(group="parse-only")
+    def test_benchmark_patitas_parse_only(benchmark, commonmark_corpus):
+        """Benchmark Patitas parse() only, no render."""
+        from patitas import parse
+
+        def parse_all():
+            for doc in commonmark_corpus:
+                parse(doc)
+
+        benchmark(parse_all)
+
+    @pytest.mark.benchmark(group="render-only")
+    def test_benchmark_patitas_render_only(benchmark, commonmark_corpus):
+        """Benchmark Patitas render() only on pre-parsed docs."""
+        from patitas import parse, render
+
+        docs = [parse(doc) for doc in commonmark_corpus]
+
+        def render_all():
+            for doc in docs:
+                render(doc)
+
+        benchmark(render_all)
+
+    @pytest.mark.benchmark(group="parse-plugins")
+    def test_benchmark_patitas_plugins_all(benchmark, plugin_heavy_doc):
+        """Benchmark Patitas with all plugins enabled."""
+        from patitas import Markdown
+
+        md = Markdown(plugins=["all"])
+
+        def parse_doc():
+            md(plugin_heavy_doc)
+
+        benchmark(parse_doc)
+
+    @pytest.mark.benchmark(group="parse-plugins")
+    def test_benchmark_mistune_plugins(benchmark, plugin_heavy_doc):
+        """Benchmark mistune on plugin-heavy document."""
+        try:
+            import mistune
+        except ImportError:
+            pytest.skip("mistune not installed")
+
+        md = mistune.create_markdown()
+
+        def parse_doc():
+            md(plugin_heavy_doc)
+
+        benchmark(parse_doc)
+
 except ImportError:
     pass  # pytest not available
 

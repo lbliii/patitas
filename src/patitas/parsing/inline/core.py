@@ -26,9 +26,7 @@ from patitas.parsing.charsets import (
     HEX_DIGITS,
     INLINE_SPECIAL,
 )
-from patitas.parsing.inline.match_registry import (
-    MatchRegistry,
-)
+from patitas.parsing.inline.match_registry import MatchRegistry
 from patitas.parsing.inline.tokens import (
     CodeSpanToken,
     DelimiterToken,

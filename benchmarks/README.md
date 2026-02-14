@@ -14,9 +14,21 @@ python benchmarks/benchmark_vs_mistune.py
 # Install benchmark dependencies
 pip install pytest-benchmark mistune markdown-it-py
 
-# Run benchmarks
-pytest benchmarks/ -v --benchmark-only --benchmark-group-by=group
+# Run all benchmarks (including incremental)
+pytest benchmarks/benchmark_vs_mistune.py benchmarks/benchmark_incremental.py -v --benchmark-only --benchmark-group-by=group
 ```
+
+## Benchmark Groups
+
+| Group | What it measures |
+|-------|------------------|
+| `parse-corpus` | 652 CommonMark examples (parse+render) |
+| `parse-large-doc` | ~100KB document with tables |
+| `parse-real-world` | Real-world document patterns |
+| `parse-plugins` | Plugin-heavy doc (tables, math, footnotes, etc.) |
+| `parse-only` | Parse to AST only (no render) |
+| `render-only` | Render pre-parsed AST to HTML |
+| `parse-incremental` | Incremental re-parse vs full parse |
 
 ## Methodology
 
@@ -25,20 +37,15 @@ pytest benchmarks/ -v --benchmark-only --benchmark-group-by=group
 - **CommonMark Spec**: 652 examples from CommonMark 0.31.2
 - **Large Document**: ~100KB generated markdown with varied syntax
 - **Real-world**: Collection of common markdown patterns
-
-### What We Measure
-
-1. **Parse time**: Time to convert markdown source to HTML
-2. **Memory**: Peak memory usage during parsing
-3. **Throughput**: Documents per second
+- **Plugin-heavy**: Document with tables, math, footnotes, strikethrough, task lists
 
 ### Parsers Compared
 
-| Parser | Version | Notes |
-|--------|---------|-------|
-| Patitas | 0.1.0 | This library |
-| mistune | 3.x | Fast, popular |
-| markdown-it-py | 3.x | CommonMark compliant |
+| Parser | Notes |
+|--------|-------|
+| Patitas | This library — typed AST, ReDoS-proof |
+| mistune | Fast, popular |
+| markdown-it-py | CommonMark compliant, crashes under free-threading |
 
 ## Results
 
@@ -48,30 +55,30 @@ Run benchmarks to generate current results:
 python benchmarks/benchmark_vs_mistune.py
 ```
 
-Expected output:
+Typical output (results vary by environment):
 
 ```
 RESULTS: Parse 652 CommonMark examples
 ============================================================
-Patitas                 12.34ms  (1.00x)
-mistune                 20.56ms  (1.67x)
-markdown-it-py          19.87ms  (1.61x)
-
-✅ Patitas is 40% faster than mistune
+mistune                 ~12ms  (1.0x)
+Patitas                 ~26ms  (2.1x)
+markdown-it-py          ~26ms  (2.1x)
 ```
 
-## Why Patitas is Faster
+**Incremental parsing** — for a 1-char edit in a ~100KB doc: `parse_incremental` ~160µs vs full `parse` ~32ms (~200x faster).
 
-1. **Hand-written lexer**: No regex compilation or backtracking overhead
+## Why Patitas Prioritizes Safety
+
+1. **Hand-written lexer**: O(n) guaranteed — no regex backtracking
 2. **Zero-copy code blocks**: AST stores offsets, not content copies
 3. **StringBuilder pattern**: O(n) string building vs concatenation
 4. **Immutable AST**: No defensive copying, safe to share
+5. **Incremental re-parse**: O(change) for editor workflows
 
 ## Reproducibility
 
 All benchmarks run on:
 - Python 3.14+
-- Same machine (no parallelism affecting results)
 - 10 iterations minimum, median reported
 - Warmup runs excluded
 

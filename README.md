@@ -101,25 +101,31 @@ Patitas uses a hand-written finite state machine lexer:
 
 ## Performance
 
-**Python 3.14t (free-threading) — 652 CommonMark examples:**
+**652 CommonMark examples (single thread):**
 
-| Parser | Single Thread | 4 Threads | Thread-safe? |
-|--------|---------------|-----------|--------------|
-| mistune | 11ms | 4ms | ✅ |
-| **Patitas** | 17ms | 7ms | ✅ |
-| markdown-it-py | 20ms | **CRASH** | ❌ |
+| Parser | Time | Thread-safe? |
+|--------|------|--------------|
+| mistune | ~12ms | ✅ |
+| **Patitas** | ~26ms | ✅ |
+| markdown-it-py | ~26ms | ❌ Crashes under free-threading |
+
+**Incremental parsing** — for a 1-char edit in a ~100KB doc, `parse_incremental` is ~200x faster than full re-parse (~160µs vs ~32ms).
 
 ```bash
-# Run benchmarks yourself
-PYTHONPATH=src python3.14t benchmarks/benchmark_vs_mistune.py
+# From repo (after uv sync --group dev):
+python benchmarks/benchmark_vs_mistune.py
+
+# All benchmarks including incremental:
+pytest benchmarks/benchmark_vs_mistune.py benchmarks/benchmark_incremental.py -v --benchmark-only
 ```
 
 **Key insights:**
-- **mistune is faster** — regex engines are highly optimized
-- **Patitas scales linearly** — 2.5x speedup with 4 threads
+- **mistune is faster** on typical workloads — regex engines are highly optimized
+- **Patitas scales linearly** — ~2.5x speedup with 4 threads under Python 3.14t free-threading
 - **markdown-it-py crashes** under free-threading (race condition in URL encoding)
+- **Incremental parsing** — O(change) re-parse for editor-style workflows
 
-Patitas prioritizes **safety over raw speed**: O(n) guaranteed parsing, typed AST, and full thread-safety.
+Patitas prioritizes **safety over raw speed**: O(n) guaranteed parsing, typed AST, full thread-safety, and incremental re-parse.
 
 ---
 
@@ -215,18 +221,16 @@ JavaScript code here.
 
 ```python
 from patitas import Markdown, create_registry_with_defaults
+from patitas.directives.decorator import directive
 
-# Define a custom directive
-class AlertDirective:
-    names = ("alert",)
-    token_type = "alert"
-    
-    def render(self, directive, renderer):
-        return f'<div class="alert">{directive.title}</div>'
+# Define a custom directive with the @directive decorator
+@directive("alert")
+def render_alert(node, children: str, sb) -> None:
+    sb.append(f'<div class="alert">{children}</div>')
 
 # Extend defaults with your directive
 builder = create_registry_with_defaults()  # Has admonition, dropdown, tabs
-builder.register(AlertDirective())
+builder.register(render_alert())
 
 # Use it
 md = Markdown(directive_registry=builder.build())
@@ -327,10 +331,10 @@ uv sync --group dev
 pytest
 ```
 
-**Run benchmarks:**
+**Run benchmarks** (after `uv sync --group dev`):
 
 ```bash
-pip install mistune markdown-it-py
+pip install mistune markdown-it-py    # optional: for parser comparison
 python benchmarks/benchmark_vs_mistune.py
 ```
 
