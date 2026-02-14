@@ -11,6 +11,7 @@ tags:
 keywords:
 - api
 - parse
+- parse_notebook
 - render
 - markdown
 - serialization
@@ -86,6 +87,45 @@ doc = parse("# Hello")
 html = render(doc, source="# Hello")
 print(html)  # <h1>Hello</h1>
 ```
+
+### parse_notebook()
+
+Parse a Jupyter notebook (`.ipynb`) to Markdown content and metadata. Zero dependencies — uses stdlib `json` only. Supports nbformat 4 and 5.
+
+```python
+def parse_notebook(
+    content: str,
+    source_path: Path | str | None = None,
+) -> tuple[str, dict[str, Any]]
+```
+
+**Parameters:**
+- `content`: Raw JSON content of the `.ipynb` file (caller handles I/O)
+- `source_path`: Optional path for title fallback when notebook has no title
+
+**Returns:** Tuple of `(markdown_content, metadata_dict)`
+
+- `markdown_content`: Markdown string — markdown cells as-is, code cells as fenced blocks, outputs as HTML
+- `metadata`: Dict with `title`, `type: "notebook"`, `notebook.kernel_name`, `notebook.cell_count`, etc.
+
+**Raises:**
+- `json.JSONDecodeError`: If content is not valid JSON
+- `ValueError`: If nbformat is 3 or older
+
+**Example:**
+
+```python
+from patitas import parse_notebook
+
+with open("demo.ipynb") as f:
+    content, metadata = parse_notebook(f.read(), "demo.ipynb")
+
+# content: Markdown string ready for parse() or render
+# metadata: title, type, notebook{kernel_name, cell_count}, etc.
+print(metadata["notebook"]["kernel_name"])  # e.g. "python3"
+```
+
+Used by [Bengal](https://github.com/lbliii/bengal) for native notebook rendering — drop `.ipynb` into content and build.
 
 ### Markdown
 
