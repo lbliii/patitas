@@ -235,6 +235,21 @@ class TestTabsDirective:
         assert node.options.selected is True
         assert node.options.badge == "Popular"
 
+    def test_tab_labels_with_ampersand_render_correctly(self) -> None:
+        """Tab titles with & must not be double-escaped (no &amp;amp;)."""
+        from patitas.directives.builtins.tabs import _extract_tab_items
+
+        # Simulates HTML from TabItemDirective.render (title is html_escape'd)
+        html = (
+            '<div class="tab-item" data-title="JVM &amp; .NET" '
+            'data-selected="false" data-icon="" data-badge="" data-disabled="">'
+            "<p>Content</p></div>"
+        )
+        items = _extract_tab_items(html)
+        assert len(items) == 1
+        assert items[0].title == "JVM & .NET"
+        # When re-escaped in _render_enhanced, should produce &amp; not &amp;amp;
+
 
 class TestContainerDirective:
     """Tests for container directive."""
