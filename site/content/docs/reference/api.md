@@ -13,6 +13,9 @@ keywords:
 - parse
 - render
 - markdown
+- serialization
+- to_dict
+- from_dict
 category: reference
 icon: code
 ---
@@ -116,6 +119,61 @@ print(html)  # <h1>Hello <strong>World</strong></h1>
 md = Markdown(plugins=["table", "math", "strikethrough"])
 html = md("| a | b |\n|---|---|\n| 1 | 2 |")
 ```
+
+## Serialization API
+
+Convert AST nodes to/from JSON-compatible dicts and strings. Deterministic output
+for cache-key stability. Useful for caching parsed ASTs (Bengal incremental builds)
+and sending ASTs over the wire (Purr SSE).
+
+### to_dict() / from_dict()
+
+In-memory dict format — use for caching or when you need to inspect or modify
+the structure before serializing to JSON.
+
+```python
+from patitas import parse, to_dict, from_dict
+
+doc = parse("# Hello **World**")
+data = to_dict(doc)
+restored = from_dict(data)
+assert doc == restored
+```
+
+**to_dict(node: Node) -> dict[str, Any]**
+
+- `node`: Any AST node (Document, Heading, Paragraph, etc.)
+- **Returns:** JSON-compatible dict with `_type` discriminator
+
+**from_dict(data: dict[str, Any]) -> Node**
+
+- `data`: Dict produced by `to_dict`
+- **Returns:** Reconstructed typed AST node
+
+### to_json() / from_json()
+
+JSON string format — use for persistence, wire transfer, or human inspection.
+
+```python
+from patitas import parse, to_json, from_json
+
+doc = parse("# Hello **World**")
+json_str = to_json(doc)
+restored = from_json(json_str)
+assert doc == restored
+```
+
+**to_json(doc: Document, *, indent: int | None = None) -> str**
+
+- `doc`: Document AST root
+- `indent`: Optional indent for pretty-printing (None = compact)
+
+**from_json(data: str) -> Document**
+
+- `data`: JSON string from `to_json`
+- **Returns:** Reconstructed Document
+
+See [Serialization](/docs/extending/serialization/) for caching and wire-transfer patterns.
 
 ## Configuration API
 

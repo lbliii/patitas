@@ -39,6 +39,12 @@ Extend Patitas with custom functionality.
 :description: Bundle extensions into plugins
 :::{/card}
 
+:::{card} Serialization
+:icon: database
+:link: ./serialization
+:description: Cache and transfer AST as dict or JSON
+:::{/card}
+
 :::{card} AST Diffing
 :icon: git-compare
 :link: ./diffing
