@@ -40,7 +40,7 @@ html = md("# Hello **World**")
 
 ---
 
-## Why Patitas?
+## What's good about it
 
 :::{cards}
 :columns: 2
@@ -70,24 +70,11 @@ Pure Python with no runtime dependencies. Optional extras for directives and syn
 
 ---
 
-## Quick Comparison
-
-| Feature | Patitas | mistune | markdown-it-py |
-|---------|---------|---------|----------------|
-| **Parsing** | State machine O(n) | Regex-based | Regex-based |
-| **ReDoS Safe** | ✅ Yes | ❌ No | ❌ No |
-| **CommonMark** | ✅ 0.31.2 | ⚠️ Partial | ✅ 0.30 |
-| **Free-threading** | ✅ Native | ❌ No | ❌ No |
-| **Typed AST** | ✅ Frozen dataclasses | ❌ Dicts | ⚠️ Partial |
-| **Dependencies** | 0 (core) | 0 | 3 |
-
----
-
 ## Performance
 
-**652 CommonMark examples:** mistune ~12ms, Patitas ~26ms. mistune is faster on typical workloads.
-
-**Incremental parsing:** For a 1-char edit in a ~100KB doc, `parse_incremental` is ~200x faster than full re-parse (~160µs vs ~32ms).
+- **652 CommonMark examples** — ~26ms single-threaded
+- **Incremental parsing** — For a 1-char edit in a ~100KB doc, `parse_incremental` is ~200x faster than full re-parse (~160µs vs ~32ms)
+- **Parallel scaling** — ~2.5x speedup with 4 threads under Python 3.14t free-threading
 
 Patitas prioritizes **safety over raw speed**: O(n) guaranteed parsing, typed AST, and full thread-safety.
 

@@ -23,15 +23,13 @@ Patitas is designed for consistent, predictable performance.
 
 ## Why State Machine?
 
-Regex-based parsers have unpredictable performance:
+State machines guarantee O(n) regardless of input:
 
-| Input Pattern | Regex Parser | State Machine |
-|---------------|--------------|---------------|
-| Normal text | Fast | Fast |
-| Nested emphasis | Slower | Fast |
-| Pathological input | **Exponential** | Fast |
-
-State machines guarantee O(n) regardless of input.
+| Input Pattern | Patitas |
+|---------------|---------|
+| Normal text | Fast |
+| Nested emphasis | Fast |
+| Pathological input | Fast |
 
 ## Benchmarks
 
@@ -41,13 +39,13 @@ Run benchmarks to get current results:
 pytest benchmarks/benchmark_vs_mistune.py benchmarks/benchmark_incremental.py -v --benchmark-only
 ```
 
-**652 CommonMark examples (single thread):** mistune ~12ms, Patitas ~26ms, markdown-it-py ~26ms. mistune is faster on typical workloads.
+**652 CommonMark examples (single thread):** ~26ms.
 
-**Large document (~100KB):** mistune ~23ms, Patitas ~38ms.
+**Large document (~100KB):** ~38ms.
 
 **Incremental parsing:** For a 1-char edit in a ~100KB doc, `parse_incremental` is ~200x faster than full re-parse (~160µs vs ~32ms).
 
-**Pathological input:** Regex-based parsers can hang; Patitas completes in O(n) regardless of input.
+**Pathological input:** Patitas completes in O(n) regardless of input.
 
 ## Optimization Strategies
 
