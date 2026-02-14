@@ -31,6 +31,7 @@ from patitas.lexer.scanners import (
     FenceScannerMixin,
     HtmlScannerMixin,
 )
+from patitas.location import SourceLocation
 from patitas.tokens import Token, TokenType
 
 
@@ -314,8 +315,17 @@ class Lexer(
             line_indent: Pre-computed indent level.
 
         Returns:
-            Token with raw coordinates for lazy location creation.
+            Token with pre-created SourceLocation (avoids property overhead).
         """
+        loc = SourceLocation(
+            lineno=self._saved_lineno,
+            col_offset=start_col if start_col is not None else self._saved_col,
+            offset=start_pos,
+            end_offset=end_pos if end_pos is not None else self._pos,
+            end_lineno=self._lineno,
+            end_col_offset=self._col,
+            source_file=self._source_file,
+        )
         return Token(
             type=token_type,
             value=value,
@@ -327,6 +337,7 @@ class Lexer(
             _end_lineno=self._lineno,
             _end_col=self._col,
             _source_file=self._source_file,
+            _location_cache=loc,
         )
 
     def _make_token_at_current(
@@ -344,8 +355,17 @@ class Lexer(
             line_indent: Pre-computed indent level.
 
         Returns:
-            Token at current position.
+            Token at current position with pre-created SourceLocation.
         """
+        loc = SourceLocation(
+            lineno=self._lineno,
+            col_offset=self._col,
+            offset=self._pos,
+            end_offset=self._pos,
+            end_lineno=self._lineno,
+            end_col_offset=self._col,
+            source_file=self._source_file,
+        )
         return Token(
             type=token_type,
             value=value,
@@ -357,4 +377,5 @@ class Lexer(
             _end_lineno=self._lineno,
             _end_col=self._col,
             _source_file=self._source_file,
+            _location_cache=loc,
         )

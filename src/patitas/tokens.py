@@ -8,9 +8,9 @@ Token is frozen (immutable) and safe to share across threads.
 TokenType is an enum (inherently immutable).
 
 Performance Note:
-Token stores raw coordinates and lazily creates SourceLocation on demand.
-This avoids allocating SourceLocation objects for tokens whose location
-is never accessed (most tokens during parsing).
+Lexer creates SourceLocation at token creation time to avoid property
+overhead. Tokens constructed manually (e.g. in tests) use lazy creation
+when _location_cache is None.
 
 """
 
