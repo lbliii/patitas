@@ -57,8 +57,29 @@ cache backend (Redis, memcached) or pass through Python without a string round-t
 
 ## Caching Parsed ASTs
 
-Cache the AST to skip re-parsing when only templates or downstream config change.
-Bengal uses this for incremental builds.
+Two approaches:
+
+### Parse Cache (content-addressed)
+
+Use the built-in parse cache for content-addressed caching. Key is
+`(content_hash, config_hash)`; no path needed. Ideal for incremental builds,
+undo/revert, and duplicate content:
+
+```python
+from patitas import parse, DictParseCache
+
+cache = DictParseCache()
+doc = parse(source, cache=cache)
+# Same source hits cache; different config produces different entry
+```
+
+See [API Reference](/docs/reference/api/#parse-cache) for `ParseCache` protocol
+and `hash_content` / `hash_config` helpers.
+
+### Path-based (to_dict / from_dict)
+
+Cache by path when you need to skip re-parsing when only templates or
+downstream config change. Bengal uses this for incremental builds.
 
 ```python
 from patitas import parse, to_dict, from_dict, render

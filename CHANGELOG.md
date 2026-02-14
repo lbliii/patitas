@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Parse cache** — Content-addressed `(content_hash, config_hash) -> Document` cache.
+  `parse()`, `Markdown.parse()`, and `Markdown.parse_many()` accept optional `cache:
+  ParseCache | None`. `DictParseCache` for in-memory use; `hash_content()` and
+  `hash_config()` for key computation. Enables faster incremental builds (undo/revert,
+  duplicate content). Exported from `patitas.cache` and `patitas` top-level.
+
 - **`examples/`** — Runnable examples showcasing Patitas: basic (hello, Markdown class),
   notebooks (parse_notebook), AST (visitor, transform), directives (builtin, custom),
   incremental, differ, plugins (math, tables, footnotes), advanced (parallel parse,

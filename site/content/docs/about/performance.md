@@ -89,6 +89,24 @@ Using tuples instead of lists:
 children: tuple[Inline, ...]  # Immutable, hashable
 ```
 
+### 5. Parse Cache
+
+Content-addressed cache avoids re-parsing unchanged content. Key is
+`(content_hash, config_hash)`; value is `Document`. Use for incremental builds,
+undo/revert, or duplicate content:
+
+```python
+from patitas import parse, DictParseCache
+
+cache = DictParseCache()
+for source in sources:
+    doc = parse(source, cache=cache)  # Duplicates hit cache
+```
+
+On a 2-pass build over the same content, the second pass is effectively free.
+`DictParseCache` is not thread-safe; for parallel parsing, use a cache with
+internal locking. See [API Reference](/docs/reference/api/#parse-cache).
+
 ## Memory Usage
 
 | Component | Per Node | Notes |
