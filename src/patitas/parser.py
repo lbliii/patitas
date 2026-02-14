@@ -93,6 +93,7 @@ class Parser(
         "_source",
         "_source_file",
         "_tokens",
+        "_tokens_len",
     )
 
     def __init__(
@@ -114,6 +115,7 @@ class Parser(
         self._source = source
         self._source_file = source_file
         self._tokens: list[Token] = []
+        self._tokens_len = 0
         self._pos = 0
         self._current: Token | None = None
 
@@ -156,6 +158,7 @@ class Parser(
         self._source = source
         self._source_file = source_file
         self._tokens = []
+        self._tokens_len = 0
         self._pos = 0
         self._current = None
         self._link_refs = {}
@@ -238,6 +241,7 @@ class Parser(
         # Tokenize source
         lexer = Lexer(self._source, self._source_file, text_transformer=self._text_transformer)
         self._tokens = list(lexer.tokenize())
+        self._tokens_len = len(self._tokens)
         self._pos = 0
         self._current = self._tokens[0] if self._tokens else None
 

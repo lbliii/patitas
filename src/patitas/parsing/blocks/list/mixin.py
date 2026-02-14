@@ -121,7 +121,7 @@ class ListParsingMixin:
             )
             # Update parser position
             self._pos = new_pos
-            self._current = self._tokens[new_pos] if new_pos < len(self._tokens) else None
+            self._current = self._tokens[new_pos] if new_pos < self._tokens_len else None
             return list_node
 
         # Extract marker info

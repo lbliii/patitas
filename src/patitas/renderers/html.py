@@ -62,13 +62,20 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+_HTML_ESCAPE_TABLE = str.maketrans({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"})
+
+
 def html_escape(s: str) -> str:
     """Escape HTML special characters.
 
     CommonMark-compliant: escapes <, >, &, " but NOT single quotes.
-    Python's html.escape() escapes ' to &#x27; which CommonMark doesn't require.
+    Uses str.translate for speed; fast path when no escaping needed.
     """
-    return html.escape(s, quote=False).replace('"', "&quot;")
+    if not s:
+        return s
+    if "&" not in s and "<" not in s and ">" not in s and '"' not in s:
+        return s
+    return s.translate(_HTML_ESCAPE_TABLE)
 
 
 def _encode_url(url: str) -> str:

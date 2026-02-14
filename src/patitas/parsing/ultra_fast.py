@@ -49,7 +49,6 @@ def parse_ultra_simple(
         elif tok.type == TokenType.BLANK_LINE:
             # Flush current paragraph
             if current_lines and current_location is not None:
-                # Join and strip trailing whitespace (CommonMark compliance)
                 content = "\n".join(current_lines).rstrip()
                 inlines = parse_inline_fn(content, current_location)
                 blocks.append(Paragraph(location=current_location, children=inlines))
@@ -59,7 +58,6 @@ def parse_ultra_simple(
         elif tok.type == TokenType.EOF:
             # Final flush
             if current_lines and current_location is not None:
-                # Join and strip trailing whitespace (CommonMark compliance)
                 content = "\n".join(current_lines).rstrip()
                 inlines = parse_inline_fn(content, current_location)
                 blocks.append(Paragraph(location=current_location, children=inlines))
