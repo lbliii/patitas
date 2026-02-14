@@ -27,7 +27,7 @@ Release history and changelogs.
 
 ## Latest Release
 
-- [[releases/0.2.0|0.2.0]] — Incremental parsing, AST diffing, visitor/transform, serialization (2026-02-13)
+- [[releases/0.4.0|0.4.0]] — Parse cache, examples, @directive fix (2026-02-14)
 
 ## Version Policy
 
