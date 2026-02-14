@@ -27,7 +27,7 @@ Release history and changelogs.
 
 ## Latest Release
 
-- [[releases/0.4.0|0.4.0]] — Parse cache, examples, @directive fix (2026-02-14)
+- [[releases/0.3.0|0.3.0]] — Notebook parsing, MathRole KaTeX compatibility (2026-02-14)
 
 ## Version Policy
 
