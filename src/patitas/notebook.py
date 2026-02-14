@@ -127,7 +127,7 @@ def _output_to_markdown(output: dict[str, Any]) -> str:
     if output_type == "stream":
         content = text if isinstance(text, str) else ("".join(text) if text else "")
         if content.strip():
-            return f"<pre>{_escape_html(content)}</pre>"
+            return f'<div class="nb-output"><pre>{_escape_html(content)}</pre></div>'
         return ""
 
     if output_type in ("execute_result", "display_data"):
@@ -136,12 +136,21 @@ def _output_to_markdown(output: dict[str, Any]) -> str:
                 b64 = data[mime]
                 if isinstance(b64, list):
                     b64 = "".join(b64)
-                return f'<img src="data:{mime};base64,{b64}" alt="output" />'
+                return (
+                    f'<div class="nb-output nb-output--image">'
+                    f'<img src="data:{mime};base64,{b64}" alt="output" />'
+                    f"</div>"
+                )
+        if "text/html" in data:
+            html = data["text/html"]
+            html = "".join(html) if isinstance(html, list) else html
+            if html.strip():
+                return f'<div class="nb-output nb-output--html">{html}</div>'
         if "text/plain" in data:
             plain = data["text/plain"]
             plain = "".join(plain) if isinstance(plain, list) else plain
             if plain.strip():
-                return f"<pre>{_escape_html(plain)}</pre>"
+                return f'<div class="nb-output"><pre>{_escape_html(plain)}</pre></div>'
         return ""
 
     if output_type == "error":
@@ -149,7 +158,11 @@ def _output_to_markdown(output: dict[str, Any]) -> str:
         evalue = output.get("evalue", "")
         traceback = output.get("traceback", [])
         tb_text = "\n".join(traceback) if traceback else f"{ename}: {evalue}"
-        return f'<pre class="notebook-error">{_escape_html(tb_text)}</pre>'
+        return (
+            f'<div class="nb-output nb-output--error">'
+            f'<pre class="notebook-error">{_escape_html(tb_text)}</pre>'
+            f"</div>"
+        )
 
     return ""
 
