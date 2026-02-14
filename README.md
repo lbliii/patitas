@@ -18,18 +18,34 @@ html = md("# Hello **World**")
 
 ---
 
-## Why Patitas?
+## What is Patitas?
 
-|   | Patitas | mistune | markdown-it-py |
-|---|---------|---------|----------------|
-| **ReDoS-proof** | ✅ O(n) FSM lexer | ❌ Regex-based | ✅ Token-based |
-| **CommonMark** | 0.31.2 ✅ | Partial | 0.31.2 ✅ |
-| **Free-threading** | ✅ Python 3.14t safe | ✅ Works | ❌ **Crashes** |
-| **Typed AST** | ✅ Frozen dataclasses | ❌ `Dict[str, Any]` | ❌ Token objects |
-| **Dependencies** | Zero | Zero | Zero |
-| **Directives** | ✅ MyST syntax | RST-style | Plugin required |
+Patitas is a pure-Python Markdown parser that parses to a typed AST and renders to HTML. It's CommonMark 0.31.2 compliant, has zero runtime dependencies, and is built for Python 3.14+.
 
-**Patitas is the only CommonMark-compliant parser with typed AST that works safely under Python 3.14t free-threading.**
+---
+
+## What it does
+
+| Function | Description |
+|----------|-------------|
+| `parse(source)` | Parse Markdown to typed AST |
+| `parse_notebook(content, source_path?)` | Parse Jupyter .ipynb to (markdown, metadata) |
+| `parse_incremental(new, prev, ...)` | Re-parse only the changed region (O(change)) |
+| `render(doc)` | Render AST to HTML |
+| `Markdown()` | All-in-one parser and renderer |
+
+---
+
+## What's good about it
+
+- **ReDoS-proof** — O(n) finite state machine lexer, no regex backtracking. Safe for untrusted input in web apps and APIs.
+- **Typed AST** — Frozen dataclasses (`Heading`, `Paragraph`, `Strong`, etc.) with IDE autocomplete and type checking.
+- **CommonMark** — Full 0.31.2 spec compliance (652 examples).
+- **Incremental parsing** — Re-parse only changed blocks; ~200x faster for small edits than full re-parse.
+- **Thread-safe** — Zero shared mutable state. Parse in parallel under Python 3.14t free-threading.
+- **Directives** — MyST-style blocks (admonition, dropdown, tabs) plus custom directives.
+- **Plugins** — Tables, footnotes, math, strikethrough, task lists.
+- **Zero dependencies** — Pure Python, stdlib only.
 
 ---
 
@@ -52,13 +68,15 @@ pip install patitas[all]         # All optional features
 
 ## Quick Start
 
-| Function | Description |
-|----------|-------------|
-| `parse(source)` | Parse Markdown to typed AST |
-| `parse_notebook(content, source_path?)` | Parse Jupyter .ipynb to (markdown, metadata) |
-| `parse_incremental(new, prev, ...)` | Re-parse only the changed region (O(change)) |
-| `render(doc)` | Render AST to HTML |
-| `Markdown()` | All-in-one parser and renderer |
+### Parse and render
+
+```python
+from patitas import parse, render
+
+doc = parse("# Hello **World**")
+html = render(doc)
+# <h1 id="hello-world">Hello <strong>World</strong></h1>
+```
 
 ### Notebook support
 
@@ -86,7 +104,6 @@ Traditional Markdown parsers use regex patterns vulnerable to catastrophic backt
 # Malicious input that can freeze regex-based parsers
 evil = "a](" + "\\)" * 10000
 
-# mistune: hangs for seconds/minutes
 # Patitas: completes in milliseconds (O(n) guaranteed)
 ```
 
@@ -101,65 +118,19 @@ Patitas uses a hand-written finite state machine lexer:
 
 ## Performance
 
-**652 CommonMark examples (single thread):**
-
-| Parser | Time | Thread-safe? |
-|--------|------|--------------|
-| mistune | ~12ms | ✅ |
-| **Patitas** | ~26ms | ✅ |
-| markdown-it-py | ~26ms | ❌ Crashes under free-threading |
-
-**Incremental parsing** — for a 1-char edit in a ~100KB doc, `parse_incremental` is ~200x faster than full re-parse (~160µs vs ~32ms).
+- **652 CommonMark examples** — ~26ms single-threaded
+- **Incremental parsing** — For a 1-char edit in a ~100KB doc, `parse_incremental` is ~200x faster than full re-parse (~160µs vs ~32ms)
+- **Parallel scaling** — ~2.5x speedup with 4 threads under Python 3.14t free-threading
 
 ```bash
 # From repo (after uv sync --group dev):
 python benchmarks/benchmark_vs_mistune.py
-
-# All benchmarks including incremental:
 pytest benchmarks/benchmark_vs_mistune.py benchmarks/benchmark_incremental.py -v --benchmark-only
 ```
-
-**Key insights:**
-- **mistune is faster** on typical workloads — regex engines are highly optimized
-- **Patitas scales linearly** — ~2.5x speedup with 4 threads under Python 3.14t free-threading
-- **markdown-it-py crashes** under free-threading (race condition in URL encoding)
-- **Incremental parsing** — O(change) re-parse for editor-style workflows
-
-Patitas prioritizes **safety over raw speed**: O(n) guaranteed parsing, typed AST, full thread-safety, and incremental re-parse.
-
----
-
-## Features
-
-| Feature | Description |
-|---------|-------------|
-| **CommonMark** | Full 0.31.2 spec compliance (652 examples) |
-| **Typed AST** | Immutable frozen dataclasses with slots |
-| **Plugins** | Tables, footnotes, math, strikethrough, task lists |
-| **Directives** | MyST-style blocks (admonition, dropdown, tabs) |
-| **Roles** | Inline semantic markup |
-| **Incremental** | Re-parse only changed blocks — O(change) not O(document) |
-| **Thread-safe** | Zero shared mutable state, free-threading ready |
 
 ---
 
 ## Usage
-
-<details>
-<summary><strong>Basic Parsing</strong></summary>
-
-```python
-from patitas import parse, render
-
-# Parse to AST
-doc = parse("# Hello **World**")
-
-# Render to HTML
-html = render(doc)
-# <h1 id="hello-world">Hello <strong>World</strong></h1>
-```
-
-</details>
 
 <details>
 <summary><strong>Typed AST</strong> — IDE autocomplete, catch errors at dev time</summary>
@@ -283,22 +254,13 @@ Patitas is designed for Python 3.14t's free-threading mode (PEP 703).
 
 ## Migrate from mistune
 
-```python
-# Before (mistune)
-import mistune
-md = mistune.create_markdown()
-html = md(source)
+Same API — swap the import:
 
-# After (patitas) — same API!
+```python
 from patitas import Markdown
 md = Markdown()
 html = md(source)
 ```
-
-**Key differences:**
-- Patitas uses MyST directive syntax (`:::{note}`) vs mistune's RST (`.. note::`)
-- Patitas AST is typed dataclasses vs mistune's `Dict[str, Any]`
-- Patitas is ReDoS-proof; mistune uses regex
 
 [Full migration guide →](docs/migrate-from-mistune.md)
 
@@ -334,7 +296,6 @@ pytest
 **Run benchmarks** (after `uv sync --group dev`):
 
 ```bash
-pip install mistune markdown-it-py    # optional: for parser comparison
 python benchmarks/benchmark_vs_mistune.py
 ```
 
