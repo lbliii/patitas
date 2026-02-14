@@ -26,9 +26,7 @@ from patitas.parsing.charsets import (
     HEX_DIGITS,
     INLINE_SPECIAL,
 )
-from patitas.parsing.inline.match_registry import (
-    MatchRegistry,
-)
+from patitas.parsing.inline.match_registry import MatchRegistry
 from patitas.parsing.inline.tokens import (
     CodeSpanToken,
     DelimiterToken,
@@ -441,7 +439,7 @@ class InlineParsingCoreMixin:
                     else:
                         decoded = chr(codepoint)
                     return decoded, end + 1
-                except (ValueError, OverflowError):
+                except ValueError, OverflowError:
                     return None
 
             # Decimal: &#digits
@@ -464,7 +462,7 @@ class InlineParsingCoreMixin:
                 else:
                     decoded = chr(codepoint)
                 return decoded, end + 1
-            except (ValueError, OverflowError):
+            except ValueError, OverflowError:
                 return None
 
         # Named entity: &name;

@@ -11,6 +11,8 @@ tags:
 keywords:
 - api
 - parse
+- parse_notebook
+- parse cache
 - render
 - markdown
 - serialization
@@ -36,6 +38,7 @@ def parse(
     *,
     source_file: str | None = None,
     directive_registry: DirectiveRegistry | None = None,
+    cache: ParseCache | None = None,
 ) -> Document
 ```
 
@@ -43,6 +46,7 @@ def parse(
 - `source`: Markdown source text
 - `source_file`: Optional source file path for error messages
 - `directive_registry`: Custom directive registry (uses defaults if None)
+- `cache`: Optional content-addressed parse cache (see [Parse Cache](#parse-cache))
 
 **Returns:** Document AST root node
 
@@ -53,6 +57,12 @@ from patitas import parse
 
 doc = parse("# Hello **World**")
 print(doc.children[0])  # Heading(level=1, ...)
+
+# With parse cache (faster incremental builds)
+from patitas import parse, DictParseCache
+cache = DictParseCache()
+doc1 = parse("# Hello", cache=cache)
+doc2 = parse("# Hello", cache=cache)  # Cache hit, no re-parse
 ```
 
 ### render()
@@ -87,6 +97,45 @@ html = render(doc, source="# Hello")
 print(html)  # <h1>Hello</h1>
 ```
 
+### parse_notebook()
+
+Parse a Jupyter notebook (`.ipynb`) to Markdown content and metadata. Zero dependencies — uses stdlib `json` only. Supports nbformat 4 and 5.
+
+```python
+def parse_notebook(
+    content: str,
+    source_path: Path | str | None = None,
+) -> tuple[str, dict[str, Any]]
+```
+
+**Parameters:**
+- `content`: Raw JSON content of the `.ipynb` file (caller handles I/O)
+- `source_path`: Optional path for title fallback when notebook has no title
+
+**Returns:** Tuple of `(markdown_content, metadata_dict)`
+
+- `markdown_content`: Markdown string — markdown cells as-is, code cells as fenced blocks, outputs as HTML
+- `metadata`: Dict with `title`, `type: "notebook"`, `notebook.kernel_name`, `notebook.cell_count`, etc.
+
+**Raises:**
+- `json.JSONDecodeError`: If content is not valid JSON
+- `ValueError`: If nbformat is 3 or older
+
+**Example:**
+
+```python
+from patitas import parse_notebook
+
+with open("demo.ipynb") as f:
+    content, metadata = parse_notebook(f.read(), "demo.ipynb")
+
+# content: Markdown string ready for parse() or render
+# metadata: title, type, notebook{kernel_name, cell_count}, etc.
+print(metadata["notebook"]["kernel_name"])  # e.g. "python3"
+```
+
+Used by [Bengal](https://github.com/lbliii/bengal) for native notebook rendering — drop `.ipynb` into content and build.
+
 ### Markdown
 
 High-level processor combining parsing and rendering.
@@ -102,7 +151,8 @@ class Markdown:
     ) -> None: ...
 
     def __call__(self, source: str) -> str: ...
-    def parse(self, source: str, *, source_file: str | None = None) -> Document: ...
+    def parse(self, source: str, *, source_file: str | None = None, cache: ParseCache | None = None) -> Document: ...
+    def parse_many(self, sources: Iterable[str], *, source_file: str | None = None, cache: ParseCache | None = None) -> list[Document]: ...
     def render(self, doc: Document, *, source: str = "") -> str: ...
 ```
 
@@ -119,6 +169,42 @@ print(html)  # <h1>Hello <strong>World</strong></h1>
 md = Markdown(plugins=["table", "math", "strikethrough"])
 html = md("| a | b |\n|---|---|\n| 1 | 2 |")
 ```
+
+## Parse Cache
+
+Content-addressed cache for parsed ASTs. Key is `(content_hash, config_hash)`; value is
+`Document`. Enables faster incremental builds (undo/revert, duplicate content) and can
+replace path-based snapshot caches in consumers like Bengal.
+
+### ParseCache protocol
+
+```python
+class ParseCache(Protocol):
+    def get(self, content_hash: str, config_hash: str) -> Document | None: ...
+    def put(self, content_hash: str, config_hash: str, doc: Document) -> None: ...
+```
+
+### DictParseCache
+
+In-memory implementation. Not thread-safe — for parallel parsing, use a cache with
+internal locking.
+
+```python
+from patitas import parse, DictParseCache
+
+cache = DictParseCache()
+doc = parse("# Hello", cache=cache)
+# Second call with same source hits cache
+doc2 = parse("# Hello", cache=cache)
+```
+
+### hash_content() / hash_config()
+
+Compute cache keys. `hash_content(source)` returns SHA256 of source. `hash_config(config)`
+returns config hash, or `""` when `text_transformer` is set (cache bypassed).
+
+See [Performance](/docs/about/performance/) for optimization details and
+[Serialization](/docs/extending/serialization/) for persistence patterns.
 
 ## Serialization API
 

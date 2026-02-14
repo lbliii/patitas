@@ -121,7 +121,7 @@ class ListParsingMixin:
             )
             # Update parser position
             self._pos = new_pos
-            self._current = self._tokens[new_pos] if new_pos < len(self._tokens) else None
+            self._current = self._tokens[new_pos] if new_pos < self._tokens_len else None
             return list_node
 
         # Extract marker info
@@ -214,30 +214,35 @@ class ListParsingMixin:
         tight = not self._containers.current().is_loose
         self._containers.pop()
 
-        # Normalize misclassified indented code that was actually paragraph text
-        normalized_items: list[ListItem] = []
-        for item in items:
-            fixed_children = []
-            for child in item.children:
-                if (
-                    isinstance(child, IndentedCode)
-                    and inside_block_quote
-                    and child.location.col_offset <= content_indent
-                ):
-                    text = child.code.rstrip("\n")
-                    inlines = self._parse_inline(text, child.location)
-                    fixed_children.append(Paragraph(location=child.location, children=inlines))
-                else:
-                    fixed_children.append(child)
-            normalized_items.append(
-                ListItem(
-                    location=item.location, children=tuple(fixed_children), checked=item.checked
+        # Normalize misclassified indented code only when inside block quote
+        if not inside_block_quote:
+            final_items = items
+        else:
+            normalized_items: list[ListItem] = []
+            for item in items:
+                fixed_children = []
+                for child in item.children:
+                    if (
+                        isinstance(child, IndentedCode)
+                        and child.location.col_offset <= content_indent
+                    ):
+                        text = child.code.rstrip("\n")
+                        inlines = self._parse_inline(text, child.location)
+                        fixed_children.append(Paragraph(location=child.location, children=inlines))
+                    else:
+                        fixed_children.append(child)
+                normalized_items.append(
+                    ListItem(
+                        location=item.location,
+                        children=tuple(fixed_children),
+                        checked=item.checked,
+                    )
                 )
-            )
+            final_items = normalized_items
 
         return List(
             location=start_token.location,
-            items=tuple(normalized_items),
+            items=tuple(final_items),
             ordered=ordered,
             start=start,
             tight=tight,

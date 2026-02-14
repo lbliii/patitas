@@ -79,6 +79,8 @@ class Parser(
     __slots__ = (
         # Setext heading control - disabled for blockquote lazy continuation content
         "_allow_setext_headings",
+        # Cached config for parse duration (avoids ContextVar lookup per access)
+        "_config_cache",
         # Container stack for tracking nesting context
         "_containers",
         "_current",
@@ -87,10 +89,11 @@ class Parser(
         # Link reference definitions (per-document state)
         "_link_refs",
         "_pos",
-        # Per-parse state only (9 slots, was 18)
+        # Per-parse state only
         "_source",
         "_source_file",
         "_tokens",
+        "_tokens_len",
     )
 
     def __init__(
@@ -112,6 +115,7 @@ class Parser(
         self._source = source
         self._source_file = source_file
         self._tokens: list[Token] = []
+        self._tokens_len = 0
         self._pos = 0
         self._current: Token | None = None
 
@@ -127,6 +131,7 @@ class Parser(
 
         # Setext heading control - can be disabled for blockquote lazy continuation
         self._allow_setext_headings = True
+        self._config_cache = None
 
     def _reinit(self, source: str, source_file: str | None = None) -> None:
         """Reinitialize parser for reuse (enables pooling).
@@ -153,12 +158,14 @@ class Parser(
         self._source = source
         self._source_file = source_file
         self._tokens = []
+        self._tokens_len = 0
         self._pos = 0
         self._current = None
         self._link_refs = {}
         self._directive_stack = []
         self._containers = ContainerStack()
         self._allow_setext_headings = True
+        self._config_cache = None
 
     # =========================================================================
     # Configuration Properties (read from ContextVar)
@@ -169,7 +176,9 @@ class Parser(
 
     @property
     def _config(self) -> ParseConfig:
-        """Get current parse configuration (thread-local)."""
+        """Get current parse configuration (cached for parse duration)."""
+        if self._config_cache is not None:
+            return self._config_cache
         return get_parse_config()
 
     @property
@@ -226,9 +235,13 @@ class Parser(
         Thread Safety:
             Returns immutable AST (frozen dataclasses).
         """
+        # Cache config for parse duration (avoids thousands of ContextVar lookups)
+        self._config_cache = get_parse_config()
+
         # Tokenize source
         lexer = Lexer(self._source, self._source_file, text_transformer=self._text_transformer)
         self._tokens = list(lexer.tokenize())
+        self._tokens_len = len(self._tokens)
         self._pos = 0
         self._current = self._tokens[0] if self._tokens else None
 

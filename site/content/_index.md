@@ -85,13 +85,11 @@ Pure Python with no runtime dependencies. Optional extras for directives and syn
 
 ## Performance
 
-State-machine parsing is 40-50% faster than regex-based parsers:
+**652 CommonMark examples:** mistune ~12ms, Patitas ~26ms. mistune is faster on typical workloads.
 
-| Document Size | Patitas | mistune | Speedup |
-|---------------|---------|---------|---------|
-| Small (1KB) | 0.2ms | 0.3ms | 1.5x |
-| Medium (10KB) | 1.8ms | 2.8ms | 1.6x |
-| Large (100KB) | 15ms | 25ms | 1.7x |
+**Incremental parsing:** For a 1-char edit in a ~100KB doc, `parse_incremental` is ~200x faster than full re-parse (~160µs vs ~32ms).
+
+Patitas prioritizes **safety over raw speed**: O(n) guaranteed parsing, typed AST, and full thread-safety.
 
 ---
 

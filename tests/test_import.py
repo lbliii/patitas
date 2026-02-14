@@ -8,9 +8,7 @@ def test_import_patitas() -> None:
 
     import patitas
 
-    with (Path(__file__).resolve().parent.parent / "pyproject.toml").open(
-        "rb"
-    ) as f:
+    with (Path(__file__).resolve().parent.parent / "pyproject.toml").open("rb") as f:
         expected = tomllib.load(f)["project"]["version"]
     assert patitas.__version__ == expected
 

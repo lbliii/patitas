@@ -3,9 +3,12 @@
 Provides functions for detecting and classifying list markers.
 """
 
+from functools import lru_cache
+
 from patitas.parsing.blocks.list.types import ListMarkerInfo
 
 
+@lru_cache(maxsize=128)
 def get_marker_indent(marker_value: str) -> int:
     """Extract indent level from list marker value.
 
@@ -32,6 +35,7 @@ def get_marker_indent(marker_value: str) -> int:
     return indent
 
 
+@lru_cache(maxsize=256)
 def extract_marker_info(marker_value: str, start_indent: int | None = None) -> ListMarkerInfo:
     """Extract complete marker information from a marker token value.
 

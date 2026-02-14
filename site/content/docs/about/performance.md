@@ -35,14 +35,19 @@ State machines guarantee O(n) regardless of input.
 
 ## Benchmarks
 
-Tested on MacBook Pro M3, Python 3.14t:
+Run benchmarks to get current results:
 
-| Document Size | Patitas | mistune | Speedup |
-|---------------|---------|---------|---------|
-| Small (1KB) | 0.2ms | 0.3ms | 1.5x |
-| Medium (10KB) | 1.8ms | 2.8ms | 1.6x |
-| Large (100KB) | 15ms | 25ms | 1.7x |
-| Pathological | 20ms | >10s | 500x+ |
+```bash
+pytest benchmarks/benchmark_vs_mistune.py benchmarks/benchmark_incremental.py -v --benchmark-only
+```
+
+**652 CommonMark examples (single thread):** mistune ~12ms, Patitas ~26ms, markdown-it-py ~26ms. mistune is faster on typical workloads.
+
+**Large document (~100KB):** mistune ~23ms, Patitas ~38ms.
+
+**Incremental parsing:** For a 1-char edit in a ~100KB doc, `parse_incremental` is ~200x faster than full re-parse (~160µs vs ~32ms).
+
+**Pathological input:** Regex-based parsers can hang; Patitas completes in O(n) regardless of input.
 
 ## Optimization Strategies
 
@@ -83,6 +88,24 @@ Using tuples instead of lists:
 ```python
 children: tuple[Inline, ...]  # Immutable, hashable
 ```
+
+### 5. Parse Cache
+
+Content-addressed cache avoids re-parsing unchanged content. Key is
+`(content_hash, config_hash)`; value is `Document`. Use for incremental builds,
+undo/revert, or duplicate content:
+
+```python
+from patitas import parse, DictParseCache
+
+cache = DictParseCache()
+for source in sources:
+    doc = parse(source, cache=cache)  # Duplicates hit cache
+```
+
+On a 2-pass build over the same content, the second pass is effectively free.
+`DictParseCache` is not thread-safe; for parallel parsing, use a cache with
+internal locking. See [API Reference](/docs/reference/api/#parse-cache).
 
 ## Memory Usage
 

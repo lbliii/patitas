@@ -30,6 +30,9 @@ Installation:
     pip install patitas[syntax]      # + Syntax highlighting via Rosettes
 """
 
+from collections.abc import Iterable
+
+from patitas.cache import DictParseCache, ParseCache, hash_config, hash_content
 from patitas.config import (
     ParseConfig,
     get_parse_config,
@@ -81,6 +84,7 @@ from patitas.nodes import (
     Text,
     ThematicBreak,
 )
+from patitas.notebook import parse_notebook
 from patitas.parser import Parser
 from patitas.profiling import ParseAccumulator, get_parse_accumulator, profiled_parse
 from patitas.renderers.html import HtmlRenderer
@@ -89,7 +93,7 @@ from patitas.serialization import from_dict, from_json, to_dict, to_json
 from patitas.tokens import Token, TokenType
 from patitas.visitor import BaseVisitor, transform
 
-__version__ = "0.2.0"
+__version__ = "0.4.0"
 
 
 def parse(
@@ -97,6 +101,7 @@ def parse(
     *,
     source_file: str | None = None,
     directive_registry: DirectiveRegistry | None = None,
+    cache: ParseCache | None = None,
 ) -> Document:
     """Parse Markdown source into a typed AST.
 
@@ -104,6 +109,10 @@ def parse(
         source: Markdown source text
         source_file: Optional source file path for error messages
         directive_registry: Custom directive registry (uses defaults if None)
+        cache: Optional content-addressed parse cache. When provided, checks cache
+            before parsing; on miss, parses and stores result. Cache is bypassed
+            when config has text_transformer set. For parallel parsing, use a
+            thread-safe cache implementation.
 
     Returns:
         Document AST root node
@@ -113,11 +122,10 @@ def parse(
         >>> doc.children[0]
         Heading(level=1, ...)
 
-        >>> # With custom directives
-        >>> from patitas import DirectiveRegistryBuilder
-        >>> builder = DirectiveRegistryBuilder()
-        >>> builder.register(MyDirective())
-        >>> doc = parse(source, directive_registry=builder.build())
+        >>> # With parse cache
+        >>> from patitas import DictParseCache
+        >>> cache = DictParseCache()
+        >>> doc = parse("# Hello", cache=cache)
     """
     from patitas.profiling import get_parse_accumulator
 
@@ -128,6 +136,14 @@ def parse(
     set_parse_config(config)
 
     try:
+        if cache is not None:
+            config_hash = hash_config(config)
+            if config_hash:
+                content_hash = hash_content(source)
+                cached = cache.get(content_hash, config_hash)
+                if cached is not None:
+                    return cached
+
         parser = Parser(source, source_file=source_file)
         blocks = parser.parse()
         # Wrap blocks in a Document
@@ -139,6 +155,12 @@ def parse(
             source_file=source_file,
         )
         doc = Document(location=loc, children=tuple(blocks))
+
+        if cache is not None:
+            config_hash = hash_config(config)
+            if config_hash:
+                content_hash = hash_content(source)
+                cache.put(content_hash, config_hash, doc)
 
         # Record profiling metrics if accumulator is active
         acc = get_parse_accumulator()
@@ -265,12 +287,20 @@ class Markdown:
         )
         return renderer.render(doc)
 
-    def parse(self, source: str, *, source_file: str | None = None) -> Document:
+    def parse(
+        self,
+        source: str,
+        *,
+        source_file: str | None = None,
+        cache: ParseCache | None = None,
+    ) -> Document:
         """Parse Markdown source into AST.
 
         Args:
             source: Markdown source text
             source_file: Optional source file path for error messages
+            cache: Optional content-addressed parse cache. For parallel parsing,
+                use a thread-safe cache implementation.
 
         Returns:
             Document AST root node
@@ -283,6 +313,14 @@ class Markdown:
         set_parse_config(self._config)
 
         try:
+            if cache is not None:
+                config_hash = hash_config(self._config)
+                if config_hash:
+                    content_hash = hash_content(source)
+                    cached = cache.get(content_hash, config_hash)
+                    if cached is not None:
+                        return cached
+
             parser = Parser(source, source_file=source_file)
             blocks = parser.parse()
             # Wrap blocks in a Document
@@ -293,9 +331,77 @@ class Markdown:
                 end_offset=len(source),
                 source_file=source_file,
             )
-            return Document(location=loc, children=tuple(blocks))
+            doc = Document(location=loc, children=tuple(blocks))
+
+            if cache is not None:
+                config_hash = hash_config(self._config)
+                if config_hash:
+                    content_hash = hash_content(source)
+                    cache.put(content_hash, config_hash, doc)
+
+            return doc
         finally:
             # Reset to default (reuses module-level singleton, no allocation)
+            reset_parse_config()
+
+    def parse_many(
+        self,
+        sources: Iterable[str],
+        *,
+        source_file: str | None = None,
+        cache: ParseCache | None = None,
+    ) -> list[Document]:
+        """Parse multiple Markdown sources into AST documents.
+
+        Use for batch parsing; avoids per-doc config set/reset.
+        Sets config once, parses all, resets once. When cache is provided,
+        duplicate sources within the batch hit cache.
+
+        Args:
+            sources: Iterable of Markdown source strings
+            source_file: Optional source file path for error messages (applies to all)
+            cache: Optional content-addressed parse cache. For parallel parsing,
+                use a thread-safe cache implementation.
+
+        Returns:
+            List of Document AST nodes
+
+        Example:
+            >>> md = Markdown()
+            >>> docs = md.parse_many(["# Doc 1", "# Doc 2", "# Doc 3"])
+        """
+        set_parse_config(self._config)
+        try:
+            config_hash = hash_config(self._config) if cache is not None else ""
+            use_cache = cache is not None and config_hash
+
+            result: list[Document] = []
+            for source in sources:
+                if use_cache:
+                    content_hash = hash_content(source)
+                    cached = cache.get(content_hash, config_hash)
+                    if cached is not None:
+                        result.append(cached)
+                        continue
+
+                parser = Parser(source, source_file=source_file)
+                blocks = parser.parse()
+                loc = SourceLocation(
+                    lineno=1,
+                    col_offset=1,
+                    offset=0,
+                    end_offset=len(source),
+                    source_file=source_file,
+                )
+                doc = Document(location=loc, children=tuple(blocks))
+
+                if use_cache:
+                    content_hash = hash_content(source)
+                    cache.put(content_hash, config_hash, doc)
+
+                result.append(doc)
+            return result
+        finally:
             reset_parse_config()
 
     def render(self, doc: Document, *, source: str = "") -> str:
@@ -321,7 +427,13 @@ __all__ = [  # noqa: RUF022 — grouped by category for maintainability
     "__version__",
     # Core API
     "parse",
+    "parse_notebook",
     "render",
+    # Parse cache
+    "DictParseCache",
+    "ParseCache",
+    "hash_config",
+    "hash_content",
     # Block nodes
     "Block",
     "BlockQuote",

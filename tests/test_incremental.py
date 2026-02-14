@@ -173,7 +173,11 @@ class TestParseIncremental:
         new_length = len("Modified paragraph.")
 
         result = parse_incremental(
-            new_source, old_doc, edit_start, edit_end, new_length,
+            new_source,
+            old_doc,
+            edit_start,
+            edit_end,
+            new_length,
         )
 
         # Compare to full parse
@@ -192,7 +196,11 @@ class TestParseIncremental:
         new_length = len("beautiful ")
 
         result = parse_incremental(
-            new_source, old_doc, edit_start, edit_end, new_length,
+            new_source,
+            old_doc,
+            edit_start,
+            edit_end,
+            new_length,
         )
 
         full = parse(new_source)
@@ -209,7 +217,11 @@ class TestParseIncremental:
         new_length = 0  # deletion
 
         result = parse_incremental(
-            new_source, old_doc, edit_start, edit_end, new_length,
+            new_source,
+            old_doc,
+            edit_start,
+            edit_end,
+            new_length,
         )
 
         full = parse(new_source)
@@ -246,7 +258,11 @@ class TestParseIncremental:
         new_length = len("\nAdded.\n")
 
         result = parse_incremental(
-            new_source, old_doc, edit_start, edit_end, new_length,
+            new_source,
+            old_doc,
+            edit_start,
+            edit_end,
+            new_length,
         )
 
         full = parse(new_source)
@@ -262,7 +278,11 @@ class TestParseIncremental:
         new_length = len("New Title")
 
         result = parse_incremental(
-            new_source, old_doc, edit_start, edit_end, new_length,
+            new_source,
+            old_doc,
+            edit_start,
+            edit_end,
+            new_length,
         )
 
         full = parse(new_source)
@@ -275,7 +295,11 @@ class TestParseIncremental:
         old_doc = parse(old_source, source_file="test.md")
 
         result = parse_incremental(
-            new_source, old_doc, 0, len(old_source), len(new_source),
+            new_source,
+            old_doc,
+            0,
+            len(old_source),
+            len(new_source),
             source_file="test.md",
         )
         assert result.location.source_file == "test.md"
@@ -290,7 +314,11 @@ class TestParseIncremental:
         new_length = 1  # replace "B" with "X"
 
         result = parse_incremental(
-            new_source, old_doc, edit_start, edit_end, new_length,
+            new_source,
+            old_doc,
+            edit_start,
+            edit_end,
+            new_length,
         )
 
         assert isinstance(result, Document)
@@ -308,7 +336,11 @@ class TestParseIncremental:
         new_length = len("Changed.")
 
         result = parse_incremental(
-            new_source, old_doc, edit_start, edit_end, new_length,
+            new_source,
+            old_doc,
+            edit_start,
+            edit_end,
+            new_length,
         )
 
         # First two blocks (heading and first paragraph) should be reused
@@ -339,7 +371,11 @@ class TestIncrementalThreadSafety:
                 new_length = len(new_text)
 
                 result = parse_incremental(
-                    new_source, old_doc, edit_start, edit_end, new_length,
+                    new_source,
+                    old_doc,
+                    edit_start,
+                    edit_end,
+                    new_length,
                 )
                 results[idx] = result
             except Exception as exc:

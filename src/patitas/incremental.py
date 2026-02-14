@@ -72,7 +72,9 @@ def parse_incremental(
 
     # Find affected block range
     first_affected, last_affected = _find_affected_range(
-        old_blocks, edit_start, edit_end,
+        old_blocks,
+        edit_start,
+        edit_end,
     )
 
     # If detection failed, fall back

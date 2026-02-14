@@ -106,3 +106,30 @@ Continue reading below.""",
 
 Contact us at <email@example.com> or visit https://example.com.""",
     ]
+
+
+@pytest.fixture
+def plugin_heavy_doc() -> str:
+    """Document exercising tables, math, footnotes, strikethrough, task lists (~2KB)."""
+    return """# Plugin-Heavy Document
+
+| Feature | Patitas | mistune |
+|---------|---------|---------|
+| Tables | Yes | Yes |
+| Math | $E = mc^2$ | Plugin |
+
+Inline math: $x^2 + y^2 = z^2$ and block:
+
+$$
+\\int_0^1 x^2 \\, dx = \\frac{1}{3}
+$$
+
+Footnotes[^1] and strikethrough: ~~deleted~~ text.
+
+Task list:
+- [x] Completed item
+- [ ] Pending item
+- [ ] Another todo
+
+[^1]: Footnote definition here.
+"""

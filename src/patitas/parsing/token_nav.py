@@ -16,6 +16,7 @@ class TokenNavigationMixin:
 
     Required Host Attributes:
         - _tokens: Sequence[Token]
+        - _tokens_len: int (cached len(_tokens) for hot loops)
         - _pos: int
         - _current: Token | None
         - _source: str
@@ -34,7 +35,7 @@ class TokenNavigationMixin:
     def _advance(self) -> Token | None:
         """Advance to next token and return it."""
         self._pos += 1
-        if self._pos < len(self._tokens):
+        if self._pos < self._tokens_len:
             self._current = self._tokens[self._pos]
         else:
             self._current = None
@@ -43,7 +44,7 @@ class TokenNavigationMixin:
     def _peek(self, offset: int = 1) -> Token | None:
         """Peek at token at offset from current position."""
         pos = self._pos + offset
-        if pos < len(self._tokens):
+        if pos < self._tokens_len:
             return self._tokens[pos]
         return None
 

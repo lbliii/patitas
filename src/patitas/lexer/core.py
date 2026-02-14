@@ -31,6 +31,7 @@ from patitas.lexer.scanners import (
     FenceScannerMixin,
     HtmlScannerMixin,
 )
+from patitas.location import SourceLocation
 from patitas.tokens import Token, TokenType
 
 
@@ -194,7 +195,8 @@ class Lexer(
         Returns:
             Position of newline or end of source.
         """
-        idx = self._source.find("\n", self._pos)
+        source = self._source
+        idx = source.find("\n", self._pos)
         return idx if idx != -1 else self._source_len
 
     def _calc_indent(self, line: str) -> tuple[int, int]:
@@ -246,10 +248,14 @@ class Lexer(
         Args:
             line_end: Position to commit to.
         """
+        source = self._source
+        source_len = self._source_len
+        pos = self._pos
+
         # Fast path: if no position change, skip
-        if line_end == self._pos:
+        if line_end == pos:
             self._consumed_newline = False
-            if self._pos < self._source_len and self._source[self._pos] == "\n":
+            if pos < source_len and source[pos] == "\n":
                 self._pos += 1
                 self._lineno += 1
                 self._col = 1
@@ -257,7 +263,7 @@ class Lexer(
             return
 
         # Count newlines in skipped segment using C-optimized str.count
-        segment = self._source[self._pos : line_end]
+        segment = source[pos:line_end]
         newline_count = segment.count("\n")
 
         if newline_count > 0:
@@ -272,7 +278,7 @@ class Lexer(
         self._consumed_newline = False
 
         # Consume the newline if present
-        if self._pos < self._source_len and self._source[self._pos] == "\n":
+        if line_end < source_len and source[line_end] == "\n":
             self._pos += 1
             self._lineno += 1
             self._col = 1
@@ -314,8 +320,17 @@ class Lexer(
             line_indent: Pre-computed indent level.
 
         Returns:
-            Token with raw coordinates for lazy location creation.
+            Token with pre-created SourceLocation (avoids property overhead).
         """
+        loc = SourceLocation(
+            lineno=self._saved_lineno,
+            col_offset=start_col if start_col is not None else self._saved_col,
+            offset=start_pos,
+            end_offset=end_pos if end_pos is not None else self._pos,
+            end_lineno=self._lineno,
+            end_col_offset=self._col,
+            source_file=self._source_file,
+        )
         return Token(
             type=token_type,
             value=value,
@@ -327,6 +342,7 @@ class Lexer(
             _end_lineno=self._lineno,
             _end_col=self._col,
             _source_file=self._source_file,
+            _location_cache=loc,
         )
 
     def _make_token_at_current(
@@ -344,8 +360,17 @@ class Lexer(
             line_indent: Pre-computed indent level.
 
         Returns:
-            Token at current position.
+            Token at current position with pre-created SourceLocation.
         """
+        loc = SourceLocation(
+            lineno=self._lineno,
+            col_offset=self._col,
+            offset=self._pos,
+            end_offset=self._pos,
+            end_lineno=self._lineno,
+            end_col_offset=self._col,
+            source_file=self._source_file,
+        )
         return Token(
             type=token_type,
             value=value,
@@ -357,4 +382,5 @@ class Lexer(
             _end_lineno=self._lineno,
             _end_col=self._col,
             _source_file=self._source_file,
+            _location_cache=loc,
         )
