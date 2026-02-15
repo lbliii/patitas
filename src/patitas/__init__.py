@@ -42,6 +42,7 @@ from patitas.config import (
 )
 from patitas.context import CONTENT_CONTEXT_MAP, context_paths_for
 from patitas.differ import ASTChange, diff_documents
+from patitas.excerpt import extract_excerpt, extract_meta_description
 from patitas.directives.registry import (
     DirectiveRegistry,
     DirectiveRegistryBuilder,
@@ -484,6 +485,9 @@ __all__ = [  # noqa: RUF022 — grouped by category for maintainability
     # Differ
     "ASTChange",
     "diff_documents",
+    # Excerpt
+    "extract_excerpt",
+    "extract_meta_description",
     # Incremental
     "parse_incremental",
     # Context mapping
