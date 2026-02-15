@@ -1,6 +1,5 @@
 """Tests for extract_excerpt and extract_meta_description."""
 
-import pytest
 
 from patitas import extract_excerpt, extract_meta_description, parse
 
@@ -52,7 +51,7 @@ class TestExtractExcerpt:
         assert "First paragraph" in result
 
     def test_excerpt_as_html_preserves_structure(self) -> None:
-        """excerpt_as_html=True uses block elements (p, excerpt-heading) and preserves inline formatting."""
+        """excerpt_as_html=True uses block elements (p, excerpt-heading) and preserves inline."""
         doc = parse("# Title\n\nPara with **bold** and *italic*.\n\n## Key Features\n\nMore text.")
         result = extract_excerpt(doc, excerpt_as_html=True)
         assert "<strong>bold</strong>" in result

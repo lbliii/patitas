@@ -42,13 +42,13 @@ from patitas.config import (
 )
 from patitas.context import CONTENT_CONTEXT_MAP, context_paths_for
 from patitas.differ import ASTChange, diff_documents
-from patitas.excerpt import extract_excerpt, extract_meta_description
 from patitas.directives.registry import (
     DirectiveRegistry,
     DirectiveRegistryBuilder,
     create_default_registry,
     create_registry_with_defaults,
 )
+from patitas.excerpt import extract_excerpt, extract_meta_description
 from patitas.incremental import parse_incremental
 from patitas.lexer import Lexer
 from patitas.location import SourceLocation
