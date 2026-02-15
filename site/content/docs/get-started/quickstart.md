@@ -20,6 +20,14 @@ icon: zap
 
 Parse Markdown to a typed AST and render to HTML in 2 minutes.
 
+## Prerequisites
+
+:::{checklist} Before You Start
+:show-progress:
+- [ ] [[docs/get-started/installation|Patitas installed]]
+- [ ] Python 3.14+ available
+:::{/checklist}
+
 ## Step 1: Parse Markdown
 
 ```python

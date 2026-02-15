@@ -49,7 +49,8 @@ pytest benchmarks/benchmark_vs_mistune.py benchmarks/benchmark_incremental.py -v
 
 ## Optimization Strategies
 
-### 1. Zero-Copy Text
+:::{steps}
+:::{step} Zero-copy text
 
 The renderer extracts text directly from source using slices:
 
@@ -58,7 +59,8 @@ The renderer extracts text directly from source using slices:
 text = source[start:end]  # Zero-copy slice
 ```
 
-### 2. StringBuilder
+:::{/step}
+:::{step} StringBuilder
 
 Output uses `StringBuilder` for O(n) concatenation:
 
@@ -70,7 +72,8 @@ for part in parts:
 result = str(builder)  # Single allocation
 ```
 
-### 3. Frozen Dataclasses with Slots
+:::{/step}
+:::{step} Frozen dataclasses with slots
 
 ```python
 @dataclass(frozen=True, slots=True)
@@ -79,7 +82,8 @@ class Node:
     # Faster attribute access
 ```
 
-### 4. Tuple Children
+:::{/step}
+:::{step} Tuple children
 
 Using tuples instead of lists:
 
@@ -87,7 +91,8 @@ Using tuples instead of lists:
 children: tuple[Inline, ...]  # Immutable, hashable
 ```
 
-### 5. Parse Cache
+:::{/step}
+:::{step} Parse cache
 
 Content-addressed cache avoids re-parsing unchanged content. Key is
 `(content_hash, config_hash)`; value is `Document`. Use for incremental builds,
@@ -104,6 +109,9 @@ for source in sources:
 On a 2-pass build over the same content, the second pass is effectively free.
 `DictParseCache` is not thread-safe; for parallel parsing, use a cache with
 internal locking. See [API Reference](/docs/reference/api/#parse-cache).
+
+:::{/step}
+:::{/steps}
 
 ## Memory Usage
 

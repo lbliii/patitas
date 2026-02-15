@@ -21,26 +21,49 @@ icon: download
 
 ## Requirements
 
-- Python 3.14 or later
-- No runtime dependencies (core)
+:::{checklist} Prerequisites
+:show-progress:
+- [ ] Python 3.14 or later installed
+- [x] No runtime dependencies (core)
+:::{/checklist}
 
-## pip
+## Install
 
-```bash
-pip install patitas
-```
-
-## uv (recommended)
+:::{tab-set}
+:::{tab-item} uv
+:badge: Recommended
 
 ```bash
 uv add patitas
 ```
 
+:::{/tab-item}
+
+:::{tab-item} pip
+
+```bash
+pip install patitas
+```
+
+:::{/tab-item}
+
+:::{tab-item} From Source
+
+```bash
+git clone https://github.com/lbliii/patitas.git
+cd patitas
+uv sync --group dev
+```
+
+:::{/tab-item}
+:::{/tab-set}
+
 ## Optional Extras
 
 Patitas uses a tiered installation model:
 
-### Directives
+:::{tab-set}
+:::{tab-item} Directives
 
 MyST-style directives (admonition, tabs, dropdown, container):
 
@@ -48,7 +71,9 @@ MyST-style directives (admonition, tabs, dropdown, container):
 pip install patitas[directives]
 ```
 
-### Syntax Highlighting
+:::{/tab-item}
+
+:::{tab-item} Syntax Highlighting
 
 Code block syntax highlighting via Rosettes:
 
@@ -56,7 +81,9 @@ Code block syntax highlighting via Rosettes:
 pip install patitas[syntax]
 ```
 
-### Bengal Integration
+:::{/tab-item}
+
+:::{tab-item} Bengal Integration
 
 Full Bengal directive suite:
 
@@ -64,7 +91,9 @@ Full Bengal directive suite:
 pip install patitas[bengal]
 ```
 
-### Everything
+:::{/tab-item}
+
+:::{tab-item} Everything
 
 All extras except Bengal:
 
@@ -72,13 +101,8 @@ All extras except Bengal:
 pip install patitas[all]
 ```
 
-## Development Installation
-
-```bash
-git clone https://github.com/lbliii/patitas.git
-cd patitas
-uv sync --group dev
-```
+:::{/tab-item}
+:::{/tab-set}
 
 ## Verify Installation
 
@@ -87,3 +111,10 @@ uv sync --group dev
 >>> patitas.parse("# Hello")
 (Heading(level=1, ...),)
 ```
+
+## Next Steps
+
+:::{related}
+:limit: 3
+:section_title: Next Steps
+:::

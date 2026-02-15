@@ -23,7 +23,8 @@ Patitas is designed for Python 3.14t free-threading.
 
 ## Design Principles
 
-### 1. Immutable AST
+:::{steps}
+:::{step} Immutable AST
 
 All AST nodes are frozen dataclasses:
 
@@ -36,7 +37,8 @@ class Heading:
 
 Frozen = no mutation = no race conditions.
 
-### 2. No Shared State
+:::{/step}
+:::{step} No shared state
 
 Parser and renderer instances don't share mutable state:
 
@@ -46,7 +48,8 @@ doc1 = parse(source1)  # Thread 1
 doc2 = parse(source2)  # Thread 2 - no conflict
 ```
 
-### 3. Thread-Local Configuration
+:::{/step}
+:::{step} Thread-local configuration
 
 Parse configuration uses Python's `ContextVar` (thread-local by design):
 
@@ -62,7 +65,8 @@ html1 = md1("| a | b |")  # Uses tables config
 html2 = md2("$x^2$")      # Uses math config (no conflict)
 ```
 
-### 4. Thread-Local Extension Points
+:::{/step}
+:::{step} Thread-local extension points
 
 Global extension points use thread-local storage:
 
@@ -70,6 +74,9 @@ Global extension points use thread-local storage:
 # Safe for concurrent use
 set_highlighter(my_highlighter)
 ```
+
+:::{/step}
+:::{/steps}
 
 ## Concurrent Parsing
 

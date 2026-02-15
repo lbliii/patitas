@@ -23,8 +23,14 @@ Patitas uses a three-stage pipeline: Lexer → Parser → Renderer.
 
 ## Overview
 
-```
-Source Text → Lexer → Tokens → Parser → AST → Renderer → HTML
+```mermaid
+flowchart LR
+    A[Source Text] --> B[Lexer]
+    B --> C[Tokens]
+    C --> D[Parser]
+    D --> E[AST]
+    E --> F[Renderer]
+    F --> G[HTML]
 ```
 
 ## Lexer
