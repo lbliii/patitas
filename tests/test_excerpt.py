@@ -1,6 +1,5 @@
 """Tests for extract_excerpt and extract_meta_description."""
 
-
 from patitas import extract_excerpt, extract_meta_description, parse
 
 

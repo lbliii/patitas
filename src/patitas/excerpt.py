@@ -101,7 +101,7 @@ def _block_text(node: Block, source: str) -> str:
             code = node.get_code(source)
             first_line = code.split("\n")[0] if code else ""
             return f" {first_line}" if first_line else ""
-        except (IndexError, TypeError):
+        except IndexError, TypeError:
             return ""
     if isinstance(node, IndentedCode):
         first_line = node.code.split("\n")[0] if node.code else ""
@@ -130,18 +130,15 @@ def _block_text_html(node: Block, source: str) -> str:
         return f"<p>{inner}</p>" if inner else ""
     if isinstance(node, List):
         tag = "ol" if node.ordered else "ul"
-        items_html = [
-            f"<li>{_block_text_html(item, source)}</li>"
-            for item in node.items
-        ]
+        items_html = [f"<li>{_block_text_html(item, source)}</li>" for item in node.items]
         inner = "\n".join(items_html)
-        return f"<{tag} class=\"excerpt-list\">\n{inner}\n</{tag}>" if inner else ""
+        return f'<{tag} class="excerpt-list">\n{inner}\n</{tag}>' if inner else ""
     if isinstance(node, FencedCode):
         try:
             code = node.get_code(source)
             first_line = code.split("\n")[0] if code else ""
             return f"<p><code>{first_line}</code></p>" if first_line else ""
-        except (IndexError, TypeError):
+        except IndexError, TypeError:
             return ""
     if isinstance(node, IndentedCode):
         first_line = node.code.split("\n")[0] if node.code else ""
