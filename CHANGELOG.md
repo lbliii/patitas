@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-02-15
+
 ### Added
 
 - **Parse cache** — Content-addressed `(content_hash, config_hash) -> Document` cache.
@@ -19,6 +21,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   notebooks (parse_notebook), AST (visitor, transform), directives (builtin, custom),
   incremental, differ, plugins (math, tables, footnotes), advanced (parallel parse,
   serialize). Run with `python examples/basic/hello_markdown.py` etc.
+
+- **Excerpt support** — `extract_excerpt(ast, source, ...)` and `extract_meta_description(ast,
+  source)` for structurally correct excerpt extraction from AST. Stops at block boundaries;
+  optional plain text or HTML output. Useful for list previews, meta descriptions, search
+  snippets. Exported from `patitas.excerpt` and `patitas` top-level.
 
 ### Fixed
 
@@ -117,7 +124,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`DelimiterToken`** — Renamed `count` attribute to `run_length` for clarity (vs Bengal's embedded version).
 
-[Unreleased]: https://github.com/lbliii/patitas/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/lbliii/patitas/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/lbliii/patitas/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/lbliii/patitas/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/lbliii/patitas/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/lbliii/patitas/compare/v0.1.0...v0.1.1

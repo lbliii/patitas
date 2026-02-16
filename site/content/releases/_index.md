@@ -27,6 +27,7 @@ Release history and changelogs.
 
 ## Latest Release
 
+- [[releases/0.3.1|0.3.1]] — Parse cache, excerpt support, examples, directive fix (2026-02-15)
 - [[releases/0.3.0|0.3.0]] — Notebook parsing, MathRole KaTeX compatibility (2026-02-14)
 
 ## Version Policy
