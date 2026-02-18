@@ -30,6 +30,7 @@ uv run python examples/basic/hello_markdown.py
 | [plugins/math_and_tables.py](plugins/math_and_tables.py) | Tables, math, footnotes |
 | [advanced/parallel_parse.py](advanced/parallel_parse.py) | Free-threading safe parallel parse |
 | [advanced/serialize_ast.py](advanced/serialize_ast.py) | JSON round-trip for caching |
+| [llm_safety/llm_safe_context.py](llm_safety/llm_safe_context.py) | Sanitize + render markdown for LLM context |
 
 ## Requirements
 

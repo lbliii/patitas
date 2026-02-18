@@ -89,7 +89,10 @@ from patitas.notebook import parse_notebook
 from patitas.parser import Parser
 from patitas.profiling import ParseAccumulator, get_parse_accumulator, profiled_parse
 from patitas.renderers.html import HtmlRenderer
+from patitas.renderers.llm import LlmRenderer, render_llm
 from patitas.renderers.protocol import ASTRenderer
+from patitas.sanitize import Policy, sanitize
+from patitas.text import extract_text
 from patitas.serialization import from_dict, from_json, to_dict, to_json
 from patitas.tokens import Token, TokenType
 from patitas.visitor import BaseVisitor, transform
@@ -478,7 +481,14 @@ __all__ = [  # noqa: RUF022 — grouped by category for maintainability
     "Parser",
     # Renderer
     "HtmlRenderer",
+    "LlmRenderer",
     "ASTRenderer",
+    "render_llm",
+    # Text extraction
+    "extract_text",
+    # Sanitization
+    "sanitize",
+    "Policy",
     # Visitor + Transform
     "BaseVisitor",
     "transform",

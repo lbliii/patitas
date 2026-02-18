@@ -311,100 +311,110 @@ class BaseVisitor[T]:
                 pass  # Leaf nodes: no children
 
 
-def transform(doc: Document, fn: Callable[[Node], Node]) -> Document:
+def transform(doc: Document, fn: Callable[[Node], Node | None]) -> Document:
     """Apply a function to every node in the AST, returning a new tree.
 
     The function ``fn`` is called bottom-up: children are transformed first,
     then the parent is transformed with its new children. This ensures ``fn``
     always receives nodes with already-transformed children.
 
+    Return ``None`` from ``fn`` to remove a node from the tree. The root
+    Document cannot be removed; returning None for it raises TypeError.
+
     Since all nodes are frozen dataclasses, this produces a new immutable tree.
     The original tree is untouched.
 
     Args:
         doc: The document to transform.
-        fn: Function that receives a node and returns a (possibly new) node.
-            Return the same node to keep it unchanged.
+        fn: Function that receives a node and returns a (possibly new) node,
+            or None to remove the node from the tree.
 
     Returns:
         A new Document with the transformation applied.
 
     """
     result = _transform_node(doc, fn)
-    if not isinstance(result, Document):
-        msg = f"transform fn must return a Document for the root, got {type(result).__name__}"
+    if result is None or not isinstance(result, Document):
+        msg = "transform fn must return a Document for the root (cannot remove root)"
         raise TypeError(msg)
     return result
 
 
-def _transform_node(node: Node, fn: Callable[[Node], Node]) -> Node:
+def _transform_node(node: Node, fn: Callable[[Node], Node | None]) -> Node | None:
     """Transform a single node bottom-up: children first, then self."""
     transformed = _transform_children(node, fn)
     return fn(transformed)
 
 
-def _transform_children(node: Node, fn: Callable[[Node], Node]) -> Node:
-    """Produce a new node with children transformed, or return the same node if no children."""
+def _transform_children(node: Node, fn: Callable[[Node], Node | None]) -> Node:
+    """Produce a new node with children transformed; filter out None (removed) nodes."""
+
+    def _filtered(children: tuple[Node, ...]) -> tuple[Node, ...]:
+        return tuple(
+            result for c in children
+            if (result := _transform_node(c, fn)) is not None
+        )
+
     match node:
         case Document(children=children):
-            new_children = tuple(_transform_node(c, fn) for c in children)
+            new_children = _filtered(children)
             if new_children != children:
                 return dataclasses.replace(node, children=new_children)
         case Heading(children=children):
-            new_children = tuple(_transform_node(c, fn) for c in children)
+            new_children = _filtered(children)
             if new_children != children:
                 return dataclasses.replace(node, children=new_children)
         case Paragraph(children=children):
-            new_children = tuple(_transform_node(c, fn) for c in children)
+            new_children = _filtered(children)
             if new_children != children:
                 return dataclasses.replace(node, children=new_children)
         case BlockQuote(children=children):
-            new_children = tuple(_transform_node(c, fn) for c in children)
+            new_children = _filtered(children)
             if new_children != children:
                 return dataclasses.replace(node, children=new_children)
         case ListItem(children=children):
-            new_children = tuple(_transform_node(c, fn) for c in children)
+            new_children = _filtered(children)
             if new_children != children:
                 return dataclasses.replace(node, children=new_children)
         case List(items=items):
-            new_items = tuple(_transform_node(item, fn) for item in items)
+            new_items = _filtered(items)
             if new_items != items:
                 return dataclasses.replace(node, items=new_items)
         case Directive(children=children):
-            new_children = tuple(_transform_node(c, fn) for c in children)
+            new_children = _filtered(children)
             if new_children != children:
                 return dataclasses.replace(node, children=new_children)
         case FootnoteDef(children=children):
-            new_children = tuple(_transform_node(c, fn) for c in children)
+            new_children = _filtered(children)
             if new_children != children:
                 return dataclasses.replace(node, children=new_children)
         case Emphasis(children=children):
-            new_children = tuple(_transform_node(c, fn) for c in children)
+            new_children = _filtered(children)
             if new_children != children:
                 return dataclasses.replace(node, children=new_children)
         case Strong(children=children):
-            new_children = tuple(_transform_node(c, fn) for c in children)
+            new_children = _filtered(children)
             if new_children != children:
                 return dataclasses.replace(node, children=new_children)
         case Strikethrough(children=children):
-            new_children = tuple(_transform_node(c, fn) for c in children)
+            new_children = _filtered(children)
             if new_children != children:
                 return dataclasses.replace(node, children=new_children)
         case Link(children=children):
-            new_children = tuple(_transform_node(c, fn) for c in children)
+            new_children = _filtered(children)
             if new_children != children:
                 return dataclasses.replace(node, children=new_children)
         case Table(head=head, body=body):
-            new_head = tuple(_transform_node(r, fn) for r in head)
-            new_body = tuple(_transform_node(r, fn) for r in body)
+            new_head = _filtered(head)
+            new_body = _filtered(body)
             if new_head != head or new_body != body:
                 return dataclasses.replace(node, head=new_head, body=new_body)
         case TableRow(cells=cells):
-            new_cells = tuple(_transform_node(c, fn) for c in cells)
+            new_cells = _filtered(cells)
             if new_cells != cells:
                 return dataclasses.replace(node, cells=new_cells)
         case TableCell(children=children):
-            new_children = tuple(_transform_node(c, fn) for c in children)
+            new_children = _filtered(children)
             if new_children != children:
                 return dataclasses.replace(node, children=new_children)
         case _:
