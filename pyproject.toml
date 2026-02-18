@@ -149,7 +149,7 @@ dev = [
     "pytest-timeout>=2.3.0",
     "pytest-xdist>=3.5.0",
     "ty>=0.0.11",              # Astral type checker (Rust-based)
-    "ruff>=0.14.0",
+    "ruff>=0.15.1",  # 0.15.1+ fixes except-parenthesis bug (PEP 758 + as clause)
     "pre-commit>=4.0.0",
     "hypothesis>=6.100.0",
 ]
