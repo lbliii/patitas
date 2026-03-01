@@ -53,6 +53,7 @@ from patitas.nodes import (
     ThematicBreak,
 )
 from patitas.stringbuilder import StringBuilder
+from patitas.text import extract_text
 from patitas.utils.text import slugify as default_slugify
 
 if TYPE_CHECKING:
@@ -280,7 +281,7 @@ class HtmlRenderer:
     def _render_heading(self, heading: Heading, sb: StringBuilder, ctx: RenderContext) -> None:
         """Render heading with ID for anchoring."""
         # Extract plain text for slug
-        text = self._extract_text(heading.children)
+        text = extract_text(heading, source=self._source)
 
         # Use explicit ID if provided, otherwise generate slug
         slug = heading.explicit_id or self._slugify(text)
@@ -583,28 +584,6 @@ class HtmlRenderer:
     # =========================================================================
     # Helpers
     # =========================================================================
-
-    def _extract_text(self, inlines: tuple[Inline, ...]) -> str:
-        """Extract plain text from inline nodes."""
-        parts: list[str] = []
-        for inline in inlines:
-            match inline:
-                case Text():
-                    parts.append(inline.content)
-                case Emphasis() | Strong() | Strikethrough():
-                    parts.append(self._extract_text(inline.children))
-                case Link():
-                    parts.append(self._extract_text(inline.children))
-                case Image():
-                    # Include alt text in extracted text (for heading slugs)
-                    parts.append(inline.alt)
-                case CodeSpan():
-                    parts.append(inline.code)
-                case Math():
-                    parts.append(inline.content)
-                case _:
-                    pass
-        return "".join(parts)
 
     def _collect_footnotes(self, doc: Document, ctx: RenderContext) -> None:
         """Collect footnote definitions from document."""

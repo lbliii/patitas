@@ -34,7 +34,7 @@ def get_corpus() -> list[str]:
 
 def _bench_inline_memoization(docs: list[str], iters: int = 8) -> float:
     """With inline memoization: cache _parse_inline by text across batch."""
-    from patitas import Markdown, set_parse_config, reset_parse_config
+    from patitas import reset_parse_config, set_parse_config
     from patitas.config import ParseConfig
     from patitas.directives.registry import create_default_registry
 
@@ -48,8 +48,8 @@ def _bench_inline_memoization(docs: list[str], iters: int = 8) -> float:
     _inline_cache: ContextVar[dict | None] = ContextVar("experiment_inline_cache", default=None)
 
     # Subclass Parser to use cache
-    from patitas.parser import Parser
     from patitas.location import SourceLocation
+    from patitas.parser import Parser
 
     class CachedInlineParser(Parser):
         def _parse_inline(self, text: str, location: SourceLocation) -> tuple:
@@ -63,7 +63,6 @@ def _bench_inline_memoization(docs: list[str], iters: int = 8) -> float:
             return super()._parse_inline(text, location)
 
     # Monkey-patch parse to use our parser
-    from patitas import parse
     from patitas.nodes import Document
 
     def parse_with_cache(source: str, source_file: str | None = None) -> Document:
@@ -112,8 +111,8 @@ def _is_plain_text(source: str) -> bool:
 def _bench_prelexer_fastpath(docs: list[str], iters: int = 8) -> tuple[float, int]:
     """Measure: how many docs qualify for plain-text fast path, and time savings."""
     from patitas import parse
-    from patitas.nodes import Document, Paragraph, Text
     from patitas.location import SourceLocation
+    from patitas.nodes import Document, Paragraph, Text
 
     plain_count = sum(1 for d in docs if _is_plain_text(d))
 
@@ -122,9 +121,7 @@ def _bench_prelexer_fastpath(docs: list[str], iters: int = 8) -> tuple[float, in
             loc = SourceLocation(1, 1, 0, len(source), None)
             para = Paragraph(
                 location=loc,
-                children=(Text(content=source.strip(), location=loc),)
-                if source.strip()
-                else (),
+                children=(Text(content=source.strip(), location=loc),) if source.strip() else (),
             )
             return Document(location=loc, children=(para,))
         return parse(source)
@@ -223,14 +220,13 @@ def _coalesce_paragraph_lines(tokens: list) -> list:
 
 def _bench_token_coalescing(docs: list[str], iters: int = 8) -> float:
     """Parse with coalesced PARAGRAPH_LINE tokens (ultra_fast path only)."""
-    from patitas.lexer import Lexer
-    from patitas.parser import Parser
-    from patitas.config import set_parse_config, reset_parse_config
+    from patitas.config import ParseConfig, reset_parse_config, set_parse_config
     from patitas.directives.registry import create_default_registry
-    from patitas.parsing.ultra_fast import can_use_ultra_fast, parse_ultra_simple
-    from patitas.nodes import Document
+    from patitas.lexer import Lexer
     from patitas.location import SourceLocation
-    from patitas.config import ParseConfig
+    from patitas.nodes import Document
+    from patitas.parser import Parser
+    from patitas.parsing.ultra_fast import can_use_ultra_fast, parse_ultra_simple
 
     config = ParseConfig(directive_registry=create_default_registry())
     set_parse_config(config)
@@ -275,7 +271,7 @@ def _bench_token_coalescing(docs: list[str], iters: int = 8) -> float:
 
 def main() -> None:
     docs = get_corpus()
-    print(f"Bengal optimization experiments")
+    print("Bengal optimization experiments")
     print(f"Corpus: {len(docs)} docs, Python {sys.version.split()[0]}")
     print()
 
@@ -320,7 +316,8 @@ def main() -> None:
     pct_memo = (baseline_ms - memo_ms) / baseline_ms * 100 if baseline_ms else 0
     print(f"  Inline memo:  {memo_ms:.2f}ms  ({pct_memo:+.1f}%)")
     pct_fast = (baseline_ms - fastpath_ms) / baseline_ms * 100 if baseline_ms else 0
-    print(f"  Pre-lexer:    {fastpath_ms:.2f}ms  ({pct_fast:+.1f}%)  plain={plain_count}/{len(docs)}")
+    plain_info = f"plain={plain_count}/{len(docs)}"
+    print(f"  Pre-lexer:    {fastpath_ms:.2f}ms  ({pct_fast:+.1f}%)  {plain_info}")
     two_pass = baseline_ms * 2
     pct_cache = (two_pass - cache_ms) / two_pass * 100 if two_pass else 0
     print(f"  Parse cache:  {cache_ms:.2f}ms (2-pass, {pct_cache:.0f}% vs 2x baseline)")

@@ -23,7 +23,7 @@ def get_commonmark_corpus() -> list[str]:
     return [ex["markdown"] for ex in examples]
 
 
-def parse_doc(source: str):  # noqa: ANN201
+def parse_doc(source: str):
     """Parse a single document (used by executor.map)."""
     from patitas import parse
 
