@@ -81,10 +81,18 @@ Learn inline, blocks, links, and code.
 Add admonitions, tabs, and dropdowns.
 :::{/card}
 
+:::{card} Examples
+:icon: play
+:link: ./examples
+:description: Runnable examples in the repo
+Basic, AST, directives, incremental, LLM safety, and more.
+:::{/card}
+
 :::{/cards}
 
 ## Quick Links
 
+- [[docs/get-started/examples|Examples]] — Runnable examples in `examples/`
 - [[docs/reference/api|API Reference]] — parse, render, Markdown class
 - [[docs/syntax/inline|Inline Syntax]] — emphasis, links, code
 - [[docs/about/architecture|Architecture]] — lexer, parser, renderer

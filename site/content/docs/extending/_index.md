@@ -57,4 +57,10 @@ Extend Patitas with custom functionality.
 :description: Visit and transform the Markdown AST
 :::{/card}
 
+:::{card} LLM Safety
+:icon: shield-check
+:link: ./llm-safety
+:description: Sanitize and render Markdown for LLM context (RAG, retrieval)
+:::{/card}
+
 :::{/cards}

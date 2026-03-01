@@ -14,6 +14,10 @@ keywords:
 - parse_notebook
 - parse cache
 - render
+- render_llm
+- sanitize
+- extract_text
+- extract_excerpt
 - markdown
 - serialization
 - to_dict
@@ -96,6 +100,140 @@ doc = parse("# Hello")
 html = render(doc, source="# Hello")
 print(html)  # <h1>Hello</h1>
 ```
+
+### render_llm()
+
+Render a Patitas AST to structured plain text for LLM consumption. No HTML; explicit
+labels for code (`[code:lang]`), math (`[math] ... [/math]`), images (`[image: alt]`).
+Skips HtmlBlock and HtmlInline for safety. Useful for RAG retrieval, context windows,
+and model input.
+
+```python
+def render_llm(doc: Document, *, source: str = "") -> str
+```
+
+**Parameters:**
+- `doc`: Document AST to render
+- `source`: Original Markdown source for FencedCode zero-copy extraction
+
+**Returns:** Structured plain text string
+
+**Example:**
+
+```python
+from patitas import parse, render_llm
+
+doc = parse("# Hello **World**\n\n- item\n\n```python\nx = 1\n```")
+text = render_llm(doc, source=...)
+# '# Hello World\n\n- item\n\n[code:python]\nx = 1\n[/code]\n\n'
+```
+
+See [LLM Safety](/docs/extending/llm-safety/) for the full parse → sanitize → render_llm pipeline.
+
+### extract_text()
+
+Extract plain text from any AST node. Skips HtmlBlock and HtmlInline. Used for heading
+slugs, excerpts, and LLM pipelines.
+
+```python
+def extract_text(node: Node, *, source: str = "") -> str
+```
+
+**Parameters:**
+- `node`: Any AST node (block or inline)
+- `source`: Original source (required for FencedCode zero-copy; use `""` if unavailable)
+
+**Returns:** Concatenated plain text from the node and its descendants
+
+**Example:**
+
+```python
+from patitas import parse, extract_text
+
+doc = parse("# Hello **World**")
+extract_text(doc.children[0])  # 'Hello World'
+```
+
+### extract_excerpt() / extract_meta_description()
+
+Structurally correct excerpt extraction that stops at block boundaries. Avoids mid-markdown
+truncation and properly handles headings, paragraphs, and lists.
+
+```python
+def extract_excerpt(
+    ast: Document | Sequence[Block],
+    source: str = "",
+    *,
+    max_chars: int = 750,
+    skip_leading_h1: bool = True,
+    include_headings: bool = True,
+    excerpt_as_html: bool = False,
+) -> str
+
+def extract_meta_description(
+    ast: Document | Sequence[Block],
+    source: str = "",
+    *,
+    max_chars: int = 160,
+) -> str
+```
+
+**extract_excerpt** — Walks blocks in order, extracting text. Stops at block boundaries when
+`max_chars` is reached. Optional HTML output with `<p>`, `<div class="excerpt-heading">`.
+
+**extract_meta_description** — SEO-friendly ~160 chars, truncated at sentence boundary.
+
+**Example:**
+
+```python
+from patitas import parse, extract_excerpt, extract_meta_description
+
+source = "# Title\n\nFirst paragraph. Second sentence."
+doc = parse(source)
+extract_excerpt(doc, source)                        # Plain text
+extract_excerpt(doc, source, excerpt_as_html=True) # HTML with structure
+extract_meta_description(doc, source)               # ~160 chars for meta tags
+```
+
+### sanitize()
+
+Apply a composable sanitization policy to strip unsafe content before LLM consumption or
+web rendering. Policies compose via the `|` operator.
+
+```python
+def sanitize(doc: Document, *, policy: Policy | Callable[[Document], Document]) -> Document
+```
+
+**Parameters:**
+- `doc`: Document to sanitize
+- `policy`: `Policy` instance or callable `Document -> Document`
+
+**Returns:** Sanitized document (immutable; original unchanged)
+
+**Pre-built policies** (from `patitas.sanitize`):
+- `llm_safe` — Strip HTML, dangerous URLs (javascript:, data:, vbscript:), zero-width/bidi chars (Trojan Source mitigation)
+- `web_safe` — Same as llm_safe but keeps HTML comments stripped (strip_html_comments)
+- `strict` — llm_safe + strip images (replace with alt text) + strip raw code blocks
+
+**Composable policies:** `strip_html`, `strip_html_comments`, `strip_dangerous_urls`,
+`normalize_unicode`, `strip_images`, `strip_raw_code`. Use `allow_url_schemes(*schemes)` for
+custom URL filtering.
+
+**Example:**
+
+```python
+from patitas import parse, sanitize
+from patitas.sanitize import llm_safe, strip_html, strip_dangerous_urls
+
+doc = parse("# Title\n\n<script>alert(1)</script>\n\n[link](javascript:void(0))")
+clean = sanitize(doc, policy=llm_safe)
+
+# Custom policy
+custom = strip_html | strip_dangerous_urls
+clean = sanitize(doc, policy=custom)
+```
+
+See [LLM Safety](/docs/extending/llm-safety/) for the full pipeline.
 
 ### parse_notebook()
 
@@ -370,6 +508,17 @@ from patitas.renderers.html import HtmlRenderer
 
 renderer = HtmlRenderer(source=source)
 html = renderer.render(doc)
+```
+
+### LlmRenderer
+
+The LLM-optimized renderer. Outputs structured plain text for model consumption.
+
+```python
+from patitas.renderers.llm import LlmRenderer
+
+renderer = LlmRenderer(source=source)
+text = renderer.render(doc)
 ```
 
 ## Extension Points
