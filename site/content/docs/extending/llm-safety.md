@@ -57,15 +57,15 @@ The `llm_safe` policy strips:
 
 | Policy | Strips | Use case |
 |--------|--------|----------|
-| `llm_safe` | HTML, dangerous URLs, zero-width | Default for LLM context |
-| `web_safe` | llm_safe + HTML comments stripped | Web display of user content |
+| `llm_safe` | HTML, dangerous URLs, zero-width | LLM context (RAG, retrieval) |
+| `web_safe` | Same as llm_safe (alias) | Web display of untrusted content |
 | `strict` | llm_safe + images (→ alt text) + raw code blocks | Maximum reduction |
 
 ```python
 from patitas.sanitize import llm_safe, web_safe, strict
 
 clean = sanitize(doc, policy=llm_safe)   # RAG, retrieval
-clean = sanitize(doc, policy=web_safe)  # User content on web
+clean = sanitize(doc, policy=web_safe)  # User content on web (same as llm_safe)
 clean = sanitize(doc, policy=strict)    # Minimal text only
 ```
 

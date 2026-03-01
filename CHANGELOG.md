@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.3] - 2026-03-01
+
+### Added
+
+- **Frontmatter parsing** — `parse_frontmatter(content)` and `extract_body(content)` for
+  YAML frontmatter extraction. `parse_frontmatter` returns `(metadata, body_markdown)`;
+  complementary to `parse_notebook(content) -> (markdown_content, metadata)`. Handles
+  valid frontmatter, missing/unclosed delimiters, and invalid YAML (graceful degradation).
+  Normalizes `weight`, `order`, `priority` to float for SSG cascade/sort. Exported from
+  `patitas.frontmatter` and `patitas` top-level.
+
+### Changed
+
+- **Dependencies** — Added `pyyaml>=6.0` as core dependency for frontmatter support.
+
 ## [0.3.2] - 2026-03-01
 
 ### Added
@@ -18,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Sanitization** — `sanitize(doc, policy)` and composable `Policy` instances. Strip HTML,
   dangerous URLs (javascript:, data:, vbscript:), zero-width/bidi characters (Trojan Source
-  mitigation), images, raw code. Pre-built policies: `llm_safe`, `web_safe`, `strict`.
+  mitigation), images, raw code. Pre-built policies: `llm_safe`, `web_safe` (alias for llm_safe), `strict`.
   Compose via `|` operator. Exported from `patitas.sanitize` and `patitas` top-level.
 
 - **`extract_text(node, source?)`** — Extract plain text from any AST node. Skips

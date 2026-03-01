@@ -212,8 +212,8 @@ def sanitize(doc: Document, *, policy: Policy | Callable[[Document], Document]) 
 **Returns:** Sanitized document (immutable; original unchanged)
 
 **Pre-built policies** (from `patitas.sanitize`):
-- `llm_safe` — Strip HTML, dangerous URLs (javascript:, data:, vbscript:), zero-width/bidi chars (Trojan Source mitigation)
-- `web_safe` — llm_safe + strip_html_comments (also strips HTML comment nodes)
+- `llm_safe` — Strip HTML, dangerous URLs (javascript:, data:, vbscript:), zero-width/bidi chars (Trojan Source mitigation). Use for LLM context.
+- `web_safe` — Alias for `llm_safe`. Same policy for web display of untrusted content.
 - `strict` — llm_safe + strip images (replace with alt text) + strip raw code blocks
 
 **Composable policies:** `strip_html`, `strip_html_comments`, `strip_dangerous_urls`,
