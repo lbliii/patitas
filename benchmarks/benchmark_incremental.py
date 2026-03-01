@@ -18,11 +18,7 @@ try:
         """Benchmark parse_incremental for a 1-char edit in large doc."""
         previous = parse(large_document)
         edit_offset = min(5000, len(large_document) - 1)
-        new_source = (
-            large_document[:edit_offset]
-            + "x"
-            + large_document[edit_offset + 1 :]
-        )
+        new_source = large_document[:edit_offset] + "x" + large_document[edit_offset + 1 :]
         edit_start = edit_offset
         edit_end = edit_offset + 1
         new_length = 1
@@ -43,11 +39,7 @@ try:
         """Benchmark full parse of large doc (baseline for ratio)."""
         # Use same edited doc as incremental for fair comparison
         edit_offset = min(5000, len(large_document) - 1)
-        new_source = (
-            large_document[:edit_offset]
-            + "x"
-            + large_document[edit_offset + 1 :]
-        )
+        new_source = large_document[:edit_offset] + "x" + large_document[edit_offset + 1 :]
 
         def full_parse():
             parse(new_source)
