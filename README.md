@@ -29,12 +29,14 @@ Patitas is a pure-Python Markdown parser that parses to a typed AST and renders 
 | Function | Description |
 |----------|-------------|
 | `parse(source)` | Parse Markdown to typed AST |
+| `parse_frontmatter(content)` | Parse YAML frontmatter to (metadata, body) |
 | `parse_notebook(content, source_path?)` | Parse Jupyter .ipynb to (markdown, metadata) |
 | `parse_incremental(new, prev, ...)` | Re-parse only the changed region (O(change)) |
 | `render(doc)` | Render AST to HTML |
 | `render_llm(doc)` | Render AST to LLM-friendly plain text (no HTML) |
 | `sanitize(doc, policy)` | Strip HTML, dangerous URLs, zero-width chars |
 | `extract_text(node)` | Extract plain text from any AST node |
+| `extract_body(content)` | Strip --- delimited frontmatter block (no YAML parse) |
 | `Markdown()` | All-in-one parser and renderer |
 
 ---
@@ -49,7 +51,7 @@ Patitas is a pure-Python Markdown parser that parses to a typed AST and renders 
 - **LLM-safe** — `render_llm` + composable `sanitize` policies for RAG, retrieval, safe context.
 - **Directives** — MyST-style blocks (admonition, dropdown, tabs) plus custom directives.
 - **Plugins** — Tables, footnotes, math, strikethrough, task lists.
-- **Zero dependencies** — Pure Python, stdlib only.
+- **Minimal dependencies** — PyYAML for frontmatter; core parser is pure Python.
 
 ---
 
@@ -82,9 +84,30 @@ html = render(doc)
 # <h1 id="hello-world">Hello <strong>World</strong></h1>
 ```
 
+### Frontmatter
+
+Parse YAML frontmatter from Markdown or other content (same shape as `parse_notebook`):
+
+```python
+from patitas import parse_frontmatter, extract_body
+
+content = """---
+title: Hello
+weight: 10
+---
+# Body content
+"""
+metadata, body = parse_frontmatter(content)
+# metadata: {"title": "Hello", "weight": 10.0}
+# body: "# Body content"
+
+# When YAML is broken, extract_body strips the --- block without parsing
+body_only = extract_body(content)
+```
+
 ### Notebook support
 
-Parse Jupyter notebooks (.ipynb) to Markdown content and metadata — zero dependencies, stdlib JSON only:
+Parse Jupyter notebooks (.ipynb) to Markdown content and metadata — stdlib JSON only:
 
 ```python
 from patitas import parse_notebook
@@ -277,7 +300,7 @@ clean = sanitize(doc, policy=llm_safe)  # Strip HTML, dangerous URLs, zero-width
 safe_text = render_llm(clean, source=user_content)
 ```
 
-Pre-built policies: `llm_safe`, `web_safe`, `strict`. Compose with `|`.
+Pre-built policies: `llm_safe`, `web_safe` (alias), `strict`. Compose with `|`.
 
 </details>
 

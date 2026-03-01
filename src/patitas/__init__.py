@@ -2,7 +2,7 @@
 Patitas — Modern Markdown Parser for Python 3.14t
 
 A CommonMark-compliant Markdown parser designed for free-threaded Python.
-Features O(n) guaranteed parsing, typed AST, and zero runtime dependencies.
+Features O(n) guaranteed parsing, typed AST, and minimal dependencies (PyYAML for frontmatter).
 
 Quick Start:
     >>> from patitas import parse, render
@@ -26,7 +26,7 @@ Custom Directives:
     >>> html = md(":::{my-directive}\\nContent\\n:::")
 
 Installation:
-    pip install patitas              # Core parser with directives (zero deps)
+    pip install patitas              # Core parser + frontmatter (PyYAML)
     pip install patitas[syntax]      # + Syntax highlighting via Rosettes
 """
 
@@ -49,6 +49,7 @@ from patitas.directives.registry import (
     create_registry_with_defaults,
 )
 from patitas.excerpt import extract_excerpt, extract_meta_description
+from patitas.frontmatter import extract_body, parse_frontmatter
 from patitas.incremental import parse_incremental
 from patitas.lexer import Lexer
 from patitas.location import SourceLocation
@@ -97,7 +98,7 @@ from patitas.text import extract_text
 from patitas.tokens import Token, TokenType
 from patitas.visitor import BaseVisitor, transform
 
-__version__ = "0.3.2"
+__version__ = "0.3.3"
 
 
 def parse(
@@ -498,6 +499,9 @@ __all__ = [  # noqa: RUF022 — grouped by category for maintainability
     # Excerpt
     "extract_excerpt",
     "extract_meta_description",
+    # Frontmatter
+    "parse_frontmatter",
+    "extract_body",
     # Incremental
     "parse_incremental",
     # Context mapping

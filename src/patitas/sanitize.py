@@ -175,10 +175,10 @@ def limit_depth(max_depth: int = 10) -> Policy:
 
 # Pre-built policy sets
 llm_safe: Policy = strip_html | strip_dangerous_urls | normalize_unicode
+web_safe: Policy = llm_safe  # Alias: same policy for web display of untrusted content
 strict: Policy = (
     strip_html | strip_dangerous_urls | normalize_unicode | strip_images | strip_raw_code
 )
-web_safe: Policy = strip_html | strip_html_comments | strip_dangerous_urls | normalize_unicode
 
 
 def sanitize(doc: Document, *, policy: Policy | Callable[[Document], Document]) -> Document:

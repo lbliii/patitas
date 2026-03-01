@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "patitas"
-version = "0.3.2"
+version = "0.3.3"
 description = "Modern Markdown parser for Python 3.14t — CommonMark compliant, free-threading ready, typed AST"
 readme = "README.md"
 requires-python = ">=3.14"
@@ -29,7 +29,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Typing :: Typed",
 ]
-dependencies = [] # Pure Python, zero runtime dependencies
+dependencies = ["pyyaml>=6.0"]
 
 [project.optional-dependencies]
 # Syntax highlighting for code blocks
