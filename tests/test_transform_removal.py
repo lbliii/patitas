@@ -65,6 +65,6 @@ class TestTransformRemoval:
 
         try:
             transform(doc, remove_all)
-            assert False, "Expected TypeError"
+            raise AssertionError("Expected TypeError")
         except TypeError as e:
             assert "root" in str(e).lower() or "Document" in str(e)

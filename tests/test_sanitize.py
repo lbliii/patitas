@@ -3,11 +3,8 @@
 from patitas import parse, sanitize
 from patitas.location import SourceLocation
 from patitas.nodes import (
-    Document,
     HtmlBlock,
     HtmlInline,
-    Image,
-    Link,
     Paragraph,
     Text,
 )
@@ -16,11 +13,8 @@ from patitas.sanitize import (
     normalize_unicode,
     strip_dangerous_urls,
     strip_html,
-    strip_html_comments,
     strip_images,
     strip_raw_code,
-    strict,
-    web_safe,
 )
 
 LOC = SourceLocation(lineno=1, col_offset=0)
@@ -132,7 +126,6 @@ class TestPolicyOr:
         custom = strip_html
         clean = custom(doc)
         # HtmlInline removed; only Text nodes remain
-        from patitas.nodes import HtmlInline
 
         para = clean.children[0]
         assert not any(isinstance(c, HtmlInline) for c in para.children)

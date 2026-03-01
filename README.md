@@ -42,7 +42,7 @@ Patitas is a pure-Python Markdown parser that parses to a typed AST and renders 
 - **Typed AST** — Frozen dataclasses (`Heading`, `Paragraph`, `Strong`, etc.) with IDE autocomplete and type checking.
 - **CommonMark** — Full 0.31.2 spec compliance (652 examples).
 - **Incremental parsing** — Re-parse only changed blocks; ~200x faster for small edits than full re-parse.
-- **Thread-safe** — Zero shared mutable state. Parse in parallel under Python 3.14t free-threading.
+- **Free-threading native** — Frozen AST, `ContextVar` config, no shared mutable state. 1,000 documents parse in parallel with near-linear thread scaling on 3.14t — no locks, no special API.
 - **Directives** — MyST-style blocks (admonition, dropdown, tabs) plus custom directives.
 - **Plugins** — Tables, footnotes, math, strikethrough, task lists.
 - **Zero dependencies** — Pure Python, stdlib only.
@@ -120,11 +120,20 @@ Patitas uses a hand-written finite state machine lexer:
 
 - **652 CommonMark examples** — ~26ms single-threaded
 - **Incremental parsing** — For a 1-char edit in a ~100KB doc, `parse_incremental` is ~200x faster than full re-parse (~160µs vs ~32ms)
-- **Parallel scaling** — ~2.5x speedup with 4 threads under Python 3.14t free-threading
+- **Parallel scaling** — Near-linear thread scaling under Python 3.14t free-threading. Run `python benchmarks/benchmark_parallel.py` to see results on your machine. Example on 8-core:
+
+  ```
+    Threads    Time      Speedup
+    1          1.52s     1.00x
+    2          0.79s     1.92x
+    4          0.41s     3.71x
+    8          0.23s     6.61x
+  ```
 
 ```bash
 # From repo (after uv sync --group dev):
 python benchmarks/benchmark_vs_mistune.py
+python benchmarks/benchmark_parallel.py
 pytest benchmarks/benchmark_vs_mistune.py benchmarks/benchmark_incremental.py -v --benchmark-only
 ```
 
@@ -297,6 +306,7 @@ pytest
 
 ```bash
 python benchmarks/benchmark_vs_mistune.py
+python benchmarks/benchmark_parallel.py   # Free-threading scaling demo
 ```
 
 ---

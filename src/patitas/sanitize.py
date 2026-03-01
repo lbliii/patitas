@@ -46,10 +46,7 @@ def _is_dangerous_url(url: str) -> bool:
 def _scheme_allowed(url: str, allowed: frozenset[str]) -> bool:
     """Check if URL scheme is in allowed set."""
     lower = url.strip().lower()
-    for scheme in allowed:
-        if lower.startswith(scheme + ":"):
-            return True
-    return False
+    return any(lower.startswith(scheme + ":") for scheme in allowed)
 
 
 class Policy:
@@ -63,7 +60,7 @@ class Policy:
     def __call__(self, doc: Document) -> Document:
         return self._fn(doc)
 
-    def __or__(self, other: "Policy") -> "Policy":
+    def __or__(self, other: Policy) -> Policy:
         """Chain policies: (self | other)(doc) applies self then other."""
 
         def chained(doc: Document) -> Document:
@@ -74,58 +71,70 @@ class Policy:
 
 def _strip_html(doc: Document) -> Document:
     """Remove all HtmlBlock and HtmlInline nodes."""
+
     def fn(node: Node) -> Node | None:
         if isinstance(node, (HtmlBlock, HtmlInline)):
             return None
         return node
+
     return transform(doc, fn)
 
 
 def _strip_html_comments(doc: Document) -> Document:
     """Remove HtmlInline nodes where .html starts with <!--."""
+
     def fn(node: Node) -> Node | None:
         if isinstance(node, HtmlInline) and node.html.strip().startswith("<!--"):
             return None
         return node
+
     return transform(doc, fn)
 
 
 def _strip_dangerous_urls(doc: Document) -> Document:
     """Remove Link and Image nodes with javascript:, data:, vbscript: URLs."""
+
     def fn(node: Node) -> Node | None:
         if isinstance(node, Link) and _is_dangerous_url(node.url):
             return None
         if isinstance(node, Image) and _is_dangerous_url(node.url):
             return None
         return node
+
     return transform(doc, fn)
 
 
 def _normalize_unicode(doc: Document) -> Document:
     """Strip zero-width characters and bidi overrides from Text nodes."""
+
     def fn(node: Node) -> Node | None:
         if isinstance(node, Text) and _NORMALIZE_UNICODE_PATTERN.search(node.content):
             cleaned = _NORMALIZE_UNICODE_PATTERN.sub("", node.content)
             return dataclasses.replace(node, content=cleaned)
         return node
+
     return transform(doc, fn)
 
 
 def _strip_images(doc: Document) -> Document:
     """Replace Image nodes with Text nodes containing alt text."""
+
     def fn(node: Node) -> Node | None:
         if isinstance(node, Image):
             return Text(location=node.location, content=node.alt)
         return node
+
     return transform(doc, fn)
 
 
 def _strip_raw_code(doc: Document) -> Document:
     """Remove FencedCode and IndentedCode blocks."""
+
     def fn(node: Node) -> Node | None:
         if isinstance(node, (FencedCode, IndentedCode)):
             return None
         return node
+
     return transform(doc, fn)
 
 

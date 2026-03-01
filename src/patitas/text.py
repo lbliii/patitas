@@ -79,7 +79,7 @@ def extract_text(node: Node, *, source: str = "") -> str:
         case FencedCode():
             try:
                 return node.get_code(source)
-            except (IndexError, TypeError):
+            except IndexError, TypeError:
                 return ""
         case IndentedCode():
             return node.code
@@ -88,24 +88,16 @@ def extract_text(node: Node, *, source: str = "") -> str:
         case Paragraph() | Heading() | FootnoteDef() | Directive():
             return "".join(extract_text(c, source=source) for c in node.children)
         case BlockQuote():
-            return " ".join(
-                extract_text(c, source=source) for c in node.children
-            )
+            return " ".join(extract_text(c, source=source) for c in node.children)
         case List():
-            return " ".join(
-                extract_text(item, source=source) for item in node.items
-            )
+            return " ".join(extract_text(item, source=source) for item in node.items)
         case ListItem():
             return " ".join(extract_text(c, source=source) for c in node.children)
         case Document():
             return " ".join(extract_text(c, source=source) for c in node.children)
         case Table():
             rows = list(node.head) + list(node.body)
-            return " ".join(
-                extract_text(cell, source=source)
-                for row in rows
-                for cell in row.cells
-            )
+            return " ".join(extract_text(cell, source=source) for row in rows for cell in row.cells)
         case TableRow():
             return " ".join(extract_text(c, source=source) for c in node.cells)
         case TableCell():

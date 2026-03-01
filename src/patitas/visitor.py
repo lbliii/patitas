@@ -350,10 +350,7 @@ def _transform_children(node: Node, fn: Callable[[Node], Node | None]) -> Node:
     """Produce a new node with children transformed; filter out None (removed) nodes."""
 
     def _filtered(children: tuple[Node, ...]) -> tuple[Node, ...]:
-        return tuple(
-            result for c in children
-            if (result := _transform_node(c, fn)) is not None
-        )
+        return tuple(result for c in children if (result := _transform_node(c, fn)) is not None)
 
     match node:
         case Document(children=children):

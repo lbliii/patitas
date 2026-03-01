@@ -3,17 +3,13 @@
 from patitas import parse
 from patitas.location import SourceLocation
 from patitas.nodes import (
-    BlockQuote,
     CodeSpan,
     Document,
     Emphasis,
-    FencedCode,
     Heading,
     Image,
     IndentedCode,
     Link,
-    List,
-    ListItem,
     Math,
     MathBlock,
     Paragraph,

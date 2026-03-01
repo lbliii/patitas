@@ -10,6 +10,8 @@ Example:
     '## Hello World\\n\\n- item\\n'
 """
 
+import contextlib
+
 from patitas.nodes import (
     BlockQuote,
     CodeSpan,
@@ -37,8 +39,6 @@ from patitas.nodes import (
     Strikethrough,
     Strong,
     Table,
-    TableCell,
-    TableRow,
     Text,
     ThematicBreak,
 )
@@ -82,10 +82,8 @@ class LlmRenderer:
                 lang = (block.info or "").split()[0] if block.info else ""
                 tag = f"[code:{lang}]" if lang else "[code]"
                 sb.append(tag).append("\n")
-                try:
+                with contextlib.suppress(IndexError, TypeError):
                     sb.append(block.get_code(self._source))
-                except (IndexError, TypeError):
-                    pass
                 sb.append("\n[/code]\n\n")
             case IndentedCode():
                 sb.append("[code]\n").append(block.code).append("\n[/code]\n\n")
@@ -143,10 +141,8 @@ class LlmRenderer:
 
     def _inline_text(self, node) -> str:
         """Extract plain text from a node with inline children."""
-        parts: list[str] = []
-        for child in getattr(node, "children", ()):
-            parts.append(self._inline_text_single(child))
-        return "".join(parts)
+        children = getattr(node, "children", ())
+        return "".join(self._inline_text_single(c) for c in children)
 
     def _render_inlines(self, inlines: tuple[Inline, ...], sb: StringBuilder) -> None:
         """Render inline nodes."""
