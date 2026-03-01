@@ -32,6 +32,9 @@ Patitas is a pure-Python Markdown parser that parses to a typed AST and renders 
 | `parse_notebook(content, source_path?)` | Parse Jupyter .ipynb to (markdown, metadata) |
 | `parse_incremental(new, prev, ...)` | Re-parse only the changed region (O(change)) |
 | `render(doc)` | Render AST to HTML |
+| `render_llm(doc)` | Render AST to LLM-friendly plain text (no HTML) |
+| `sanitize(doc, policy)` | Strip HTML, dangerous URLs, zero-width chars |
+| `extract_text(node)` | Extract plain text from any AST node |
 | `Markdown()` | All-in-one parser and renderer |
 
 ---
@@ -43,6 +46,7 @@ Patitas is a pure-Python Markdown parser that parses to a typed AST and renders 
 - **CommonMark** — Full 0.31.2 spec compliance (652 examples).
 - **Incremental parsing** — Re-parse only changed blocks; ~200x faster for small edits than full re-parse.
 - **Free-threading native** — Frozen AST, `ContextVar` config, no shared mutable state. 1,000 documents parse in parallel with near-linear thread scaling on 3.14t — no locks, no special API.
+- **LLM-safe** — `render_llm` + composable `sanitize` policies for RAG, retrieval, safe context.
 - **Directives** — MyST-style blocks (admonition, dropdown, tabs) plus custom directives.
 - **Plugins** — Tables, footnotes, math, strikethrough, task lists.
 - **Zero dependencies** — Pure Python, stdlib only.
@@ -256,6 +260,24 @@ with ThreadPoolExecutor() as executor:
 ```
 
 Patitas is designed for Python 3.14t's free-threading mode (PEP 703).
+
+</details>
+
+<details>
+<summary><strong>LLM Safety</strong> — Sanitize and render for RAG, retrieval</summary>
+
+When sending Markdown to an LLM, sanitize untrusted content and render to plain text:
+
+```python
+from patitas import parse, sanitize, render_llm
+from patitas.sanitize import llm_safe
+
+doc = parse(user_content)
+clean = sanitize(doc, policy=llm_safe)  # Strip HTML, dangerous URLs, zero-width chars
+safe_text = render_llm(clean, source=user_content)
+```
+
+Pre-built policies: `llm_safe`, `web_safe`, `strict`. Compose with `|`.
 
 </details>
 
