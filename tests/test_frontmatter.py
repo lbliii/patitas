@@ -44,6 +44,14 @@ class TestParseFrontmatter:
 
         assert meta == {"meta": {"og_title": "Test", "og_image": "/img.png"}}
 
+    def test_frontmatter_with_dashes_in_value(self) -> None:
+        """Frontmatter with --- inside YAML value does not truncate (line-boundary delimiters)."""
+        content = '---\ntitle: "a---b"\ndescription: separator\n---\nBody content'
+        meta, body = parse_frontmatter(content)
+
+        assert meta == {"title": "a---b", "description": "separator"}
+        assert body == "Body content"
+
     def test_invalid_yaml_returns_body_only(self) -> None:
         """Invalid YAML returns empty dict and body with frontmatter stripped."""
         content = "---\ntitle: [unclosed bracket\n---\nBody"
@@ -84,7 +92,7 @@ class TestParseFrontmatter:
 
     def test_numeric_from_string(self) -> None:
         """String numeric values are coerced when possible."""
-        content = "---\nweight: \"10\"\ntitle: Test\n---\nBody"
+        content = '---\nweight: "10"\ntitle: Test\n---\nBody'
         meta, _body = parse_frontmatter(content)
 
         assert meta["weight"] == 10.0
@@ -137,3 +145,10 @@ class TestExtractBody:
         assert "# Heading" in result
         assert "---" in result
         assert "More content" in result
+
+    def test_dashes_in_frontmatter_value(self) -> None:
+        """--- inside YAML value does not truncate (line-boundary delimiter detection)."""
+        content = '---\ntitle: "a---b"\n---\nBody'
+        result = extract_body(content)
+
+        assert result == "Body"

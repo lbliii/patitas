@@ -86,7 +86,7 @@ html = render(doc)
 
 ### Frontmatter
 
-Parse YAML frontmatter from Markdown or other content (same shape as `parse_notebook`):
+Parse YAML frontmatter from Markdown or other content, returning a `(metadata, body)` tuple:
 
 ```python
 from patitas import parse_frontmatter, extract_body

@@ -12,7 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Frontmatter parsing** — `parse_frontmatter(content)` and `extract_body(content)` for
-  YAML frontmatter extraction. Same shape as `parse_notebook` for consistency. Handles
+  YAML frontmatter extraction. `parse_frontmatter` returns `(metadata, body_markdown)`;
+  complementary to `parse_notebook(content) -> (markdown_content, metadata)`. Handles
   valid frontmatter, missing/unclosed delimiters, and invalid YAML (graceful degradation).
   Normalizes `weight`, `order`, `priority` to float for SSG cascade/sort. Exported from
   `patitas.frontmatter` and `patitas` top-level.
