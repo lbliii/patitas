@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-03-01
+
+### Added
+
+- **LLM renderer** — `render_llm(doc, source?)` and `LlmRenderer` for structured plain text
+  output for model consumption. No HTML; markdown-like labels for code (`[code:lang]`),
+  math (`[math] ... [/math]`), images (`[image: alt]`). Skips HtmlBlock and HtmlInline for
+  safety. Exported from `patitas.renderers.llm` and `patitas` top-level.
+
+- **Sanitization** — `sanitize(doc, policy)` and composable `Policy` instances. Strip HTML,
+  dangerous URLs (javascript:, data:, vbscript:), zero-width/bidi characters (Trojan Source
+  mitigation), images, raw code. Pre-built policies: `llm_safe`, `web_safe`, `strict`.
+  Compose via `|` operator. Exported from `patitas.sanitize` and `patitas` top-level.
+
+- **`extract_text(node, source?)`** — Extract plain text from any AST node. Skips
+  HtmlBlock/HtmlInline. Used for heading slugs, excerpts, LLM-safe rendering. Exported
+  from `patitas.text` and `patitas` top-level.
+
+- **LLM safety example** — `examples/llm_safety/llm_safe_context.py` demonstrates
+  parse → sanitize → render_llm pipeline for RAG/retrieval contexts.
+
+- **Parallel benchmark** — `benchmarks/benchmark_parallel.py` for free-threading scaling
+  demo. Near-linear speedup on multi-core (e.g. 6.6x on 8 threads).
+
+### Changed
+
+- **README** — Updated free-threading wording and parallel benchmark example.
+- **Ruff** — Dev dependency bumped to `>=0.15.1` (fixes except-parenthesis bug with PEP 758).
+
 ## [0.3.1] - 2026-02-15
 
 ### Added
@@ -124,7 +153,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`DelimiterToken`** — Renamed `count` attribute to `run_length` for clarity (vs Bengal's embedded version).
 
-[Unreleased]: https://github.com/lbliii/patitas/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/lbliii/patitas/compare/v0.3.2...HEAD
+[0.3.2]: https://github.com/lbliii/patitas/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/lbliii/patitas/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/lbliii/patitas/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/lbliii/patitas/compare/v0.1.1...v0.2.0
