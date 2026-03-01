@@ -7,7 +7,7 @@ Example:
     >>> from patitas import parse, render_llm
     >>> doc = parse("# Hello **World**\\n\\n- item")
     >>> render_llm(doc)
-    '## Hello World\\n\\n- item\\n'
+    '# Hello World\\n\\n- item\\n'
 """
 
 import contextlib
@@ -103,7 +103,7 @@ class LlmRenderer:
             case ThematicBreak():
                 sb.append("---\n\n")
             case HtmlBlock():
-                sb.append(block.html).append("\n\n")
+                pass  # Skip raw HTML in LLM output (safety)
             case Table():
                 self._render_table(block, sb)
             case MathBlock():

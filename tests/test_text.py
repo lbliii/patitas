@@ -49,7 +49,7 @@ class TestExtractTextInline:
         assert extract_text(node) == "em"
 
     def test_strong(self) -> None:
-        node = Emphasis(location=LOC, children=(_text("bold"),))
+        node = Strong(location=LOC, children=(_text("bold"),))
         assert extract_text(node) == "bold"
 
     def test_link(self) -> None:

@@ -122,10 +122,12 @@ class TestComposition:
 
 class TestPolicyOr:
     def test_policy_or_chains(self) -> None:
-        doc = parse("A <span>B</span> C")
-        custom = strip_html
+        # Chain strip_html | normalize_unicode; both transformations apply
+        doc = parse("A\u200b <span>B</span> C")
+        custom = strip_html | normalize_unicode
         clean = custom(doc)
-        # HtmlInline removed; only Text nodes remain
-
         para = clean.children[0]
         assert not any(isinstance(c, HtmlInline) for c in para.children)
+        for child in para.children:
+            if isinstance(child, Text):
+                assert "\u200b" not in child.content

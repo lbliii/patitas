@@ -165,20 +165,20 @@ def allow_url_schemes(*schemes: str) -> Policy:
 
 
 def limit_depth(max_depth: int = 10) -> Policy:
-    """Flatten deeply nested structures (prevent adversarial nesting).
+    """Placeholder for depth limiting (prevent adversarial nesting).
 
-    Removes blocks that exceed max_depth levels of nesting.
+    Intended to remove blocks exceeding max_depth levels. Currently a pass-through;
+    full implementation would track depth in transform.
     """
-    # Simplified: pass-through for now; full impl would track depth in transform
     return Policy(lambda d: d)
 
 
 # Pre-built policy sets
-llm_safe: Policy = strip_html | strip_html_comments | strip_dangerous_urls | normalize_unicode
+llm_safe: Policy = strip_html | strip_dangerous_urls | normalize_unicode
 strict: Policy = (
     strip_html | strip_dangerous_urls | normalize_unicode | strip_images | strip_raw_code
 )
-web_safe: Policy = strip_html_comments | strip_dangerous_urls | normalize_unicode
+web_safe: Policy = strip_html | strip_html_comments | strip_dangerous_urls | normalize_unicode
 
 
 def sanitize(doc: Document, *, policy: Policy | Callable[[Document], Document]) -> Document:

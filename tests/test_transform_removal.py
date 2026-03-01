@@ -1,5 +1,7 @@
 """Tests for transform() with node removal (None return)."""
 
+import pytest
+
 from patitas.location import SourceLocation
 from patitas.nodes import (
     Document,
@@ -63,8 +65,7 @@ class TestTransformRemoval:
         def remove_all(node):
             return None
 
-        try:
+        with pytest.raises(TypeError) as exc_info:
             transform(doc, remove_all)
-            raise AssertionError("Expected TypeError")
-        except TypeError as e:
-            assert "root" in str(e).lower() or "Document" in str(e)
+        msg = str(exc_info.value).lower()
+        assert "root" in msg or "document" in msg
