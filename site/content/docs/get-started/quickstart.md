@@ -48,17 +48,17 @@ doc = parse(source)
 ## Step 2: Explore the AST
 
 ```python
-# doc is a tuple of Block nodes
-print(len(doc))  # 3 (Heading, Paragraph, List)
+# doc is a Document with children (tuple of Block nodes)
+print(len(doc.children))  # 3 (Heading, Paragraph, List)
 
 # Access the heading
-heading = doc[0]
+heading = doc.children[0]
 print(heading.level)  # 1
-print(heading.children)  # [Text("Welcome")]
+print(heading.children)  # (Text("Welcome"),)
 
 # Access the paragraph
-para = doc[1]
-print(para.children)  # [Text, Strong, Text, Emphasis, Text]
+para = doc.children[1]
+print(para.children)  # (Text, Strong, Text, Emphasis, Text)
 ```
 
 ## Step 3: Render to HTML

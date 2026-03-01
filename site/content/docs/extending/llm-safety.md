@@ -58,7 +58,7 @@ The `llm_safe` policy strips:
 | Policy | Strips | Use case |
 |--------|--------|----------|
 | `llm_safe` | HTML, dangerous URLs, zero-width | Default for LLM context |
-| `web_safe` | Same + HTML comments | Web display of user content |
+| `web_safe` | llm_safe + HTML comments stripped | Web display of user content |
 | `strict` | llm_safe + images (→ alt text) + raw code blocks | Maximum reduction |
 
 ```python

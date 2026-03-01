@@ -123,8 +123,9 @@ def render_llm(doc: Document, *, source: str = "") -> str
 ```python
 from patitas import parse, render_llm
 
-doc = parse("# Hello **World**\n\n- item\n\n```python\nx = 1\n```")
-text = render_llm(doc, source=...)
+source = "# Hello **World**\n\n- item\n\n```python\nx = 1\n```"
+doc = parse(source)
+text = render_llm(doc, source=source)
 # '# Hello World\n\n- item\n\n[code:python]\nx = 1\n[/code]\n\n'
 ```
 
@@ -212,7 +213,7 @@ def sanitize(doc: Document, *, policy: Policy | Callable[[Document], Document]) 
 
 **Pre-built policies** (from `patitas.sanitize`):
 - `llm_safe` — Strip HTML, dangerous URLs (javascript:, data:, vbscript:), zero-width/bidi chars (Trojan Source mitigation)
-- `web_safe` — Same as llm_safe but keeps HTML comments stripped (strip_html_comments)
+- `web_safe` — llm_safe + strip_html_comments (also strips HTML comment nodes)
 - `strict` — llm_safe + strip images (replace with alt text) + strip raw code blocks
 
 **Composable policies:** `strip_html`, `strip_html_comments`, `strip_dangerous_urls`,
@@ -525,28 +526,26 @@ text = renderer.render(doc)
 
 ### set_highlighter()
 
-Set the global syntax highlighter.
+Set the global syntax highlighter. Accepts a `Highlighter` protocol implementation or a
+simple callable `(code: str, language: str) -> str`.
 
 ```python
-from patitas.highlighting import set_highlighter, Highlighter
+from patitas.highlighting import set_highlighter
 
-class MyHighlighter:
-    def highlight(self, code: str, lang: str) -> str:
-        return f"<pre><code class='{lang}'>{code}</code></pre>"
-
-set_highlighter(MyHighlighter())
+# Simple callable
+set_highlighter(lambda code, lang: f"<pre><code class='{lang}'>{code}</code></pre>")
+# Or pass None to clear
+set_highlighter(None)
 ```
 
 ### set_icon_resolver()
 
-Set the global icon resolver.
+Set the global icon resolver. Takes a callable `(name: str) -> str | None`.
 
 ```python
-from patitas.icons import set_icon_resolver, IconResolver
+from patitas.icons import set_icon_resolver
 
-class MyIcons:
-    def resolve(self, name: str) -> str | None:
-        return f"<span class='icon-{name}'></span>"
-
-set_icon_resolver(MyIcons())
+set_icon_resolver(lambda name: f"<span class='icon-{name}'></span>")
+# Or pass None to clear
+set_icon_resolver(None)
 ```

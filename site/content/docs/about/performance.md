@@ -37,6 +37,7 @@ Run benchmarks to get current results:
 
 ```bash
 pytest benchmarks/benchmark_vs_mistune.py benchmarks/benchmark_incremental.py -v --benchmark-only
+python benchmarks/benchmark_parallel.py   # Free-threading scaling demo
 ```
 
 **652 CommonMark examples (single thread):** ~26ms.
