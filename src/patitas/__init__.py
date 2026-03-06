@@ -98,7 +98,7 @@ from patitas.text import extract_text
 from patitas.tokens import Token, TokenType
 from patitas.visitor import BaseVisitor, transform
 
-__version__ = "0.3.3"
+__version__ = "0.3.4"
 
 
 def parse(

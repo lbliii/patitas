@@ -147,12 +147,8 @@ class DirectiveParsingMixin:
                     self._advance()
 
                 if first_content_offset is not None:
-                    content_line_start = (
-                        self._source.rfind("\n", 0, first_content_offset) + 1
-                    )
-                    close_line_start = (
-                        self._source.rfind("\n", 0, close_start_offset) + 1
-                    )
+                    content_line_start = self._source.rfind("\n", 0, first_content_offset) + 1
+                    close_line_start = self._source.rfind("\n", 0, close_start_offset) + 1
                     raw_content = self._source[content_line_start:close_line_start]
                     raw_content = raw_content.strip("\n")
                 else:
