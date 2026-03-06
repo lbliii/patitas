@@ -561,7 +561,6 @@ class TestDecoratorTyping:
         """List-like content inside a directive must be preserved verbatim."""
         from patitas import ParseConfig, Parser, parse_config_context
         from patitas.directives.decorator import directive
-        from patitas.directives.options import DirectiveOptions
         from patitas.directives.registry import DirectiveRegistryBuilder
         from patitas.nodes import Directive
         from patitas.stringbuilder import StringBuilder

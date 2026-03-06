@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.4] - 2026-03-06
+
+### Fixed
+
+- **`preserves_raw_content` for list-like directives** — `_parse_block()` consumed list tokens
+  before `raw_content` could capture them, so directives with `preserves_raw_content=True`
+  (e.g. `list-table`) received empty or partial content. Now uses source offsets to extract
+  verbatim text when `preserves_raw_content` is True.
+
 ## [0.3.3] - 2026-03-01
 
 ### Added
@@ -168,7 +177,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`DelimiterToken`** — Renamed `count` attribute to `run_length` for clarity (vs Bengal's embedded version).
 
-[Unreleased]: https://github.com/lbliii/patitas/compare/v0.3.3...HEAD
+[Unreleased]: https://github.com/lbliii/patitas/compare/v0.3.4...HEAD
+[0.3.4]: https://github.com/lbliii/patitas/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/lbliii/patitas/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/lbliii/patitas/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/lbliii/patitas/compare/v0.3.0...v0.3.1
