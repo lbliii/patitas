@@ -16,6 +16,7 @@ class DirectiveParsingMixin:
     """Mixin for directive parsing with contract validation.
 
     Required Host Attributes:
+        - _source: str
         - _current: Token | None
         - _directive_registry: DirectiveRegistry | None
         - _directive_stack: list[str]
@@ -121,56 +122,74 @@ class DirectiveParsingMixin:
 
         # Parse content (nested blocks)
         children: list[Block] = []
-        raw_content_parts: list[str] = []
+        raw_content: str | None = None
         try:
-            while not self._at_end():
-                token = self._current
-                assert token is not None
+            if preserves_raw_content:
+                # Extract verbatim source text instead of parsing blocks.
+                # _parse_block() would consume list tokens, destroying the
+                # original "* - Cell" structure that handlers like list-table
+                # need to parse themselves.
+                first_content_offset: int | None = None
+                close_start_offset: int = len(self._source)
 
-                if token.type == TokenType.DIRECTIVE_CLOSE:
+                while not self._at_end():
+                    token = self._current
+                    assert token is not None
+
+                    if token.type == TokenType.DIRECTIVE_CLOSE:
+                        close_start_offset = token._start_offset
+                        self._advance()
+                        break
+
+                    if first_content_offset is None:
+                        first_content_offset = token._start_offset
+
                     self._advance()
-                    break
-                elif token.type == TokenType.BLANK_LINE:
-                    if preserves_raw_content:
-                        raw_content_parts.append("\n")
-                    self._advance()
-                    continue
 
-                # Capture raw content from token value before parsing
-                if preserves_raw_content and token.value:
-                    raw_content_parts.append(token.value)
-                    raw_content_parts.append("\n")
+                if first_content_offset is not None:
+                    content_line_start = self._source.rfind("\n", 0, first_content_offset) + 1
+                    close_line_start = self._source.rfind("\n", 0, close_start_offset) + 1
+                    raw_content = self._source[content_line_start:close_line_start]
+                    raw_content = raw_content.strip("\n")
+                else:
+                    raw_content = ""
+            else:
+                while not self._at_end():
+                    token = self._current
+                    assert token is not None
 
-                block = self._parse_block()
-                if block is not None:
-                    children.append(block)
+                    if token.type == TokenType.DIRECTIVE_CLOSE:
+                        self._advance()
+                        break
+                    elif token.type == TokenType.BLANK_LINE:
+                        self._advance()
+                        continue
+
+                    block = self._parse_block()
+                    if block is not None:
+                        children.append(block)
+
+                # Validate children contract AFTER parsing
+                if handler and hasattr(handler, "contract") and handler.contract:
+                    child_directives = [c for c in children if isinstance(c, Directive)]
+                    violations = handler.contract.validate_children(name, child_directives)
+                    if violations:
+                        from patitas.errors import DirectiveContractError
+                        from patitas.utils.logger import get_logger
+
+                        logger = get_logger(__name__)
+                        for violation in violations:
+                            if self._strict_contracts:
+                                raise DirectiveContractError(name, violation.message)
+                            else:
+                                logger.warning(
+                                    "Directive contract violation: %s: %s",
+                                    name,
+                                    violation.message,
+                                )
         finally:
             # Always pop from stack, even on error
             self._directive_stack.pop()
-
-        # Validate children contract AFTER parsing
-        if handler and hasattr(handler, "contract") and handler.contract:
-            child_directives = [c for c in children if isinstance(c, Directive)]
-            violations = handler.contract.validate_children(name, child_directives)
-            if violations:
-                from patitas.errors import DirectiveContractError
-                from patitas.utils.logger import get_logger
-
-                logger = get_logger(__name__)
-                for violation in violations:
-                    if self._strict_contracts:
-                        raise DirectiveContractError(name, violation.message)
-                    else:
-                        logger.warning(
-                            "Directive contract violation: %s: %s",
-                            name,
-                            violation.message,
-                        )
-
-        # Build raw_content if needed
-        raw_content: str | None = None
-        if preserves_raw_content:
-            raw_content = "".join(raw_content_parts) if raw_content_parts else ""
 
         # Use handler if available, otherwise create Directive directly
         if handler and hasattr(handler, "parse"):

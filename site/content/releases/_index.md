@@ -27,6 +27,7 @@ Release history and changelogs.
 
 ## Latest Release
 
+- [[releases/0.3.4|0.3.4]] — Fix preserves_raw_content for list-table directives (2026-03-06)
 - [[releases/0.3.3|0.3.3]] — Frontmatter parsing (parse_frontmatter, extract_body) (2026-03-01)
 - [[releases/0.3.2|0.3.2]] — LLM renderer, sanitization, extract_text, parallel benchmark (2026-03-01)
 - [[releases/0.3.1|0.3.1]] — Parse cache, excerpt support, examples, directive fix (2026-02-15)

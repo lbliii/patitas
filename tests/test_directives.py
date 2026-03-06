@@ -557,6 +557,47 @@ class TestDecoratorTyping:
 
         assert node.raw_content == "raw content here"
 
+    def test_preserves_raw_content_with_list_content(self) -> None:
+        """List-like content inside a directive must be preserved verbatim."""
+        from patitas import ParseConfig, Parser, parse_config_context
+        from patitas.directives.decorator import directive
+        from patitas.directives.registry import DirectiveRegistryBuilder
+        from patitas.nodes import Directive
+        from patitas.stringbuilder import StringBuilder
+
+        @directive("list-table", preserves_raw_content=True)
+        def render_lt(node, children: str, sb: StringBuilder) -> None:
+            sb.append(node.raw_content or "")
+
+        builder = DirectiveRegistryBuilder()
+        builder.register(render_lt())
+        registry = builder.build()
+
+        source = (
+            ":::{list-table}\n"
+            ":header-rows: 1\n"
+            "\n"
+            "* - Header 1\n"
+            "  - Header 2\n"
+            "* - Cell 1\n"
+            "  - Cell 2\n"
+            ":::\n"
+        )
+
+        config = ParseConfig(directive_registry=registry)
+        with parse_config_context(config):
+            parser = Parser(source)
+            blocks = parser.parse()
+
+        directives = [b for b in blocks if isinstance(b, Directive)]
+        assert len(directives) == 1
+        raw = directives[0].raw_content
+        assert raw is not None
+        assert "* - Header 1" in raw
+        assert "  - Header 2" in raw
+        assert "* - Cell 1" in raw
+        assert "  - Cell 2" in raw
+
 
 class TestProtocolCompliance:
     """Tests verifying handlers comply with DirectiveHandler protocol.
