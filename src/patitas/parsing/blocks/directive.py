@@ -26,6 +26,7 @@ class DirectiveParsingMixin:
         - _at_end() -> bool
         - _advance() -> Token | None
         - _parse_block() -> Block | None
+        - _line_start_for_offset(offset: int) -> int
     """
 
     # Required host attributes (documented, not declared, to avoid override conflicts)
@@ -148,8 +149,12 @@ class DirectiveParsingMixin:
 
                 if first_content_offset is not None:
                     content_line_start = self._line_start_for_offset(first_content_offset)
-                    close_line_start = self._line_start_for_offset(close_start_offset)
-                    raw_content = self._source[content_line_start:close_line_start]
+                    if close_start_offset == len(self._source):
+                        # No DIRECTIVE_CLOSE found: slice to end-of-source
+                        raw_content = self._source[content_line_start:]
+                    else:
+                        close_line_start = self._line_start_for_offset(close_start_offset)
+                        raw_content = self._source[content_line_start:close_line_start]
                     raw_content = raw_content.strip("\n")
                 else:
                     raw_content = ""

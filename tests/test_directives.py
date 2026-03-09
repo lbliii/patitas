@@ -598,6 +598,37 @@ class TestDecoratorTyping:
         assert "* - Cell 1" in raw
         assert "  - Cell 2" in raw
 
+    def test_preserves_raw_content_without_closing_directive(self) -> None:
+        """When DIRECTIVE_CLOSE is missing, last line content must be preserved."""
+        from patitas import ParseConfig, Parser, parse_config_context
+        from patitas.directives.decorator import directive
+        from patitas.directives.registry import DirectiveRegistryBuilder
+        from patitas.nodes import Directive
+        from patitas.stringbuilder import StringBuilder
+
+        @directive("raw-no-close", preserves_raw_content=True)
+        def render_raw(node, children: str, sb: StringBuilder) -> None:
+            sb.append(node.raw_content or "")
+
+        builder = DirectiveRegistryBuilder()
+        builder.register(render_raw())
+        registry = builder.build()
+
+        # No trailing newline, no ::: close
+        source = ":::{raw-no-close}\nfirst line\nlast line content"
+
+        config = ParseConfig(directive_registry=registry)
+        with parse_config_context(config):
+            parser = Parser(source)
+            blocks = parser.parse()
+
+        directives = [b for b in blocks if isinstance(b, Directive)]
+        assert len(directives) == 1
+        raw = directives[0].raw_content
+        assert raw is not None
+        assert "first line" in raw
+        assert "last line content" in raw
+
 
 class TestProtocolCompliance:
     """Tests verifying handlers comply with DirectiveHandler protocol.

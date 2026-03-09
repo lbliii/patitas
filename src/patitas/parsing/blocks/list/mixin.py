@@ -82,6 +82,7 @@ class ListParsingMixin:
         - _parse_inline(text, location) -> tuple[Inline, ...]
         - _parse_block() -> Block | None
         - _get_line_at(offset) -> str
+        - _line_start_for_offset(offset: int) -> int
         - _strip_columns(text, count) -> str
 
     """

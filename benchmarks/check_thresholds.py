@@ -33,14 +33,19 @@ def main() -> int:
     benchmarks = {b["name"]: b for b in data.get("benchmarks", [])}
 
     failed: list[str] = []
+    missing: list[str] = []
     for name, max_ms in THRESHOLDS_MS.items():
         if name not in benchmarks:
+            missing.append(name)
             continue
         mean_s = benchmarks[name]["stats"]["mean"]
         mean_ms = mean_s * 1000
         if mean_ms > max_ms:
             failed.append(f"  {name}: {mean_ms:.1f}ms > {max_ms}ms threshold")
 
+    if missing:
+        print("Missing required benchmarks (run full suite):\n  " + "\n  ".join(missing))
+        return 1
     if failed:
         print("Benchmark thresholds exceeded:\n" + "\n".join(failed))
         return 1
