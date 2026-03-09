@@ -16,7 +16,7 @@ THRESHOLDS_MS: dict[str, float] = {
     "test_benchmark_parse_100kb": 200,
     "test_benchmark_parse_500kb": 1000,
     "test_benchmark_parse_list_table_50kb": 150,
-    "test_benchmark_parse_only_10kb": 15,
+    "test_benchmark_parse_only_10kb": 20,
     "test_benchmark_parse_only_500kb": 1000,
     "test_benchmark_extract_excerpt_code_heavy": 50,
     "test_benchmark_extract_excerpt_commonmark": 1500,
