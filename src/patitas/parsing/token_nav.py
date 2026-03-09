@@ -3,6 +3,7 @@
 Provides mixin for token stream navigation and basic parsing operations.
 """
 
+import bisect
 from typing import TYPE_CHECKING
 
 from patitas.tokens import Token, TokenType
@@ -20,6 +21,7 @@ class TokenNavigationMixin:
         - _pos: int
         - _current: Token | None
         - _source: str
+        - _line_starts: list[int] | None (lazy line index for O(log n) boundary lookup)
 
     """
 
@@ -48,13 +50,20 @@ class TokenNavigationMixin:
             return self._tokens[pos]
         return None
 
+    def _line_start_for_offset(self, offset: int) -> int:
+        """Get start offset of line containing offset. O(log n) with lazy line index."""
+        if self._line_starts is None:
+            line_starts = [0]
+            for i, c in enumerate(self._source):
+                if c == "\n":
+                    line_starts.append(i + 1)
+            self._line_starts = line_starts
+        idx = bisect.bisect_right(self._line_starts, offset) - 1
+        return self._line_starts[idx] if idx >= 0 else 0
+
     def _get_line_at(self, offset: int) -> str:
         """Get the full line content containing the given source offset."""
-        # Find start of line (previous newline)
-        start = self._source.rfind("\n", 0, offset) + 1
-        if start == -1:
-            start = 0
-        # Find end of line (next newline)
+        start = self._line_start_for_offset(offset)
         end = self._source.find("\n", offset)
         if end == -1:
             end = len(self._source)

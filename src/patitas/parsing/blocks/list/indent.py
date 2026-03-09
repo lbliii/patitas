@@ -32,10 +32,11 @@ def calculate_content_indent(
     line_start_pos = source.rfind("\n", 0, line_offset) + 1
     if line_start_pos == 0:
         line_start_pos = 0
-    original_line = source[line_start_pos:].split("\n")[0]
+    end = source.find("\n", line_start_pos)
+    original_line = source[line_start_pos:end] if end != -1 else source[line_start_pos:]
 
-    # Find where content starts (after marker and spaces)
-    marker_part = marker_stripped.split()[0] if marker_stripped.split() else marker_stripped
+    parts = marker_stripped.split()
+    marker_part = parts[0] if parts else marker_stripped
     marker_pos_in_line = original_line.find(marker_part)
     if marker_pos_in_line == -1:
         # Fallback: use marker_indent + marker_length + 1

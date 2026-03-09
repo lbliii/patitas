@@ -69,7 +69,7 @@ class Parser(
     Configuration:
         Parser reads configuration from ContextVar instead of instance attributes.
         This provides:
-        - 50% smaller memory footprint (9 vs 18 slots)
+        - 12 slots vs 18 before (config via ContextVar)
         - Faster instantiation (no config copying)
         - Automatic config inheritance for sub-parsers
         - Thread-safe by design
@@ -86,6 +86,8 @@ class Parser(
         "_current",
         # Directive stack (per-parse state)
         "_directive_stack",
+        # Line index for O(log n) boundary lookup (lazy, used by preserves_raw_content)
+        "_line_starts",
         # Link reference definitions (per-document state)
         "_link_refs",
         "_pos",
@@ -132,6 +134,7 @@ class Parser(
         # Setext heading control - can be disabled for blockquote lazy continuation
         self._allow_setext_headings = True
         self._config_cache = None
+        self._line_starts = None
 
     def _reinit(self, source: str, source_file: str | None = None) -> None:
         """Reinitialize parser for reuse (enables pooling).
@@ -166,6 +169,7 @@ class Parser(
         self._containers = ContainerStack()
         self._allow_setext_headings = True
         self._config_cache = None
+        self._line_starts = None
 
     # =========================================================================
     # Configuration Properties (read from ContextVar)

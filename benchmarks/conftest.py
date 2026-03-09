@@ -133,3 +133,177 @@ Task list:
 
 [^1]: Footnote definition here.
 """
+
+
+@pytest.fixture
+def directive_heavy_doc() -> str:
+    """Document with many MyST directives (admonition, tabs, dropdown). ~4KB."""
+    block = """# Section
+
+:::{note}
+This is a note with **bold** and *italic*.
+:::
+
+:::{warning}
+Important warning here.
+:::
+
+:::{tab-set}
+
+:::{tab-item} Python
+```python
+def hello():
+    print("world")
+```
+:::
+
+:::{tab-item} JavaScript
+```javascript
+console.log("world");
+```
+:::
+:::
+
+:::{dropdown} Click to expand
+Hidden content with a [link](https://example.com).
+:::
+"""
+    return (block + "\n\n") * 15
+
+
+@pytest.fixture
+def preserves_raw_content_doc() -> str:
+    """Document with list-table directives (preserves_raw_content=True path)."""
+    block = """:::{list-table}
+:header-rows: 1
+
+* - Header 1
+  - Header 2
+  - Header 3
+* - Cell A1
+  - Cell A2
+  - Cell A3
+* - Cell B1
+  - Cell B2
+  - Cell B3
+:::
+"""
+    return (block + "\n\n") * 20
+
+
+@pytest.fixture
+def frontmatter_docs() -> list[str]:
+    """Documents with YAML frontmatter for parse_frontmatter benchmark."""
+    return [
+        """---
+title: Hello World
+weight: 10
+tags: [a, b, c]
+---
+
+# Body content
+
+Paragraph with **bold**.
+""",
+        """---
+title: API Reference
+description: Full API docs
+---
+
+```python
+from lib import Client
+```
+""",
+    ] * 50
+
+
+def _scaled_document(target_kb: int) -> str:
+    """Generate document of approximately target_kb size."""
+    template = """
+# Section {i}
+
+Paragraph {i} with **bold** and *italic* and `code`.
+
+- List item 1
+- List item 2
+
+| A | B |
+|---|---|
+| x | y |
+"""
+    section_len = len(template.format(i=0))
+    count = max(1, (target_kb * 1024) // section_len)
+    return "\n".join(template.format(i=i) for i in range(count))
+
+
+@pytest.fixture
+def doc_10kb() -> str:
+    """~10KB document."""
+    return _scaled_document(10)
+
+
+@pytest.fixture
+def doc_100kb() -> str:
+    """~100KB document."""
+    return _scaled_document(100)
+
+
+@pytest.fixture
+def doc_500kb() -> str:
+    """~500KB document."""
+    return _scaled_document(500)
+
+
+def _list_table_scaled_doc(target_kb: int) -> str:
+    """Generate document with list-table directives at target size."""
+    block = """:::{list-table}
+:header-rows: 1
+
+* - H1
+  - H2
+  - H3
+* - A1
+  - A2
+  - A3
+* - B1
+  - B2
+  - B3
+:::
+"""
+    block_len = len(block)
+    count = max(1, (target_kb * 1024) // block_len)
+    return (block + "\n\n") * count
+
+
+@pytest.fixture
+def list_table_doc_50kb() -> str:
+    """~50KB document with list-table directives (preserves_raw_content path)."""
+    return _list_table_scaled_doc(50)
+
+
+def _code_heavy_doc(num_blocks: int) -> str:
+    """Generate document with many code blocks (exercises excerpt first-line path)."""
+    block = """# Section {i}
+
+Paragraph before code.
+
+```python
+def function_{i}():
+    '''Docstring with multiple lines.
+    More docstring.
+    '''
+    return {i} * 2
+```
+
+Paragraph after code.
+
+    indented_code_block_{i}
+    another_line
+"""
+    return "\n".join(block.format(i=i) for i in range(num_blocks))
+
+
+@pytest.fixture
+def doc_with_many_code_blocks() -> str:
+    """~20KB document with many fenced and indented code blocks."""
+    return _code_heavy_doc(200)

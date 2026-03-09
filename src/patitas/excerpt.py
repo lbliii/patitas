@@ -99,12 +99,12 @@ def _block_text(node: Block, source: str) -> str:
     if isinstance(node, FencedCode):
         try:
             code = node.get_code(source)
-            first_line = code.split("\n")[0] if code else ""
+            first_line = (code or "").split("\n", 1)[0]
             return f" {first_line}" if first_line else ""
         except IndexError, TypeError:
             return ""
     if isinstance(node, IndentedCode):
-        first_line = node.code.split("\n")[0] if node.code else ""
+        first_line = (node.code or "").split("\n", 1)[0]
         return f" {first_line}" if first_line else ""
     return ""
 
@@ -136,12 +136,12 @@ def _block_text_html(node: Block, source: str) -> str:
     if isinstance(node, FencedCode):
         try:
             code = node.get_code(source)
-            first_line = code.split("\n")[0] if code else ""
+            first_line = (code or "").split("\n", 1)[0]
             return f"<p><code>{first_line}</code></p>" if first_line else ""
         except IndexError, TypeError:
             return ""
     if isinstance(node, IndentedCode):
-        first_line = node.code.split("\n")[0] if node.code else ""
+        first_line = (node.code or "").split("\n", 1)[0]
         return f"<p><code>{first_line}</code></p>" if first_line else ""
     return ""
 

@@ -82,6 +82,7 @@ class ListParsingMixin:
         - _parse_inline(text, location) -> tuple[Inline, ...]
         - _parse_block() -> Block | None
         - _get_line_at(offset) -> str
+        - _line_start_for_offset(offset: int) -> int
         - _strip_columns(text, count) -> str
 
     """
@@ -193,7 +194,8 @@ class ListParsingMixin:
 
             # Update content indent for this item
             current_marker = token.value.lstrip()
-            current_marker_length = len(current_marker.split()[0]) if current_marker.split() else 1
+            parts = current_marker.split()
+            current_marker_length = len(parts[0]) if parts else 1
             content_indent = current_indent + current_marker_length + 1
 
             # Parse item content
@@ -379,7 +381,7 @@ class ListParsingMixin:
                 # marker character (like "." or "-") to the first content character.
                 if actual_content_indent is None and not content_lines:
                     # Find the original line containing this content
-                    line_start = self._source.rfind("\n", 0, tok.location.offset) + 1
+                    line_start = self._line_start_for_offset(tok.location.offset)
                     line_end = self._source.find("\n", tok.location.offset)
                     if line_end == -1:
                         line_end = len(self._source)
@@ -696,7 +698,7 @@ class ListParsingMixin:
                         # Check if there was a blank line before current token by looking at source
                         if next_tok.location.offset > 0:
                             # Find the line start
-                            line_start = self._source.rfind("\n", 0, next_tok.location.offset) + 1
+                            line_start = self._line_start_for_offset(next_tok.location.offset)
                             if line_start > 1:
                                 prev_char = self._source[line_start - 2 : line_start]
                                 if prev_char == "\n\n" or (
@@ -793,12 +795,14 @@ class ListParsingMixin:
         a space, so content starts at column 3. Content indent = 3.
         """
         line_start = tok.location.offset
-        line_start_pos = self._source.rfind("\n", 0, line_start) + 1
-        if line_start_pos == 0:
-            line_start_pos = 0
-        original_line = self._source[line_start_pos:].split("\n")[0]
+        line_start_pos = self._line_start_for_offset(line_start)
+        end = self._source.find("\n", line_start_pos)
+        original_line = (
+            self._source[line_start_pos:end] if end != -1 else self._source[line_start_pos:]
+        )
 
-        marker_part = marker_stripped.split()[0] if marker_stripped.split() else marker_stripped
+        parts = marker_stripped.split()
+        marker_part = parts[0] if parts else marker_stripped
         marker_pos_in_line = original_line.find(marker_part)
         if marker_pos_in_line == -1:
             return get_marker_indent(tok.value) + len(marker_part) + 1

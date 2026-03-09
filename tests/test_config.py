@@ -288,8 +288,8 @@ class TestParserSlotReduction:
     """Verify Parser slot count reduction."""
 
     def test_parser_slot_count(self) -> None:
-        """Parser has reduced slot count (11 vs 18 before)."""
-        assert len(Parser.__slots__) == 11
+        """Parser has reduced slot count (12 vs 18 before)."""
+        assert len(Parser.__slots__) == 12
 
     def test_parser_has_required_slots(self) -> None:
         """Parser has all required per-parse state slots."""
@@ -301,6 +301,7 @@ class TestParserSlotReduction:
             "_current",
             "_source_file",
             "_directive_stack",
+            "_line_starts",
             "_link_refs",
             "_containers",
             "_allow_setext_headings",
