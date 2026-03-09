@@ -69,7 +69,7 @@ class Parser(
     Configuration:
         Parser reads configuration from ContextVar instead of instance attributes.
         This provides:
-        - 50% smaller memory footprint (9 vs 18 slots)
+        - 12 slots vs 18 before (config via ContextVar)
         - Faster instantiation (no config copying)
         - Automatic config inheritance for sub-parsers
         - Thread-safe by design
