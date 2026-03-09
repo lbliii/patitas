@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.5] - 2026-03-09
+
+### Added
+
+- **`_line_start_for_offset()`** — O(log n) line boundary lookup with lazy line index. Replaces
+  repeated `rfind("\n", 0, offset)` (O(n) per call) with bisect-based lookup. Used by directive
+  `preserves_raw_content`, list parsing, and block core for line extraction.
+
+- **Benchmark suite** — `benchmark_directives`, `benchmark_excerpt`, `benchmark_phase_breakdown`,
+  `benchmark_pipelines`, `benchmark_scaling`, `profile_large_doc`, `check_thresholds` for CI.
+  New groups: parse-directives, parse-preserves-raw, parse-scaling, phase-breakdown, excerpt,
+  render-llm, parse-frontmatter, parse-sanitize-render-llm.
+
+### Changed
+
+- **excerpt.py** — Safer first-line extraction for code blocks: `(code or "").split("\n", 1)[0]`
+  instead of `code.split("\n")[0] if code else ""` to avoid IndexError and avoid splitting
+  full string when only first line is needed.
+
+- **directive.py** — Edge case when `DIRECTIVE_CLOSE` not found: slice `raw_content` to end of
+  source instead of failing.
+
+- **List parsing** — Avoid duplicate `.split()` calls; use `find("\n")` instead of
+  `split("\n")[0]` for line extraction (more efficient).
+
+- **thread-safety.md** — Clarified extension points; added Code References table.
+
+### Fixed
+
+- **excerpt.py** — Safer handling for empty code in `FencedCode`/`IndentedCode` blocks.
+
 ## [0.3.4] - 2026-03-06
 
 ### Fixed
@@ -177,7 +208,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`DelimiterToken`** — Renamed `count` attribute to `run_length` for clarity (vs Bengal's embedded version).
 
-[Unreleased]: https://github.com/lbliii/patitas/compare/v0.3.4...HEAD
+[Unreleased]: https://github.com/lbliii/patitas/compare/v0.3.5...HEAD
+[0.3.5]: https://github.com/lbliii/patitas/compare/v0.3.4...v0.3.5
 [0.3.4]: https://github.com/lbliii/patitas/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/lbliii/patitas/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/lbliii/patitas/compare/v0.3.1...v0.3.2

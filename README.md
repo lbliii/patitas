@@ -36,6 +36,8 @@ Patitas is a pure-Python Markdown parser that parses to a typed AST and renders 
 | `render_llm(doc)` | Render AST to LLM-friendly plain text (no HTML) |
 | `sanitize(doc, policy)` | Strip HTML, dangerous URLs, zero-width chars |
 | `extract_text(node)` | Extract plain text from any AST node |
+| `extract_excerpt(ast, source, ...)` | Structurally correct excerpt from AST (list previews, meta) |
+| `extract_meta_description(ast, source)` | Meta description from first paragraph/heading |
 | `extract_body(content)` | Strip --- delimited frontmatter block (no YAML parse) |
 | `Markdown()` | All-in-one parser and renderer |
 
@@ -160,9 +162,11 @@ Patitas uses a hand-written finite state machine lexer:
 ```bash
 # From repo (after uv sync --group dev):
 python benchmarks/benchmark_vs_mistune.py
-python benchmarks/benchmark_parallel.py
-pytest benchmarks/benchmark_vs_mistune.py benchmarks/benchmark_incremental.py -v --benchmark-only
+python benchmarks/benchmark_parallel.py   # Free-threading scaling
+pytest benchmarks/benchmark_vs_mistune.py benchmarks/benchmark_incremental.py benchmarks/benchmark_directives.py benchmarks/benchmark_scaling.py benchmarks/benchmark_excerpt.py -v --benchmark-only --benchmark-group-by=group
 ```
+
+See [benchmarks/README.md](benchmarks/README.md) for the full suite (pipelines, phase-breakdown, CI threshold checks).
 
 ---
 
@@ -352,6 +356,7 @@ pytest
 ```bash
 python benchmarks/benchmark_vs_mistune.py
 python benchmarks/benchmark_parallel.py   # Free-threading scaling demo
+pytest benchmarks/benchmark_*.py -v --benchmark-only --benchmark-group-by=group   # Full suite
 ```
 
 ---
