@@ -14,8 +14,11 @@ python benchmarks/benchmark_vs_mistune.py
 # Install benchmark dependencies
 pip install pytest-benchmark mistune markdown-it-py
 
-# Run all benchmarks (including incremental)
-pytest benchmarks/benchmark_vs_mistune.py benchmarks/benchmark_incremental.py -v --benchmark-only --benchmark-group-by=group
+# Run all benchmarks
+pytest benchmarks/benchmark_vs_mistune.py benchmarks/benchmark_incremental.py benchmarks/benchmark_directives.py benchmarks/benchmark_pipelines.py benchmarks/benchmark_scaling.py benchmarks/benchmark_phase_breakdown.py benchmarks/benchmark_excerpt.py -v --benchmark-only --benchmark-group-by=group
+
+# CI: run key benchmarks and check thresholds
+pytest benchmarks/benchmark_scaling.py benchmarks/benchmark_phase_breakdown.py benchmarks/benchmark_excerpt.py -v --benchmark-only --benchmark-json=benchmarks/ci_results.json -q && python benchmarks/check_thresholds.py
 ```
 
 ## Benchmark Groups
@@ -26,8 +29,17 @@ pytest benchmarks/benchmark_vs_mistune.py benchmarks/benchmark_incremental.py -v
 | `parse-large-doc` | ~100KB document with tables |
 | `parse-real-world` | Real-world document patterns |
 | `parse-plugins` | Plugin-heavy doc (tables, math, footnotes, etc.) |
+| `parse-directives` | Directive-heavy doc (admonition, tabs, dropdown) |
+| `parse-preserves-raw` | list-table directives (preserves_raw_content path) |
+| `parse-scaling` | Parse time vs doc size (10KB, 100KB, 500KB) |
+| `phase-breakdown` | Parse-only vs render-only vs full pipeline |
+| `parse-scaling-list-table` | Parse time for list-table directives (preserves_raw_content path) |
+| `excerpt` | extract_excerpt on code-heavy and CommonMark corpus |
 | `parse-only` | Parse to AST only (no render) |
 | `render-only` | Render pre-parsed AST to HTML |
+| `render-llm` | Render AST to LLM-friendly plain text |
+| `parse-frontmatter` | YAML frontmatter parsing |
+| `parse-sanitize-render-llm` | Full RAG pipeline (parse → sanitize → render_llm) |
 | `parse-incremental` | Incremental re-parse vs full parse |
 
 ## Methodology
@@ -38,6 +50,10 @@ pytest benchmarks/benchmark_vs_mistune.py benchmarks/benchmark_incremental.py -v
 - **Large Document**: ~100KB generated markdown with varied syntax
 - **Real-world**: Collection of common markdown patterns
 - **Plugin-heavy**: Document with tables, math, footnotes, strikethrough, task lists
+- **Directive-heavy**: Many admonition, tab-set, dropdown directives (~4KB)
+- **Preserves-raw**: list-table directives (preserves_raw_content path)
+- **Frontmatter**: Documents with YAML frontmatter
+- **Scaling**: 10KB, 100KB, 500KB documents for O(n) validation
 
 ### Parsers Compared
 

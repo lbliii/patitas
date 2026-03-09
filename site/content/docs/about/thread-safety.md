@@ -66,14 +66,9 @@ html2 = md2("$x^2$")      # Uses math config (no conflict)
 ```
 
 :::{/step}
-:::{step} Thread-local extension points
+:::{step} Extension points
 
-Global extension points use thread-local storage:
-
-```python
-# Safe for concurrent use
-set_highlighter(my_highlighter)
-```
+Plugins and directive registries are configured per `Markdown` instance via `ParseConfig` (ContextVar). The `set_highlighter()` API uses module-level state — set it once at startup before any concurrent parsing; do not change it during parallel execution.
 
 :::{/step}
 :::{/steps}
@@ -171,3 +166,11 @@ Run with GIL disabled:
 ```bash
 PYTHON_GIL=0 python -c "from patitas import parse; parse('# Test')"
 ```
+
+## Code References
+
+| Pattern | File |
+|---------|------|
+| Immutable AST nodes | [src/patitas/nodes.py](https://github.com/lbliii/patitas/blob/main/src/patitas/nodes.py) |
+| ParseConfig (ContextVar) | [src/patitas/config.py](https://github.com/lbliii/patitas/blob/main/src/patitas/config.py) |
+| Markdown facade | [src/patitas/__init__.py](https://github.com/lbliii/patitas/blob/main/src/patitas/__init__.py) |

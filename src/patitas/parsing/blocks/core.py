@@ -626,7 +626,7 @@ class BlockParsingCoreMixin:
                         # Get original line content to preserve whitespace
                         # (blank lines with 4+ spaces should keep excess spaces)
                         offset = next_token.location.offset
-                        line_start = source.rfind("\n", 0, offset) + 1
+                        line_start = self._line_start_for_offset(offset)
                         line_end = source.find("\n", offset)
                         if line_end == -1:
                             line_end = source_len
