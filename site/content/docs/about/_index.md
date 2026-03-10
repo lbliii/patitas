@@ -1,6 +1,6 @@
 ---
 title: About
-description: Architecture, performance, and design philosophy
+description: Architecture, performance, security, and design philosophy for the Patitas Python Markdown parser
 draft: false
 weight: 60
 lang: en
@@ -12,6 +12,9 @@ keywords:
 - architecture
 - performance
 - design
+- python markdown parser
+- commonmark parser
+- security
 category: explanation
 cascade:
   type: doc
@@ -20,7 +23,8 @@ icon: info
 
 # About
 
-Learn how Patitas works and why it was built.
+Learn how Patitas works and why it fits as a Python Markdown parser for secure,
+CommonMark-compliant content processing.
 
 :::{cards}
 :columns: 2

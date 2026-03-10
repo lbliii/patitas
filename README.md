@@ -7,7 +7,7 @@
 [![CommonMark](https://img.shields.io/badge/CommonMark-0.31.2-brightgreen.svg)](https://spec.commonmark.org/0.31.2/)
 [![ReDoS Safe](https://img.shields.io/badge/ReDoS-Safe-brightgreen.svg)](docs/security.md)
 
-**The secure, typed Markdown parser for modern Python.**
+**A Python Markdown parser and CommonMark parser for typed ASTs, frontmatter, directives, and notebook content.**
 
 ```python
 from patitas import Markdown
@@ -20,7 +20,28 @@ html = md("# Hello **World**")
 
 ## What is Patitas?
 
-Patitas is a pure-Python Markdown parser that parses to a typed AST and renders to HTML. It's CommonMark 0.31.2 compliant, has zero runtime dependencies, and is built for Python 3.14+.
+Patitas is a pure-Python Markdown parser that parses to a typed AST and renders to
+HTML. It's CommonMark 0.31.2 compliant, has zero runtime dependencies, and is built
+for Python 3.14+.
+
+**Why people pick it:**
+
+- **ReDoS-proof** — O(n) finite state machine lexer, no regex backtracking. Safe for untrusted input in web apps and APIs.
+- **Typed AST** — Frozen dataclasses (`Heading`, `Paragraph`, `Strong`, etc.) with IDE autocomplete and type checking.
+- **CommonMark** — Full 0.31.2 spec compliance (652 examples).
+- **Incremental parsing** — Re-parse only changed blocks; ~200x faster for small edits than full re-parse.
+- **Free-threading native** — Frozen AST, `ContextVar` config, no shared mutable state. 1,000 documents parse in parallel with near-linear thread scaling on 3.14t — no locks, no special API.
+- **LLM-safe** — `render_llm` + composable `sanitize` policies for RAG, retrieval, safe context.
+- **Directives** — MyST-style blocks (admonition, dropdown, tabs) plus custom directives.
+- **Notebook + frontmatter support** — Parse `.ipynb` content and YAML frontmatter as part of content pipelines.
+
+## Use Patitas For
+
+- **Markdown to HTML pipelines** — Render docs, blogs, and site content from Python
+- **Typed Markdown processing** — Analyze or transform documents through a typed AST
+- **Secure user-input parsing** — Handle untrusted Markdown without regex backtracking risk
+- **Content tooling** — Frontmatter extraction, excerpts, meta descriptions, and notebook conversion
+- **Modern docs stacks** — Directives, syntax highlighting, LLM-safe rendering, and incremental parsing
 
 ---
 
@@ -43,7 +64,7 @@ Patitas is a pure-Python Markdown parser that parses to a typed AST and renders 
 
 ---
 
-## What's good about it
+## More Features
 
 - **ReDoS-proof** — O(n) finite state machine lexer, no regex backtracking. Safe for untrusted input in web apps and APIs.
 - **Typed AST** — Frozen dataclasses (`Heading`, `Paragraph`, `Strong`, etc.) with IDE autocomplete and type checking.
