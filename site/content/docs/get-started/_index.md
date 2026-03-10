@@ -1,6 +1,6 @@
 ---
 title: Get Started
-description: Install Patitas and parse your first Markdown document
+description: Install Patitas and parse your first Markdown document with a Python Markdown parser built for typed AST workflows
 draft: false
 weight: 10
 lang: en
@@ -12,6 +12,9 @@ keywords:
 - getting started
 - installation
 - quickstart
+- python markdown parser
+- commonmark parser
+- typed ast
 category: onboarding
 cascade:
   type: doc

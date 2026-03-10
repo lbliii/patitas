@@ -1,6 +1,6 @@
 ---
 title: Syntax
-description: Markdown syntax reference
+description: CommonMark and Markdown syntax reference for the Patitas Python Markdown parser
 draft: false
 weight: 20
 lang: en
@@ -13,6 +13,8 @@ keywords:
 - markdown
 - inline
 - blocks
+- commonmark
+- markdown parser
 category: reference
 cascade:
   type: doc
@@ -21,7 +23,7 @@ icon: code
 
 # Syntax
 
-Complete Markdown syntax reference for Patitas.
+Complete Markdown and CommonMark syntax reference for Patitas.
 
 Patitas implements the [CommonMark 0.31.2](https://spec.commonmark.org/0.31.2/) specification with extensions for directives and roles.
 

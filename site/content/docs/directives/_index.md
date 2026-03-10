@@ -1,6 +1,6 @@
 ---
 title: Directives
-description: MyST-style directive extensions
+description: MyST-style directive extensions for the Patitas Python Markdown parser
 draft: false
 weight: 30
 lang: en
@@ -13,6 +13,8 @@ keywords:
 - admonition
 - tabs
 - dropdown
+- myst directives
+- markdown parser
 category: reference
 cascade:
   type: doc
@@ -21,7 +23,8 @@ icon: layers
 
 # Directives
 
-MyST-style directive extensions for enhanced Markdown.
+MyST-style directive extensions for enhanced Markdown, documentation sites, and custom
+content pipelines.
 
 Directives require the `directives` extra:
 

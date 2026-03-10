@@ -1,12 +1,12 @@
 ---
 title: Patitas
-description: Modern Markdown parser for Python 3.14t
+description: A Python Markdown parser and CommonMark parser for typed ASTs, directives, frontmatter, and notebook content
 template: home.html
 weight: 100
 type: page
 draft: false
 lang: en
-keywords: [patitas, markdown, parser, python, free-threading, commonmark]
+keywords: [patitas, python markdown parser, commonmark parser, typed ast, frontmatter, myst directives, notebook parsing]
 category: home
 
 # Hero configuration
@@ -24,11 +24,13 @@ cta_buttons:
 show_recent_posts: false
 ---
 
-## Markdown, Parsed Right
+## Python Markdown Parser for Modern Content
 
-**Fast. Safe. Modern. Standards-based.**
+**CommonMark. Typed AST. Secure parsing.**
 
-Patitas is a pure-Python Markdown parser designed for Python 3.14t+. It uses a state-machine lexer—no regex backtracking, no ReDoS vulnerabilities, O(n) guaranteed parsing.
+Patitas is a pure-Python Markdown parser for HTML rendering, content pipelines, and
+Markdown tooling. It uses a state-machine lexer with O(n) guaranteed parsing, exposes a
+typed AST, and supports directives, frontmatter, notebook parsing, and LLM-safe output.
 
 ```python
 from patitas import Markdown
@@ -40,7 +42,7 @@ html = md("# Hello **World**")
 
 ---
 
-## What's good about it
+## Why Use Patitas
 
 :::{cards}
 :columns: 2
@@ -67,6 +69,14 @@ Pure Python with no runtime dependencies. Optional extras for directives and syn
 :::{/card}
 
 :::{/cards}
+
+## Common Use Cases
+
+- Parsing Markdown to HTML in Python applications
+- Extracting typed structure from Markdown for analysis or transforms
+- Handling YAML frontmatter and notebook content in publishing pipelines
+- Replacing regex-heavy Markdown parsers in security-sensitive systems
+- Powering docs stacks with directives, syntax highlighting, and incremental parsing
 
 ---
 

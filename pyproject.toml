@@ -5,18 +5,21 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "patitas"
 version = "0.3.5"
-description = "Modern Markdown parser for Python 3.14t — CommonMark compliant, free-threading ready, typed AST"
+description = "Python Markdown parser and CommonMark parser for typed ASTs, directives, frontmatter, and notebook content"
 readme = "README.md"
 requires-python = ">=3.14"
 license = "MIT"
 keywords = [
     "markdown",
+    "python-markdown-parser",
     "parser",
     "commonmark",
+    "commonmark-parser",
     "free-threading",
     "ast",
     "myst",
     "directives",
+    "frontmatter",
 ]
 authors = [{ name = "Bengal Contributors" }]
 classifiers = [
@@ -39,8 +42,8 @@ syntax = ["rosettes>=0.1.0"]
 all = ["rosettes>=0.1.0"]
 
 [project.urls]
-Homepage = "https://github.com/lbliii/patitas"
-Documentation = "https://lbliii.github.io/patitas"
+Homepage = "https://lbliii.github.io/patitas/"
+Documentation = "https://lbliii.github.io/patitas/"
 Repository = "https://github.com/lbliii/patitas"
 Changelog = "https://github.com/lbliii/patitas/blob/main/CHANGELOG.md"
 

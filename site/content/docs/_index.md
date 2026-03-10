@@ -7,11 +7,14 @@ cascade:
   type: doc
   variant: standard
 category: documentation
-description: Patitas Markdown parser documentation
+description: Documentation for the Patitas Python Markdown parser, including CommonMark syntax, directives, frontmatter, and typed AST APIs
 keywords:
 - documentation
 - markdown
 - parser
+- python markdown parser
+- commonmark parser
+- typed ast
 - api
 menu:
   main:
@@ -26,7 +29,8 @@ icon: book-open
 
 ## Start Here
 
-New to Patitas? Parse your first Markdown in under 2 minutes.
+New to Patitas? Start here to parse Markdown, explore the typed AST, add directives,
+and use frontmatter or notebook content in Python pipelines.
 
 :::{cards}
 :columns: 2
@@ -48,7 +52,7 @@ New to Patitas? Parse your first Markdown in under 2 minutes.
 
 ## Learn Patitas
 
-Master Markdown syntax and extension patterns.
+Master CommonMark syntax, directive extensions, and content-processing patterns.
 
 :::{cards}
 :columns: 2
@@ -75,7 +79,7 @@ Master Markdown syntax and extension patterns.
 :::{card} About
 :icon: info
 :link: ./about/
-:description: Architecture, performance, and design
+:description: Architecture, performance, security, and design
 :::{/card}
 
 :::{/cards}
