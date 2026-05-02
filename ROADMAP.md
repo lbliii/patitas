@@ -6,13 +6,13 @@ Patitas isn't just a Markdown parser — it's the **typed content layer** that B
 
 ---
 
-## Current State (v0.1.1)
+## Current State (v0.3.5)
 
 - CommonMark 0.31.2 compliance (652/652 spec examples)
 - Hand-written FSM lexer — ReDoS-proof, O(n) guaranteed
 - Typed AST with frozen dataclasses (`slots=True`)
 - Free-threading safe (Python 3.14t)
-- Zero runtime dependencies
+- Core parser is pure Python; frontmatter support depends on PyYAML
 - Plugins: tables, footnotes, math, strikethrough, task lists, autolinks
 - Directives: admonitions, dropdowns, tabs, containers (MyST syntax)
 - Roles: formatting, icons, math, references
@@ -99,11 +99,12 @@ Each "cheat code" maps to a standalone feature in one library + an extension poi
 
 ### What Someone Using Only One Library Gets
 
-**Patitas alone** (without kida or Bengal):
+**Patitas alone** (without Kida or Bengal):
 - CommonMark parser with typed AST, ReDoS-proof, thread-safe
 - Visitor protocol for AST walking
 - Differ for content versioning
-- Linting framework for content quality
+- Incremental parsing and content-addressed parse caching
+- LLM-safe rendering and sanitization helpers
 - Works with Jinja, Django templates, or any other renderer
 
 **Kida alone** (without patitas):
@@ -158,9 +159,24 @@ After this sprint, the next epic is purely orchestration work in Bengal and Purr
 
 ---
 
-## Next Epic: Orchestration (Bengal + Purr)
+## Next Patitas Epic: Evidence And API Readiness
 
-No library-level work remaining — purely wiring the foundation libraries together.
+Before adding broad new surface area, Patitas should make its public contract and published
+claims match the current package.
+
+- [ ] Document public vs internal API boundaries before 1.0
+- [ ] Reduce type-checker diagnostics that are currently warning-only
+- [ ] Make benchmark scripts degrade cleanly when optional comparators are missing
+- [ ] Reconcile README, docs, site, roadmap, and benchmark claims from fresh runs
+- [ ] Start GFM compliance tracking for plugin-backed syntax
+- [ ] Keep CommonMark, ReDoS-safety, immutable AST, and thread-safety checks green
+
+---
+
+## Ecosystem Epic: Orchestration (Bengal + Purr)
+
+The foundation APIs are available. Ecosystem work should use Patitas through public exports
+and report any missing contract before reaching into internals.
 
 ### Bengal Orchestration
 
@@ -180,7 +196,7 @@ No library-level work remaining — purely wiring the foundation libraries toget
 
 ---
 
-## Future: Standalone Value (v0.3.0)
+## Future: Standalone Value (post-v0.3.5)
 
 Make Patitas attractive outside the Bengal ecosystem.
 
@@ -305,8 +321,8 @@ How each roadmap item connects back to the ecosystem:
 | Version | Theme | Status |
 |---|---|---|
 | **0.2.0** | Foundation library sprint | **Done** — visitor, differ, context, profiling, renderer protocol, serialization |
-| **0.3.0** | Standalone value | Planned — additional renderers, extensions, source maps |
-| **0.4.0** | Platform differentiator | Planned — linting framework, incremental parsing, LSP |
+| **0.3.x** | Standalone value | In progress — notebooks, cache, examples, excerpts, LLM safety, frontmatter, benchmark suite |
+| **0.4.0** | Platform differentiator | Planned — additional renderers, source maps, linting framework, LSP |
 | **1.0.0** | Stable API, full GFM, linting | When ready |
 
 The 1.0.0 milestone means: public API is frozen, all internal imports are gated, GFM compliance is tracked, and the linting framework is usable. No rush — ship it when the contract is right.
