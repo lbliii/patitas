@@ -30,7 +30,7 @@ for Python 3.14+.
 - **Typed AST** — Frozen dataclasses (`Heading`, `Paragraph`, `Strong`, etc.) with IDE autocomplete and type checking.
 - **CommonMark** — Full 0.31.2 spec compliance (652 examples).
 - **Incremental parsing** — Re-parse only changed blocks; ~200x faster for small edits than full re-parse.
-- **Free-threading native** — Frozen AST, `ContextVar` config, no shared mutable state. 1,000 documents parse in parallel with near-linear thread scaling on 3.14t — no locks, no special API.
+- **Free-threading native** — Frozen AST, `ContextVar` config, no shared mutable parser state. Parallel speedups vary by Python build, hardware, and corpus.
 - **LLM-safe** — `render_llm` + composable `sanitize` policies for RAG, retrieval, safe context.
 - **Directives** — MyST-style blocks (admonition, dropdown, tabs) plus custom directives.
 - **Notebook + frontmatter support** — Parse `.ipynb` content and YAML frontmatter as part of content pipelines.
@@ -70,7 +70,7 @@ for Python 3.14+.
 - **Typed AST** — Frozen dataclasses (`Heading`, `Paragraph`, `Strong`, etc.) with IDE autocomplete and type checking.
 - **CommonMark** — Full 0.31.2 spec compliance (652 examples).
 - **Incremental parsing** — Re-parse only changed blocks; ~200x faster for small edits than full re-parse.
-- **Free-threading native** — Frozen AST, `ContextVar` config, no shared mutable state. 1,000 documents parse in parallel with near-linear thread scaling on 3.14t — no locks, no special API.
+- **Free-threading native** — Frozen AST, `ContextVar` config, no shared mutable parser state. Parallel speedups vary by Python build, hardware, and corpus.
 - **LLM-safe** — `render_llm` + composable `sanitize` policies for RAG, retrieval, safe context.
 - **Directives** — MyST-style blocks (admonition, dropdown, tabs) plus custom directives.
 - **Plugins** — Tables, footnotes, math, strikethrough, task lists.
@@ -168,16 +168,16 @@ Patitas uses a hand-written finite state machine lexer:
 
 ## Performance
 
-- **652 CommonMark examples** — ~26ms single-threaded
-- **Incremental parsing** — For a 1-char edit in a ~100KB doc, `parse_incremental` is ~200x faster than full re-parse (~160µs vs ~32ms)
-- **Parallel scaling** — Near-linear thread scaling under Python 3.14t free-threading. Run `python benchmarks/benchmark_parallel.py` to see results on your machine. Example on 8-core:
+- **652 CommonMark examples** — measure on your machine with `benchmarks/benchmark_vs_mistune.py`; recent Python 3.14.2 free-threaded local runs are in the low tens of milliseconds.
+- **Incremental parsing** — For a 1-char edit in a ~100KB doc, `parse_incremental` can be roughly 200x faster than full re-parse in the bundled benchmark.
+- **Parallel scaling** — Free-threaded speedups depend on Python build, hardware, corpus size, and optional comparator packages. Run `python benchmarks/benchmark_parallel.py` to see results on your machine. One recent local run on Python 3.14.2 with 1,000 CommonMark documents:
 
   ```
     Threads    Time      Speedup
-    1          1.52s     1.00x
-    2          0.79s     1.92x
-    4          0.41s     3.71x
-    8          0.23s     6.61x
+    1          0.07s     1.00x
+    2          0.05s     1.42x
+    4          0.04s     1.64x
+    8          0.04s     1.75x
   ```
 
 ```bash

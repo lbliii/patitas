@@ -40,11 +40,15 @@ pytest benchmarks/benchmark_vs_mistune.py benchmarks/benchmark_incremental.py -v
 python benchmarks/benchmark_parallel.py   # Free-threading scaling demo
 ```
 
-**652 CommonMark examples (single thread):** ~26ms.
+**652 CommonMark examples (single thread):** typically low tens of milliseconds on
+Python 3.14. Run the benchmark locally for a number that matches your hardware and
+installed comparator packages.
 
-**Large document (~100KB):** ~38ms.
+**Large document (~100KB):** environment-sensitive; use
+`benchmarks/benchmark_scaling.py` or the full benchmark suite for current data.
 
-**Incremental parsing:** For a 1-char edit in a ~100KB doc, `parse_incremental` is ~200x faster than full re-parse (~160µs vs ~32ms).
+**Incremental parsing:** For a 1-char edit in a ~100KB doc, `parse_incremental`
+can be roughly 200x faster than full re-parse in the bundled benchmark.
 
 **Pathological input:** Patitas completes in O(n) regardless of input.
 
@@ -125,15 +129,20 @@ internal locking. See [API Reference](/docs/reference/api/#parse-cache).
 
 ## Free-Threading Performance
 
-With Python 3.14t (GIL disabled):
+With Python 3.14t (GIL disabled), speedups depend on corpus shape, document
+count, CPU, and scheduler behavior. Measure your workload instead of treating
+one example as a guarantee. A recent local run on Python 3.14.2 with 1,000
+CommonMark documents produced:
 
 | Threads | Documents | Time | Speedup |
 |---------|-----------|------|---------|
-| 1 | 1000 | 1.5s | 1x |
-| 4 | 1000 | 0.4s | 3.75x |
-| 8 | 1000 | 0.25s | 6x |
+| 1 | 1000 | 0.07s | 1.00x |
+| 2 | 1000 | 0.05s | 1.42x |
+| 4 | 1000 | 0.04s | 1.64x |
+| 8 | 1000 | 0.04s | 1.75x |
 
-Near-linear scaling due to no shared mutable state.
+Patitas is structured to avoid shared mutable parser state; actual scaling still
+depends on the runtime and workload.
 
 ## Profiling Your Workload
 
