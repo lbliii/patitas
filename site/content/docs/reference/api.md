@@ -30,6 +30,25 @@ icon: code
 
 Core API for parsing and rendering Markdown.
 
+## Public API Boundary
+
+The stable integration surface is the top-level `patitas` package. Prefer imports like:
+
+```python
+from patitas import Markdown, parse, render, Document, Heading
+```
+
+Names exported from `patitas.__init__` are treated as downstream contracts. That includes
+the parser facade, AST node types, source locations, parse cache helpers, visitor/diff
+helpers, serialization helpers, sanitization helpers, directive registry builders, and
+renderer protocols documented on this page.
+
+Subpackages such as `patitas.lexer`, `patitas.parser`, `patitas.parsing`,
+`patitas.renderers.html`, and implementation modules under `patitas.directives`,
+`patitas.roles`, or `patitas.plugins` may still be useful for advanced users, but they are
+not the preferred compatibility boundary before 1.0. If an integration needs an internal
+module, open an issue so the missing public contract can be promoted intentionally.
+
 ## High-Level API
 
 ### parse()

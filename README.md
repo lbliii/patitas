@@ -62,6 +62,11 @@ for Python 3.14+.
 | `extract_body(content)` | Strip --- delimited frontmatter block (no YAML parse) |
 | `Markdown()` | All-in-one parser and renderer |
 
+The public compatibility boundary is the top-level `patitas` package. Prefer
+`from patitas import ...` for integrations; direct imports from parser, lexer,
+and renderer implementation modules are still pre-1.0 internals unless the API
+reference says otherwise.
+
 ---
 
 ## More Features
