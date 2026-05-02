@@ -24,7 +24,7 @@ Thread Safety:
 """
 
 from dataclasses import dataclass
-from typing import Literal
+from typing import Literal, cast
 
 from patitas.nodes import Block, Document
 from patitas.utils.hashing import subtree_hash
@@ -139,11 +139,11 @@ def _child_blocks(node: Block) -> tuple[Block, ...]:
     if hasattr(node, "children"):
         children = node.children
         if isinstance(children, tuple) and all(hasattr(item, "location") for item in children):
-            return children
+            return cast("tuple[Block, ...]", children)
     if hasattr(node, "items"):
         items = node.items
         if isinstance(items, tuple):
-            return items
+            return cast("tuple[Block, ...]", items)
     return ()
 
 

@@ -17,7 +17,7 @@ Top 10 patterns cover 79.1% of CommonMark spec:
 """
 
 from collections.abc import Callable
-from typing import TYPE_CHECKING
+from typing import Literal, cast
 
 from patitas.nodes import (
     Block,
@@ -31,9 +31,6 @@ from patitas.nodes import (
 )
 from patitas.parsing.blocks.list.marker import extract_marker_info
 from patitas.tokens import TokenType
-
-if TYPE_CHECKING:
-    pass
 
 
 def parse_html_only(
@@ -78,7 +75,7 @@ def parse_atx_only(
             blocks.append(
                 Heading(
                     location=tok.location,
-                    level=level,
+                    level=cast("Literal[1, 2, 3, 4, 5, 6]", level),
                     children=inlines,
                     style="atx",
                 )
@@ -125,7 +122,6 @@ def parse_fenced_code_only(
     in_fence = False
     fence_location = None
     fence_info = ""
-    fence_lang = ""
     code_lines: list[str] = []
 
     for tok in tokens:
@@ -134,7 +130,6 @@ def parse_fenced_code_only(
             fence_location = tok.location
             # Parse info string (language)
             fence_info = tok.value.strip()
-            fence_lang = fence_info.split()[0] if fence_info else ""
             code_lines = []
         elif tok.type == TokenType.FENCED_CODE_CONTENT:
             if in_fence:
@@ -147,9 +142,10 @@ def parse_fenced_code_only(
                 blocks.append(
                     FencedCode(
                         location=fence_location,
-                        content=content,
-                        info_string=fence_info,
-                        language=fence_lang,
+                        source_start=fence_location.end_offset,
+                        source_end=fence_location.end_offset,
+                        info=fence_info,
+                        content_override=content,
                     )
                 )
             in_fence = False

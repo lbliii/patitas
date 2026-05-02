@@ -377,14 +377,15 @@ class Markdown:
         """
         set_parse_config(self._config)
         try:
-            config_hash = hash_config(self._config) if cache is not None else ""
-            use_cache = cache is not None and config_hash
+            active_cache = cache
+            config_hash = hash_config(self._config) if active_cache is not None else ""
+            use_cache = active_cache is not None and config_hash
 
             result: list[Document] = []
             for source in sources:
-                if use_cache:
+                if use_cache and active_cache is not None:
                     content_hash = hash_content(source)
-                    cached = cache.get(content_hash, config_hash)
+                    cached = active_cache.get(content_hash, config_hash)
                     if cached is not None:
                         result.append(cached)
                         continue
@@ -400,9 +401,9 @@ class Markdown:
                 )
                 doc = Document(location=loc, children=tuple(blocks))
 
-                if use_cache:
+                if use_cache and active_cache is not None:
                     content_hash = hash_content(source)
-                    cache.put(content_hash, config_hash, doc)
+                    active_cache.put(content_hash, config_hash, doc)
 
                 result.append(doc)
             return result
