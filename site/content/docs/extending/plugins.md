@@ -57,6 +57,10 @@ html = md(":::{my-directive}\nContent\n:::{/my-directive}")
 
 Patitas includes these plugins:
 
+CommonMark compliance is tracked separately from GFM-style plugin support.
+Tables, task lists, strikethrough, and autolinks are available as plugins, but
+Patitas does not yet publish an official GFM spec pass count.
+
 | Plugin | Description | Directives |
 |--------|-------------|------------|
 | `directives` | Core directives | admonition, container, dropdown, tabs |

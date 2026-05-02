@@ -207,7 +207,10 @@ html = md(source)  # HTML is escaped by default
 
 ### "Tables look different"
 
-Both parsers support GFM tables, but rendering may differ slightly. Patitas follows CommonMark/GFM spec strictly.
+Both parsers support table syntax, but rendering may differ slightly. Patitas
+tracks CommonMark compliance separately from GFM-style plugin behavior; see
+[GFM compliance tracking](gfm-compliance.md) before relying on an official GFM
+pass count.
 
 ## Need Help?
 

@@ -81,6 +81,9 @@ reference says otherwise.
 - **Plugins** — Tables, footnotes, math, strikethrough, task lists.
 - **Minimal dependencies** — PyYAML for frontmatter; core parser is pure Python.
 
+GFM-style features are available through plugins, but official GFM spec pass counts
+are not published yet. See [GFM compliance tracking](docs/gfm-compliance.md).
+
 ---
 
 ## Installation
