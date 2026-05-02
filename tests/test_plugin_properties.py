@@ -8,7 +8,7 @@ These tests verify invariants that should hold for any combination of plugins:
 Property-based testing finds edge cases that example-based tests miss.
 """
 
-from hypothesis import assume, given, settings
+from hypothesis import given, settings
 from hypothesis import strategies as st
 
 from patitas import Markdown
@@ -17,11 +17,22 @@ from patitas.plugins import BUILTIN_PLUGINS
 # Strategy for generating plugin lists
 plugin_names = st.sampled_from(list(BUILTIN_PLUGINS.keys()))
 plugin_lists = st.lists(plugin_names, max_size=len(BUILTIN_PLUGINS), unique=True)
+plugin_lists_min_two = st.lists(
+    plugin_names,
+    min_size=2,
+    max_size=len(BUILTIN_PLUGINS),
+    unique=True,
+)
 plugin_lists_with_all = st.one_of(
     plugin_lists,
     st.just(["all"]),
     st.lists(st.sampled_from([*list(BUILTIN_PLUGINS.keys()), "all"]), max_size=7, unique=True),
 )
+plugin_lists_requiring_all = st.lists(
+    plugin_names,
+    max_size=len(BUILTIN_PLUGINS),
+    unique=True,
+).map(lambda plugins: ["all", *plugins])
 
 
 class TestPluginCombinationProperties:
@@ -68,12 +79,10 @@ class TestPluginCombinationProperties:
             f"Enabled {enabled_count} features but passed {len(plugins)} plugins: {plugins}"
         )
 
-    @given(plugins=plugin_lists_with_all)
+    @given(plugins=plugin_lists_requiring_all)
     @settings(max_examples=30)
     def test_all_plugin_with_others_enables_all(self, plugins: list[str]) -> None:
         """If 'all' is in plugins, all features should be enabled."""
-        assume("all" in plugins)
-
         md = Markdown(plugins=plugins)
 
         # All _enabled fields should be True
@@ -115,12 +124,10 @@ class TestConfigWithRandomPlugins:
 class TestPluginOrderIndependence:
     """Verify plugin order doesn't affect behavior."""
 
-    @given(plugins=plugin_lists)
+    @given(plugins=plugin_lists_min_two)
     @settings(max_examples=30)
     def test_plugin_order_doesnt_matter_for_config(self, plugins: list[str]) -> None:
         """Plugin order should not affect which features are enabled."""
-        assume(len(plugins) > 1)
-
         md_forward = Markdown(plugins=plugins)
         md_reverse = Markdown(plugins=list(reversed(plugins)))
 
