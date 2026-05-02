@@ -76,12 +76,16 @@ Typical output (results vary by environment):
 ```
 RESULTS: Parse 652 CommonMark examples
 ============================================================
-mistune                 ~12ms  (1.0x)
-Patitas                 ~26ms  (2.1x)
-markdown-it-py          ~26ms  (2.1x)
+Patitas                 ~21ms  (1.00x)
+markdown-it-py          ~22ms  (1.02x)
+mistune              not installed
 ```
 
-**Incremental parsing** — for a 1-char edit in a ~100KB doc: `parse_incremental` ~160µs vs full `parse` ~32ms (~200x faster).
+Comparator packages are optional. If `mistune` or `markdown-it-py` is not
+installed, the quick runner reports that package as skipped instead of failing.
+
+**Incremental parsing** — for a 1-char edit in a ~100KB doc, the bundled
+benchmark has shown `parse_incremental` roughly 200x faster than full `parse`.
 
 ## Why Patitas Prioritizes Safety
 
@@ -103,6 +107,6 @@ To reproduce:
 git clone https://github.com/lbliii/patitas
 cd patitas
 uv sync --group dev
-pip install mistune markdown-it-py
+uv pip install mistune markdown-it-py
 python benchmarks/benchmark_vs_mistune.py
 ```

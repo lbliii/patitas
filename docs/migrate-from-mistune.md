@@ -158,11 +158,13 @@ class MyRenderer(HtmlRenderer):
 
 ## Performance Notes
 
-Patitas is typically 40-50% faster than mistune:
+Patitas prioritizes ReDoS safety, typed immutable ASTs, and free-threading over
+raw single-thread speed. Benchmark your own corpus before treating performance as
+a migration reason:
 
 ```bash
 # Run benchmark
-pip install mistune
+uv pip install mistune markdown-it-py
 python benchmarks/benchmark_vs_mistune.py
 ```
 
@@ -171,7 +173,7 @@ python benchmarks/benchmark_vs_mistune.py
 | Reason | Details |
 |--------|---------|
 | **Security** | Patitas is ReDoS-proof; mistune uses regex |
-| **Performance** | 40-50% faster on typical documents |
+| **Performance** | Predictable O(n) behavior, incremental parsing, and free-threading-friendly structure |
 | **Type Safety** | Typed AST vs Dict[str, Any] |
 | **Free-threading** | Native Python 3.14t support |
 | **MyST Syntax** | Modern directive syntax, Jupyter Book compatible |
@@ -205,7 +207,10 @@ html = md(source)  # HTML is escaped by default
 
 ### "Tables look different"
 
-Both parsers support GFM tables, but rendering may differ slightly. Patitas follows CommonMark/GFM spec strictly.
+Both parsers support table syntax, but rendering may differ slightly. Patitas
+tracks CommonMark compliance separately from GFM-style plugin behavior; see
+[GFM compliance tracking](gfm-compliance.md) before relying on an official GFM
+pass count.
 
 ## Need Help?
 

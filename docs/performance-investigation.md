@@ -1,6 +1,7 @@
 # Performance Investigation: Patitas vs mistune
 
 **Date:** 2026-02-14  
+**Status:** Historical snapshot; rerun the benchmark suite for current numbers on your hardware.  
 **Benchmark:** 652 CommonMark examples, single thread  
 **Result:** mistune ~12ms, Patitas ~26ms (Patitas ~2x slower)
 

@@ -18,7 +18,7 @@ Future: Could generate Cython code for even faster dispatch.
 """
 
 from collections.abc import Callable
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from patitas.tokens import TokenType
 
@@ -28,6 +28,7 @@ if TYPE_CHECKING:
 
 # Type alias for parser functions
 type ParserFn = Callable[["list[Token]", Callable], "tuple[Block, ...]"]
+type DispatchStats = dict[str, int | set[frozenset[TokenType]]]
 
 
 class PatternDispatcher:
@@ -41,7 +42,7 @@ class PatternDispatcher:
 
     def __init__(self) -> None:
         self._dispatch_table: dict[frozenset[TokenType], ParserFn] = {}
-        self._stats = {
+        self._stats: DispatchStats = {
             "hits": 0,
             "misses": 0,
             "patterns_seen": set(),
@@ -65,26 +66,33 @@ class PatternDispatcher:
         pattern = frozenset(tok.type for tok in tokens if tok.type != TokenType.EOF)
 
         # Track stats for optimization tuning
-        self._stats["patterns_seen"].add(pattern)
+        patterns_seen = cast("set[frozenset[TokenType]]", self._stats["patterns_seen"])
+        patterns_seen.add(pattern)
 
         parser = self._dispatch_table.get(pattern)
         if parser is not None:
-            self._stats["hits"] += 1
+            hits = cast("int", self._stats["hits"])
+            self._stats["hits"] = hits + 1
         else:
-            self._stats["misses"] += 1
+            misses = cast("int", self._stats["misses"])
+            self._stats["misses"] = misses + 1
 
         return parser
 
     def get_stats(self) -> dict:
         """Get dispatch statistics."""
-        total = self._stats["hits"] + self._stats["misses"]
-        hit_rate = self._stats["hits"] / total if total > 0 else 0
+        hits = cast("int", self._stats["hits"])
+        misses = cast("int", self._stats["misses"])
+        patterns_seen = cast("set[frozenset[TokenType]]", self._stats["patterns_seen"])
+
+        total = hits + misses
+        hit_rate = hits / total if total > 0 else 0
         return {
-            "hits": self._stats["hits"],
-            "misses": self._stats["misses"],
+            "hits": hits,
+            "misses": misses,
             "hit_rate": hit_rate,
             "patterns_registered": len(self._dispatch_table),
-            "patterns_seen": len(self._stats["patterns_seen"]),
+            "patterns_seen": len(patterns_seen),
         }
 
 

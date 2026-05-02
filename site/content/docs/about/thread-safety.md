@@ -150,16 +150,11 @@ The `Markdown` class handles this automatically—you only need explicit control
 
 ## Python 3.14t
 
-Patitas is built for PEP 703 (free-threading):
+Patitas is pure Python and is designed for PEP 703 free-threading:
 
-```python
-# pyproject.toml
-[tool.maturin]
-module-name = "patitas._core"
-
-# Declares GIL-free compatibility
-# _Py_mod_gil = 0 (if there were C extensions)
-```
+- AST nodes, tokens, configs, directive contracts, and role contracts are immutable.
+- Parser and renderer state is per call or held in `ContextVar`-scoped contexts.
+- There are no Patitas C extensions that need a `_Py_mod_gil` declaration.
 
 Run with GIL disabled:
 

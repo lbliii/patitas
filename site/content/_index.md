@@ -82,9 +82,9 @@ Pure Python with no runtime dependencies. Optional extras for directives and syn
 
 ## Performance
 
-- **652 CommonMark examples** — ~26ms single-threaded
-- **Incremental parsing** — For a 1-char edit in a ~100KB doc, `parse_incremental` is ~200x faster than full re-parse (~160µs vs ~32ms)
-- **Parallel scaling** — ~2.5x speedup with 4 threads under Python 3.14t free-threading
+- **652 CommonMark examples** — low tens of milliseconds in recent Python 3.14 local runs
+- **Incremental parsing** — For small edits in large documents, `parse_incremental` can be much faster than full re-parse
+- **Parallel scaling** — Free-threaded speedups vary by Python build, hardware, and corpus
 
 Patitas prioritizes **safety over raw speed**: O(n) guaranteed parsing, typed AST, and full thread-safety.
 

@@ -160,9 +160,10 @@ def main() -> None:
         ("markdown-it-py", markdown_it_time),
     ]
 
-    # Sort by time
+    # Sort by time; missing optional comparators return inf and print as skipped.
     results.sort(key=lambda x: x[1])
-    baseline = results[0][1]
+    installed_times = [time_val for _, time_val in results if time_val != float("inf")]
+    baseline = installed_times[0] if installed_times else float("inf")
 
     for name, time_val in results:
         if time_val == float("inf"):
@@ -178,20 +179,29 @@ def main() -> None:
         print("RESULTS: Parse 652 CommonMark examples (4 threads)")
         print("=" * 60)
 
-        import mistune
-
         from patitas import Markdown
 
         patitas_threaded = benchmark_threaded("Patitas", Markdown, docs)
-        mistune_threaded = benchmark_threaded("mistune", mistune.create_markdown, docs)
+        try:
+            import mistune
+        except ImportError:
+            mistune_threaded = None
+        else:
+            mistune_threaded = benchmark_threaded("mistune", mistune.create_markdown, docs)
 
-        # markdown-it-py crashes under free-threading
+        # markdown-it-py may be missing or unsafe under free-threading.
         try:
             from markdown_it import MarkdownIt
 
             mdit_threaded = benchmark_threaded("markdown-it-py", MarkdownIt, docs)
+        except ImportError:
+            mdit_threaded = None
+            mdit_status = "not installed"
         except Exception:
             mdit_threaded = None
+            mdit_status = "CRASH (not thread-safe)"
+        else:
+            mdit_status = None
 
         if patitas_threaded:
             speedup = patitas_time / patitas_threaded
@@ -199,10 +209,12 @@ def main() -> None:
         if mistune_threaded:
             speedup = mistune_time / mistune_threaded
             print(f"{'mistune':20} {mistune_threaded * 1000:8.2f}ms  (speedup: {speedup:.1f}x)")
+        else:
+            print(f"{'mistune':20} not installed")
         if mdit_threaded:
             print(f"{'markdown-it-py':20} {mdit_threaded * 1000:8.2f}ms")
         else:
-            print(f"{'markdown-it-py':20} CRASH (not thread-safe)")
+            print(f"{'markdown-it-py':20} {mdit_status}")
 
     print()
 

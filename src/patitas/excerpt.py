@@ -16,6 +16,7 @@ Example:
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import cast
 
 from patitas.nodes import (
     Block,
@@ -50,7 +51,8 @@ def _inline_text(node: Inline) -> str:
     if isinstance(node, Image):
         return node.alt
     if hasattr(node, "children"):
-        return "".join(_inline_text(c) for c in node.children)
+        children = cast("tuple[Inline, ...]", node.children)
+        return "".join(_inline_text(c) for c in children)
     return ""
 
 
@@ -74,7 +76,8 @@ def _inline_text_html(node: Inline) -> str:
         inner = "".join(_inline_text_html(c) for c in node.children)
         return inner  # Plain text for excerpt; omit href for brevity
     if hasattr(node, "children"):
-        return "".join(_inline_text_html(c) for c in node.children)
+        children = cast("tuple[Inline, ...]", node.children)
+        return "".join(_inline_text_html(c) for c in children)
     return ""
 
 

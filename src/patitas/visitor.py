@@ -34,6 +34,7 @@ Thread Safety:
 
 import dataclasses
 from collections.abc import Callable
+from typing import cast
 
 from patitas.nodes import (
     BlockQuote,
@@ -98,7 +99,7 @@ class BaseVisitor[T]:
         (suitable for ``BaseVisitor[None]``).
 
         """
-        return None  # type: ignore[return-value]
+        return cast("T", None)
 
     # -- Block visitors --------------------------------------------------------
 
