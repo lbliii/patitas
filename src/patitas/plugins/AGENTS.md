@@ -18,6 +18,14 @@ Represent users migrating from other Markdown parsers and users who enable speci
 - Built-in plugins must not silently change default syntax semantics without docs and tests.
 - Math, table, footnote, autolink, strikethrough, and task-list behavior must stay aligned across AST, renderer, docs, examples, and benchmarks.
 
+## Contract Checklist
+- `BUILTIN_PLUGINS`, plugin names, `PatitasPlugin`, `register_plugin`, `apply_plugins`, `Markdown(plugins=...)`, `ParseConfig` flags, and top-level API exposure.
+- Parser/render behavior for tables, math, footnotes, autolinks, strikethrough, task lists, and disabled-default CommonMark compatibility.
+- Thread-safety of plugin markers, config isolation, cache-key impact, and plugin order determinism.
+- Tests for plugin integration, properties, thread safety, documentation, CommonMark overlap, and renderer output.
+- Docs/examples in README, migration guide, `site/content/docs/extending/plugins.md`, `examples/plugins/`, changelog, and release notes.
+- Benchmarks for plugin-heavy documents and full pipeline changes when plugin parsing/rendering affects hot paths.
+
 ## Advocate
 - Compatibility notes for users coming from mistune or markdown-it-py.
 - Property or regression tests for plugin-heavy documents.

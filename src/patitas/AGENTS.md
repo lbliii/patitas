@@ -20,6 +20,14 @@ Represent library users, Bengal/Purr-style orchestrators, extension authors, and
 - Cache keys must include content and config-sensitive behavior; do not cache when callbacks make output non-hashable.
 - Core Patitas must not import Bengal, Purr, Kida, or site-generator orchestration code.
 
+## Contract Checklist
+- Public exports and `__all__` in `src/patitas/__init__.py`.
+- AST/token/location dataclasses, field names, tuple child shapes, frozen/slots status, and serialization compatibility.
+- `ParseConfig`, ContextVar setup/reset behavior, `Markdown` construction, plugin flags, directive/role registries, and parse cache hashing.
+- Public docs and examples in README, `site/content/docs/reference/`, `site/content/docs/about/architecture.md`, and `examples/**` using top-level imports.
+- Tests for API imports, config consistency, ContextVar isolation, cache behavior, serialization round-trip, visitor/differ helpers, incremental parsing, notebook/frontmatter helpers, and type-check-visible surfaces.
+- Changelog/release notes when exported names, dependencies, version support, cache keys, serialization, or migration behavior changes.
+
 ## Advocate
 - Clear public-vs-internal API boundaries before 1.0.
 - Better deprecation paths for any exported API replacement.

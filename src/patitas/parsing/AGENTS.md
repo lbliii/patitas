@@ -19,6 +19,15 @@ Represent CommonMark users, AST consumers, and future maintainers who need gramm
 - AST construction uses frozen nodes with correct `SourceLocation` and child tuple structure.
 - Fast paths must preserve semantics and fall back safely.
 
+## Contract Checklist
+- Block and inline grammar behavior in `src/patitas/parsing/**`, `parser.py`, shared token helpers, dispatch tables, and fast paths.
+- AST node types, child tuple ordering, source locations, and raw-source slices consumed by renderers, serialization, excerpts, differ, visitor, directives, roles, and plugins.
+- Config-sensitive behavior for tables, footnotes, math, strikethrough, task lists, autolinks, directives, and roles.
+- Parser lifecycle behavior: `_reinit`, ContextVar reset, per-parse caches, and no parser reuse across threads.
+- Tests for CommonMark, emphasis, inline tokens, match registry, parser reinit, plugin/directive interactions, source locations, and edge-case regressions.
+- Docs/examples/site/changelog when syntax behavior, error behavior, extension hooks, or public parser semantics change.
+- Benchmarks for list, quote, inline, dispatch, phase-breakdown, scaling, and plugin/directive-heavy workloads when hot paths change.
+
 ## Advocate
 - Focused edge-case tests before broad refactors.
 - Parser diagnostics that make source-location bugs reproducible.

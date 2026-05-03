@@ -17,6 +17,14 @@ Represent adopters evaluating risk: security reviewers, migration owners, and pe
 - `docs/migrate-from-mistune.md` must use working public APIs and accurate syntax differences.
 - Security reporting guidance should not encourage public disclosure of sensitive issues.
 
+## Contract Checklist
+- Security claims against lexer progress, regex avoidance, sanitizer policies, HTML escaping, URL behavior, and LLM-safety tests.
+- Performance claims against current benchmark scripts, command lines, environment caveats, and README/site numbers.
+- Migration examples against top-level public imports, plugin names, directive APIs, frontmatter/notebook helpers, and current dependency/extras behavior.
+- Cross-links from README and site docs to `docs/**`, including stale filenames, headings, and release-specific claims.
+- Changelog/release notes when documentation updates describe changed public behavior, dependency surface, security posture, or performance evidence.
+- Focused snippet or test execution when examples are non-trivial and use public APIs.
+
 ## Advocate
 - Updating docs in the same change as security, migration, plugin, renderer, or benchmark behavior changes.
 - Short runnable examples over broad claims.
