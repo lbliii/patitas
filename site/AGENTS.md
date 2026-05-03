@@ -19,6 +19,15 @@ Represent new users, extension authors, and release readers who need the site to
 - Site examples should use public APIs unless explicitly documenting internals.
 - Production/local config changes must not accidentally change canonical URLs, search, menus, or release routing.
 
+## Contract Checklist
+- Frontmatter keys, weights, menus, taxonomy, release slugs, config files, and environment-specific settings used by Bengal builds.
+- API/reference docs against `src/patitas/__init__.py`, protocols, AST nodes, config, directives, roles, plugins, renderers, sanitizer, serialization, and helpers.
+- Syntax and extension pages against tests, examples, plugin flags, directive/role registries, and renderer output.
+- Performance/thread-safety/security claims against README, `docs/**`, benchmarks, and current changelog/release evidence.
+- Release pages against `pyproject.toml` version, `CHANGELOG.md`, README feature claims, and migration/security/performance impact.
+- Snippets and examples for public imports, optional extras, command names, and paths that users can run.
+- Site build or focused Bengal/docs validation when config, frontmatter, navigation, release routing, or generated content changes.
+
 ## Advocate
 - Docs updates with every public API, directive, plugin, renderer, or release behavior change.
 - Clear quickstart and extension paths before adding broad conceptual prose.

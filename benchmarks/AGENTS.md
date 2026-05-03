@@ -19,6 +19,14 @@ Represent users deciding whether Patitas is fast enough and maintainers deciding
 - Free-threading and parallel benchmarks must distinguish parser safety from unsafe third-party comparator behavior.
 - CI threshold checks should be explicit about environment sensitivity.
 
+## Contract Checklist
+- Benchmark scripts, fixtures/corpora, groups, CLI commands, thresholds, and README instructions.
+- Correctness guardrails for benchmarked parser, lexer, renderer, sanitizer, excerpt, frontmatter, incremental, directive, plugin, and LLM pipeline paths.
+- README/site/docs/changelog performance claims against current commands, result context, Python version, hardware notes, and dependency availability.
+- Free-threading and parallel measurements against ContextVar isolation, immutable AST behavior, plugin/directive statelessness, and comparator caveats.
+- CI-facing threshold changes with rationale, noise tolerance, and reproduction command.
+- No runtime dependency additions; benchmark-only tools stay dev/docs scoped and documented.
+
 ## Advocate
 - Before/after numbers for parser, lexer, renderer, incremental, plugin-heavy, directive-heavy, and LLM-safe pipeline changes.
 - Real-world corpus benchmarks in addition to CommonMark edge-case corpus.

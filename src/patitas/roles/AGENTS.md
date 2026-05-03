@@ -17,6 +17,14 @@ Represent inline extension authors and docs authors who need roles to render pre
 - Role output must respect renderer escaping and not bypass URL/HTML safety.
 - Unknown or malformed roles should fail predictably and be covered by tests.
 
+## Contract Checklist
+- `RoleHandler`, parse/render-only protocols, role registry builders, built-in role names, `Role` node fields, and public exports.
+- Inline parsing for `{role}` syntax, unknown/malformed roles, references, icons, formatting, math, and interactions with emphasis/links/code spans.
+- Renderer escaping and URL behavior for role output, including icon resolver and reference/document links.
+- Tests for `tests/test_roles.py`, renderer edge cases, parser inline interactions, and any built-in role behavior changes.
+- Docs/examples in extending docs, README/site snippets, release notes, and examples when role APIs or built-ins change.
+- Security notes when a role can render links, raw HTML-like output, icons, or user-provided attributes.
+
 ## Advocate
 - Documentation for built-in roles and custom role registration.
 - Tests for parser/render interactions for each built-in role.

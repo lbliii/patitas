@@ -18,6 +18,14 @@ Represent users copying code into their projects and maintainers checking that a
 - LLM-safety examples must sanitize before rendering untrusted content.
 - Parallel examples must not imply unsafe cache or mutable state sharing.
 
+## Contract Checklist
+- Touched examples run from repo root with documented commands and public imports.
+- README/site/docs links and feature tables point to existing example paths with matching behavior.
+- Optional extras, environment requirements, notebook inputs, syntax highlighting, and filesystem assumptions are stated near examples that need them.
+- Output expectations stay aligned with renderer, sanitizer, directive, plugin, role, notebook/frontmatter, incremental, differ, serialization, and visitor behavior.
+- Tests or lightweight execution cover examples that advertise new public APIs or migration paths.
+- Changelog/release notes mention new or materially changed examples when they support a released feature.
+
 ## Advocate
 - Add or update an example when adding public API, extension behavior, or a migration path.
 - Keep examples small enough to read but complete enough to run.

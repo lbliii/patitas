@@ -19,6 +19,14 @@ Represent untrusted-input users, CommonMark compliance, and operators who rely o
 - Lexer instances are single-use with instance-local mutable state only.
 - Token shapes must remain compatible with parser dispatch and CommonMark fixtures.
 
+## Contract Checklist
+- Token type/value/location changes in `src/patitas/tokens.py`, lexer classifiers, scanner output, and parser dispatch consumers.
+- Forward-progress behavior for unterminated fences, HTML blocks, directives, nested directives, link refs, footnotes, lists, and block quotes.
+- Location and offset behavior used by parser, raw directive extraction, excerpts, serializers, renderer source slices, and tests.
+- CommonMark fixture coverage plus focused `tests/lexer/**` regression cases for every scanner/classifier change.
+- Security docs and README/site ReDoS claims when lexer complexity, backtracking risk, or input-size behavior changes.
+- Benchmarks for `_scan_block`, line scanning, location creation, token allocation, and adversarial scaling when hot paths change.
+
 ## Advocate
 - Adversarial tests for any new scanner or classifier.
 - Small classifier functions that can be reasoned about without position mutation.

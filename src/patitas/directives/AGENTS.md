@@ -19,6 +19,14 @@ Represent directive authors, docs-site content authors, and users who need malfo
 - Contract violations must be explicit, testable, and compatible with strict/non-strict config behavior.
 - `preserves_raw_content` directives must preserve source slices without breaking location accounting.
 
+## Contract Checklist
+- `DirectiveHandler`, registry builders, decorator behavior, option parsing, `DirectiveContract`, built-in directive names, and top-level exports.
+- Lexer/parser handling for directive start/content/options/close, nesting, strict mode, unknown directives, source locations, and raw-content preservation.
+- Renderer output for admonition, container, dropdown, tab-set/tab-item, ARIA attributes, classes, escaped labels, and malformed content.
+- Tests for directive contracts, option validation, nesting, strict/non-strict behavior, plugin documentation, renderer output, raw-content preservation, and edge cases involving lists/fences/HTML.
+- Docs and examples in `site/content/docs/directives/`, `site/content/docs/extending/custom-directives.md`, `examples/directives/`, README, and release notes.
+- Benchmarks for directive-heavy parsing/rendering when directive scanning, raw extraction, or rendering changes.
+
 ## Advocate
 - Clear contract tests for nesting rules and option parsing.
 - User-facing examples for every new directive feature.

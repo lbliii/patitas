@@ -18,6 +18,15 @@ Represent future contributors and downstream users who need failures to be preci
 - Public API and docs examples should fail when imports or behavior drift.
 - Keep tests deterministic and avoid environment-specific timing assertions unless explicitly benchmark-oriented.
 
+## Contract Checklist
+- Focused regression test for each accepted bug fix before or alongside code changes when practical.
+- Boundary tests when behavior crosses lexer/parser/renderer, extension registries, cache/config, serialization, sanitization, notebooks/frontmatter, or public exports.
+- CommonMark fixture expectations and marker usage when grammar behavior changes.
+- Thread-safety/property/adversarial tests for ContextVar config, plugins, caches, sanitization, lexer progress, and extension handlers.
+- Docs/example import drift checks when README, site snippets, examples, or public API tables change.
+- Benchmark separation: performance assertions belong in benchmarks or threshold checks, not timing-sensitive unit tests.
+- Changelog/release notes when test updates encode intentional public behavior changes rather than internal refactors.
+
 ## Advocate
 - Reproduction tests for every bug fix before implementation changes when practical.
 - Focused tests near the failure mode plus one integration test when boundaries are involved.

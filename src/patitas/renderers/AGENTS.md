@@ -19,6 +19,15 @@ Represent application users who feed Patitas output into browsers, LLM context, 
 - `render_llm` and sanitization workflows must not reintroduce dangerous HTML, URLs, or zero-width content.
 - Renderer changes must preserve deterministic output for tests, docs, and snapshots.
 
+## Contract Checklist
+- `HtmlRenderer`, `LlmRenderer`, `ASTRenderer`, `RenderContext`, `StringBuilder`, highlighter/icon resolver protocols, and top-level `render`/`render_llm` exports.
+- Escaping and URL handling for text, inline HTML, HTML blocks, links, images, roles, directives, math, footnotes, code blocks, and heading IDs.
+- Per-render state such as heading slug counters, footnote collection, directive registry use, source slices, and ContextVar-backed helpers.
+- Sanitizer and LLM-safety interactions in `sanitize.py`, `text.py`, `renderers/llm.py`, README, docs, site, and examples.
+- Tests for renderer output, edge cases, LLM output, sanitization, directives/plugins/roles, and deterministic serialization-sensitive rendering.
+- Docs/examples/changelog when rendered HTML, LLM text, highlighting, escaping, URL behavior, or renderer protocols change.
+- Benchmarks for render-heavy and full-pipeline workloads when output hot paths or `StringBuilder` behavior changes.
+
 ## Advocate
 - Renderer tests for every AST node added or changed.
 - Security-focused cases for HTML blocks, inline HTML, links, images, roles, directives, and LLM output.
