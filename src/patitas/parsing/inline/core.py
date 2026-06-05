@@ -26,6 +26,7 @@ from patitas.parsing.charsets import (
     HEX_DIGITS,
     INLINE_SPECIAL,
 )
+from patitas.parsing.inline.gfm_autolinks import scan_text_for_autolinks
 from patitas.parsing.inline.match_registry import MatchRegistry
 from patitas.parsing.inline.tokens import (
     CodeSpanToken,
@@ -48,6 +49,7 @@ class InlineParsingCoreMixin:
         - _math_enabled: bool
         - _strikethrough_enabled: bool
         - _footnotes_enabled: bool
+        - _autolinks_enabled: bool
         - _link_refs: dict[str, tuple[str, str]]
 
     Required Host Methods (from other mixins):
@@ -367,7 +369,15 @@ class InlineParsingCoreMixin:
             while pos < text_len and text[pos] not in INLINE_SPECIAL:
                 pos += 1
             if pos > text_start:
-                tokens_append(TextToken(content=text[text_start:pos]))
+                run = text[text_start:pos]
+                if self._autolinks_enabled:
+                    # GFM extended autolinks: scan this plain-text run for bare
+                    # URLs / www links / emails. The character preceding the run
+                    # (or None at start-of-text) drives the left-boundary rule.
+                    prev_char = text[text_start - 1] if text_start > 0 else None
+                    tokens.extend(scan_text_for_autolinks(run, prev_char, location))
+                else:
+                    tokens_append(TextToken(content=run))
 
         return tokens
 
