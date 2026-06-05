@@ -39,4 +39,3 @@ class AutolinksPlugin:
     @property
     def name(self) -> str:
         return "autolinks"
-

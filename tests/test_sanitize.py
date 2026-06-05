@@ -33,6 +33,7 @@ def _links(doc) -> list:
     para = doc.children[0]
     return [c for c in getattr(para, "children", ()) if isinstance(c, Link)]
 
+
 LOC = SourceLocation(lineno=1, col_offset=0)
 
 

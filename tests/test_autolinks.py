@@ -44,9 +44,7 @@ class TestGfmExtendedAutolinksNotYetImplemented:
         out = Markdown(plugins=["autolinks"])("Visit https://example.com now")
         assert '<a href="https://example.com">https://example.com</a>' in out
 
-    @pytest.mark.xfail(
-        reason="GFM www. autolinks not yet implemented", strict=True
-    )
+    @pytest.mark.xfail(reason="GFM www. autolinks not yet implemented", strict=True)
     def test_www_should_be_linked(self) -> None:
         out = Markdown(plugins=["autolinks"])("See www.example.com")
         assert 'href="http://www.example.com"' in out

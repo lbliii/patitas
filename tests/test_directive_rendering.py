@@ -40,12 +40,7 @@ class TestBuiltinDirectivesRenderThroughHandlers:
         assert "directive-" not in out
 
     def test_tab_set_renders_tab_navigation(self, md: Markdown) -> None:
-        out = md(
-            "::::{tab-set}\n"
-            ":::{tab-item} One\nA\n:::\n"
-            ":::{tab-item} Two\nB\n:::\n"
-            "::::"
-        )
+        out = md("::::{tab-set}\n:::{tab-item} One\nA\n:::\n:::{tab-item} Two\nB\n:::\n::::")
         assert 'class="tabs"' in out
         assert "tab-nav" in out
         assert "tab-pane" in out
