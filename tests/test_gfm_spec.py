@@ -45,7 +45,7 @@ def _load_spec() -> list[dict[str, Any]]:
     """Load GFM spec tests, returning empty list if fixture not found."""
     if not SPEC_PATH.exists():
         return []
-    return json.loads(SPEC_PATH.read_text())
+    return json.loads(SPEC_PATH.read_text(encoding="utf-8"))
 
 
 SPEC_TESTS: list[dict[str, Any]] = _load_spec()
@@ -69,11 +69,19 @@ KNOWN_FAIL: dict[int, str] = {
     ),
     # --- Task list items (extension) ---
     279: (
-        "<input> attribute format/order differs (Patitas emits "
+        "Two intentional divergences from the GFM 0.29 fixture: (1) Patitas "
+        "adds the 'contains-task-list' class on the <ul> and 'task-list-item' "
+        "on each task <li>, which the fixture omits; (2) <input> attribute "
+        "format/order differs (Patitas emits "
         "'<input type=\"checkbox\" disabled />', GFM emits "
-        '\'<input disabled="" type="checkbox">\'). Semantically equivalent.'
+        '\'<input disabled="" type="checkbox">\'). Both are semantically '
+        "equivalent."
     ),
-    280: ("Nested task list: same <input> attribute format/order difference as example 279."),
+    280: (
+        "Nested task list: same two intentional divergences as example 279 -- "
+        "the added 'contains-task-list'/'task-list-item' classes (absent from "
+        "the fixture) plus the <input> attribute format/order difference."
+    ),
     # --- Emphasis and strong emphasis (CommonMark version drift) ---
     # GFM 0.29 is based on CommonMark 0.28; Patitas targets 0.31.2 and matches
     # the 0.31.2 expected output for these exact inputs (they pass in

@@ -26,7 +26,7 @@ The fixture is extracted from the upstream `spec.txt` at version 0.29
 | 11 | Autolinks (extension) | GFM extended autolinks (bare `www.`, bare URL, bare email) are not yet implemented. CommonMark angle-bracket autolinks `<https://...>` work without any plugin. |
 | 9 | Emphasis | CommonMark version drift: GFM 0.29 is based on CommonMark 0.28, but Patitas targets 0.31.2. These exact emphasis inputs have different expected nesting between the two CommonMark versions; Patitas matches its 0.31.2 target (the same examples PASS in `test_commonmark_spec.py`). |
 | 2 | Tables (extension) | One alignment example renders alignment via inline `style="text-align: ..."` instead of GFM's `align="..."` attribute (cosmetic); one relies on lazily extending a table with a following paragraph-continuation row, which Patitas does not do. |
-| 2 | Task list items (extension) | `<input>` attribute format/order differs (`<input type="checkbox" disabled />` vs GFM's `<input disabled="" type="checkbox">`); semantically equivalent. |
+| 2 | Task list items (extension) | Two intentional divergences from the GFM 0.29 fixture: Patitas adds the `contains-task-list` (on the `<ul>`) and `task-list-item` (on each task `<li>`) CSS classes, which the fixture does not include; and the `<input>` attribute format/order differs (`<input type="checkbox" disabled />` vs GFM's `<input disabled="" type="checkbox">`). Both are semantically equivalent. |
 | 1 | Disallowed Raw HTML (extension) | The GFM tagfilter extension is not implemented. |
 
 ## GFM-Style Coverage
