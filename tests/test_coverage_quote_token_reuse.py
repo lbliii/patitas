@@ -3,23 +3,15 @@
 
 WHY THESE ARE UNIT TESTS, NOT PUBLIC-API TESTS
 ----------------------------------------------
-This module is **unreachable through the public API**, and its guard function is
-additionally **buggy**. ``can_use_token_reuse`` initialises
-``saw_marker_on_line = True`` and then begins its scan *at* the first
-``BLOCK_QUOTE_MARKER`` (``pos = start_pos``) instead of *after* it. On the very
-first iteration the first marker is therefore treated as "a second marker on the
-same line" and the function returns ``False``. As a result it returns ``False``
-for *every* block-quote input (verified empirically for issue #28), so
-``_parse_block_quote`` in ``blocks/core.py`` never dispatches to
-``parse_blockquote_with_token_reuse``. (Even if the guard were fixed, the
-``is_simple_block_quote`` fast path -- checked first -- already absorbs the
-multi-line/multi-paragraph quotes this module targets.)
+This module is **rarely reachable through the public API** because the
+``is_simple_block_quote`` fast path -- checked first -- already absorbs many
+single-paragraph quotes. Issue #38 covered an off-by-one in
+``can_use_token_reuse`` that made the guard reject every input before this
+fallback optimization could run.
 
-These tests pin the real behaviour of the *parsing* function (which is itself
-correct) using tokens produced by the real ``Lexer``, and exhaustively cover the
-``_is_complex_blockquote_content`` classifier. The guard bug is documented in the
-issue #28 PR rather than silently "fixed" here, to keep this change scoped to
-coverage + harness work.
+These tests pin the guard and the real behaviour of the parsing function using
+tokens produced by the real ``Lexer``, and exhaustively cover the
+``_is_complex_blockquote_content`` classifier.
 """
 
 import pytest
@@ -67,7 +59,7 @@ def _paragraph_texts(node) -> list[str]:
 
 
 class TestCanUseTokenReuseGuard:
-    """The guard currently rejects everything; pin that documented behaviour."""
+    """Guard behavior for the block quote token-reuse path."""
 
     def test_returns_false_when_start_is_not_a_marker(self) -> None:
         toks = _tokens("plain text\n")
@@ -77,10 +69,12 @@ class TestCanUseTokenReuseGuard:
         toks = _tokens("> q\n")
         assert can_use_token_reuse(toks, len(toks) + 3) is False
 
-    def test_guard_rejects_simple_multiline_quote_due_to_off_by_one(self) -> None:
-        # Documents the known guard bug (see module docstring): a perfectly
-        # simple multi-line quote is still rejected.
+    def test_accepts_simple_multiline_quote(self) -> None:
         toks = _tokens("> a\n> b\n")
+        assert can_use_token_reuse(toks, _first_quote_marker(toks)) is True
+
+    def test_rejects_indented_code_content(self) -> None:
+        toks = _tokens(">     code\n")
         assert can_use_token_reuse(toks, _first_quote_marker(toks)) is False
 
 

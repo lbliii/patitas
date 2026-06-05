@@ -39,7 +39,7 @@ def can_use_token_reuse(tokens: list, start_pos: int) -> bool:
     if first_token.type != TokenType.BLOCK_QUOTE_MARKER:
         return False
 
-    pos = start_pos
+    pos = start_pos + 1
     tokens_len = len(tokens)
     first_lineno = first_token.location.lineno
     last_lineno = first_lineno
@@ -66,7 +66,7 @@ def can_use_token_reuse(tokens: list, start_pos: int) -> bool:
                 last_lineno = token_lineno
                 pos += 1
                 continue
-            elif tok.type == TokenType.BLANK_LINE:
+            elif tok.type in (TokenType.BLANK_LINE, TokenType.EOF):
                 # Blank line ends quote (OK)
                 break
             else:
@@ -85,8 +85,7 @@ def can_use_token_reuse(tokens: list, start_pos: int) -> bool:
         if tok.type == TokenType.PARAGRAPH_LINE:
             saw_content = True
             # Check for complex content
-            content = tok.value.lstrip()
-            if _is_complex_blockquote_content(content):
+            if _is_complex_blockquote_content(tok.value):
                 return False
             last_lineno = token_lineno
             pos += 1
