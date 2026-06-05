@@ -1,0 +1,18 @@
+GitHub Flavored Markdown Spec fixture
+======================================
+
+File:        gfm_spec_0_29.json
+Source:      https://raw.githubusercontent.com/github/cmark-gfm/0.29.0.gfm.13/test/spec.txt
+Spec title:  GitHub Flavored Markdown Spec
+Version:     0.29
+Date:        2019-04-06
+License:     CC-BY-SA 4.0 (http://creativecommons.org/licenses/by-sa/4.0/)
+
+gfm_spec_0_29.json is a machine-readable extraction of the example blocks from
+the upstream spec.txt. Each entry is {markdown, html, example, section}. Tab
+visualization arrows (U+2192) in the source were replaced with literal tab
+characters, matching the convention used for the CommonMark fixture
+(commonmark_spec_0_31_2.json).
+
+This fixture is used only by the test suite (tests/test_gfm_spec.py) to measure
+GFM specification compliance. It is licensed under CC-BY-SA 4.0 by GitHub, Inc.

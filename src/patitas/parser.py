@@ -258,7 +258,7 @@ class Parser(
         # ULTRA-FAST PATH: Documents with only paragraphs and blank lines
         # Covers ~47.5% of CommonMark spec, ~60-80% of real-world docs
         # Bypasses all block-level decision logic for maximum speed
-        if can_use_ultra_fast(self._tokens):
+        if can_use_ultra_fast(self._tokens, tables_enabled=self._tables_enabled):
             return parse_ultra_simple(self._tokens, self._parse_inline)
 
         # COMPILED DISPATCH: Pattern-specific parsers for common patterns

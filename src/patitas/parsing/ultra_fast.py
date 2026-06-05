@@ -65,13 +65,17 @@ def parse_ultra_simple(
     return tuple(blocks)
 
 
-def can_use_ultra_fast(tokens: list[Token]) -> bool:
+def can_use_ultra_fast(tokens: list[Token], *, tables_enabled: bool = False) -> bool:
     """Check if document qualifies for ultra-fast path.
 
     O(n) check, but very cheap per-token (just type comparison).
 
     Args:
         tokens: Token list from lexer
+        tables_enabled: Whether GFM table parsing is enabled. When True, any
+            paragraph line containing a pipe is treated as a potential table
+            and disqualifies the document (GFM tables need not have outer pipes,
+            so the ``startswith("|")`` heuristic alone is insufficient).
 
     Returns:
         True if only simple PARAGRAPH_LINE, BLANK_LINE, EOF tokens present
@@ -87,8 +91,12 @@ def can_use_ultra_fast(tokens: list[Token]) -> bool:
                 # Potential setext underline - not ultra-simple
                 return False
 
-            # Check for table rows (start with |)
-            if content.startswith("|"):
+            # Check for table rows. With tables enabled, GFM allows tables
+            # without outer pipes (e.g. "a | b" / "--|--"), so any pipe is a
+            # potential table and must go through the full parser. Without
+            # tables, only a leading pipe could ever start a table-like line.
+            has_pipe = ("|" in content) if tables_enabled else content.startswith("|")
+            if has_pipe:
                 # Potential table - not ultra-simple
                 return False
 

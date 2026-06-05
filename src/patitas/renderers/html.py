@@ -350,11 +350,15 @@ class HtmlRenderer:
 
     def _render_list(self, lst: List, sb: StringBuilder, ctx: RenderContext) -> None:
         """Render ordered or unordered list."""
+        # GFM task lists: when any item is a task list item (checked is not
+        # None), GitHub marks the list with the "contains-task-list" class.
+        is_task_list = any(item.checked is not None for item in lst.items)
+        task_list_class = ' class="contains-task-list"' if is_task_list else ""
         if lst.ordered:
             start_attr = f' start="{lst.start}"' if lst.start != 1 else ""
-            sb.append(f"<ol{start_attr}>\n")
+            sb.append(f"<ol{task_list_class}{start_attr}>\n")
         else:
-            sb.append("<ul>\n")
+            sb.append(f"<ul{task_list_class}>\n")
 
         for item in lst.items:
             self._render_list_item(item, sb, ctx, lst.tight)
@@ -376,7 +380,10 @@ class HtmlRenderer:
             checked = " checked" if item.checked else ""
             checkbox = f'<input type="checkbox" disabled{checked} /> '
 
-        sb.append("<li>")
+        if item.checked is not None:
+            sb.append('<li class="task-list-item">')
+        else:
+            sb.append("<li>")
         if checkbox:
             sb.append(checkbox)
 
