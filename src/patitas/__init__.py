@@ -249,10 +249,12 @@ class Markdown:
             plugins: List of plugin names to enable (e.g., ["table", "math"]).
                 Use ["all"] to enable all built-in plugins.
             directive_registry: Custom directive registry (uses defaults if None)
-            max_nesting_depth: Maximum block-container nesting depth. Adversarially
-                deep input raises a catchable ``ParseError`` instead of crashing
-                with an uncaught ``RecursionError``. Default (100) is far above
-                any realistic document.
+            max_nesting_depth: Maximum nesting depth, bounding BOTH deep
+                block-container nesting (block quotes, lists, directives) AND deep
+                inline emphasis/strong nesting. Adversarially deep input of either
+                kind raises a catchable ``ParseError`` instead of crashing with an
+                uncaught ``RecursionError``. Default (100) is far above any
+                realistic document.
         """
         self._highlight = highlight
         self._directive_registry = directive_registry or create_default_registry()

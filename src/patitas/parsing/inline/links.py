@@ -363,7 +363,7 @@ def _find_closing_bracket(text: str, start: int, last_bracket: int | None = None
     Args:
         text: Full text to search
         start: Position to start searching (should be after opening [)
-        last_bracket: Precomputed index of the last ``]`` in ``text`` (``text.rfind(\']\')``),
+        last_bracket: Precomputed index of the last ``]`` in ``text`` (``text.rfind("]")``),
             or ``None`` if unknown. The presence of any ``]`` at/after a position is
             monotonic, so when ``start`` is past the last ``]`` there cannot be a closing
             bracket and we return ``-1`` in O(1). Passing this in (computed once per inline
