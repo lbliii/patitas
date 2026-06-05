@@ -48,7 +48,7 @@ Import these from the top level, e.g. `from patitas import Markdown, parse`.
 - `create_default_role_registry` — factory returning the built-in roles
   (`ref`, `doc`, `kbd`, `abbr`, `math`, `sub`, `sup`, `icon`).
 
-  The built-in roles render out of the box: `Markdown()("{kbd}` `` `Ctrl` `` `")`
+  The built-in roles render out of the box: `` Markdown()("{kbd}`Ctrl`") ``
   produces `<kbd>Ctrl</kbd>`. Pass a custom `role_registry=` to `Markdown`,
   `render`, to override or extend them.
 
