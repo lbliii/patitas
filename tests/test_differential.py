@@ -14,8 +14,9 @@ a **ratchet / informational** harness rather than a hard per-example gate:
 * It collects every disagreement and reports a compact summary, so divergences
   are visible without flaking.
 
-Marked ``slow`` so it stays out of the default fast loop (run with
-``pytest -m slow``). A nightly job can run the slow suite.
+Marked ``slow`` so it can be deselected from fast runs with
+``pytest -m 'not slow'`` (pytest still runs ``slow`` tests by default
+otherwise). A nightly or full-suite job runs it without that filter.
 
 Baseline (measured 2026-06, CommonMark 0.31.2, 652 examples):
     agree=649, disagree=3 (all the empty-blockquote whitespace cosmetic diff).

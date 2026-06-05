@@ -73,6 +73,8 @@ omit = ["*/tests/*", "*/benchmarks/*"]
 # ~67.8%; we pin the floor to the honest current number so a coverage DROP
 # fails locally and in CI. Raise this as coverage improves -- never lower it.
 [tool.coverage.report]
+# Enforced in CI: pytest-cov applies fail_under during the `pytest --cov` step
+# (exits non-zero if total coverage < fail_under).
 fail_under = 67
 exclude_lines = [
     "pragma: no cover",
