@@ -65,10 +65,21 @@ class TableParsingMixin:
         )
 
         # Parse body rows
+        #
+        # GFM normalizes each body row to the header's column count:
+        # rows with fewer cells are padded with empty <td>, and rows with more
+        # cells than the header are truncated. (Verified against markdown-it-py
+        # and mistune.)
+        col_count = len(header_cells)
         body_rows: list[TableRow] = []
         for line in lines[2:]:
             row_cells = self._parse_table_row(line)
             if row_cells:
+                # Pad short rows and truncate long rows to the header width.
+                if len(row_cells) < col_count:
+                    row_cells = row_cells + [""] * (col_count - len(row_cells))
+                elif len(row_cells) > col_count:
+                    row_cells = row_cells[:col_count]
                 body_rows.append(
                     TableRow(
                         location=location,
