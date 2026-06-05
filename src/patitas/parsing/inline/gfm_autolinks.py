@@ -101,14 +101,14 @@ def _trim_trailing_punctuation(match: str) -> str:
         while match and match[-1] in _TRAILING_PUNCT:
             match = match[:-1]
 
-        # Excess closing parens.
-        while match and match[-1] == ")":
-            opens = match.count("(")
-            closes = match.count(")")
-            if closes > opens:
-                match = match[:-1]
-            else:
-                break
+        # Excess closing parens. Only trailing ')' are stripped here, so the
+        # '(' count never changes; count both once and decrement 'closes' as we
+        # strip, avoiding an O(n^2) recount on a long run of trailing ')'.
+        opens = match.count("(")
+        closes = match.count(")")
+        while match and match[-1] == ")" and closes > opens:
+            match = match[:-1]
+            closes -= 1
 
         # Entity-reference trailing ';' (e.g. trailing "&amp;").
         if match.endswith(";"):
@@ -235,6 +235,12 @@ def _scan_email(text: str, at_pos: int, min_start: int) -> tuple[int, int] | Non
     while domain_end > at_pos + 1 and text[domain_end - 1] in "-_":
         domain_end -= 1
     if domain_end <= at_pos + 1:
+        return None
+
+    # GFM: "no underscores may be present in the last two segments of the
+    # domain." Underscores in earlier segments are still permitted.
+    domain = text[at_pos + 1 : domain_end]
+    if any("_" in seg for seg in domain.split(".")[-2:]):
         return None
 
     return local_start, domain_end

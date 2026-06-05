@@ -35,10 +35,6 @@ class TestGfmExtendedAutolinks:
         out = Markdown(plugins=["autolinks"])("Visit https://example.com now")
         assert '<a href="https://example.com">https://example.com</a>' in out
 
-    def test_bare_url_should_be_linked(self) -> None:
-        out = Markdown(plugins=["autolinks"])("Visit https://example.com now")
-        assert '<a href="https://example.com">https://example.com</a>' in out
-
     def test_http_scheme_linked(self) -> None:
         out = Markdown(plugins=["autolinks"])("Go to http://example.com here")
         assert '<a href="http://example.com">http://example.com</a>' in out
@@ -52,6 +48,18 @@ class TestGfmExtendedAutolinks:
     def test_bare_email_linked(self) -> None:
         out = Markdown(plugins=["autolinks"])("Mail foo@example.com today")
         assert '<a href="mailto:foo@example.com">foo@example.com</a>' in out
+
+    def test_email_domain_underscore_in_last_two_segments_not_linked(self) -> None:
+        # GFM: no underscores may be present in the last two segments of the
+        # domain. 'b_c.com' has an underscore in the second-to-last segment.
+        out = Markdown(plugins=["autolinks"])("mail a@b_c.com here")
+        assert "<a " not in out
+
+    def test_email_domain_underscore_in_earlier_segment_linked(self) -> None:
+        # Underscores are allowed in segments before the last two. Here the last
+        # two segments ('example', 'com') have no underscore, so it links.
+        out = Markdown(plugins=["autolinks"])("mail a@foo_bar.example.com here")
+        assert '<a href="mailto:a@foo_bar.example.com">a@foo_bar.example.com</a>' in out
 
     def test_trailing_period_excluded(self) -> None:
         out = Markdown(plugins=["autolinks"])("see https://example.com.")
