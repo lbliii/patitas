@@ -218,9 +218,11 @@ class ParserHost(InlineParsingHost, BlockParsingHost, Protocol):
 
     Required instance attributes (set in __init__):
         _source: str -- original source text
-        _tokens: Sequence[Token] -- token stream from Lexer
+        _tokens: list[Token] -- token stream from Lexer
+        _tokens_len: int -- cached len(_tokens) for hot loops
         _pos: int -- current position in token stream
         _current: Token | None -- current token (or None at end)
+        _line_starts: list[int] | None -- lazy line index (O(log n) lookup)
         _containers: ContainerStack -- nesting context tracker
         _link_refs: dict[str, tuple[str, str]] -- link reference definitions
         _allow_setext_headings: bool -- setext heading control

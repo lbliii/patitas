@@ -12,7 +12,7 @@ class TokenNavigationMixin:
     """Mixin providing token stream navigation methods.
 
     Required Host Attributes:
-        - _tokens: Sequence[Token]
+        - _tokens: list[Token]
         - _tokens_len: int (cached len(_tokens) for hot loops)
         - _pos: int
         - _current: Token | None
