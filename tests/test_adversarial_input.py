@@ -7,11 +7,16 @@ Fixed (this change): deeply nested block containers (block quotes, lists,
 directives) now raise a catchable ``ParseError`` via ``max_nesting_depth``
 instead of crashing with an uncaught ``RecursionError``.
 
-Still open (tracked in the "adversarial input hardening" issue; marked xfail so
-they flip to passing once fixed):
-  - single-line ``>``*N recursion in the *lexer* (before the parser guard runs),
-  - render-time recursion on deeply nested *inline* emphasis,
-  - the O(n^2) inline bracket scan.
+Fixed (issue #25): three further adversarial vectors that previously crashed are
+now bounded:
+  - single-line ``>``*N recursion in the *lexer* (now an iterative loop; the
+    parser depth guard fires with a catchable ParseError),
+  - render-time recursion on deeply nested *inline* emphasis (inline nesting is
+    now bounded by ``max_nesting_depth``),
+  - the O(n^2) inline bracket scan (now amortized O(n)).
+
+Heavier security/perf bounds for these vectors live in tests/test_security_perf.py
+(marked ``slow``).
 """
 
 import time
@@ -20,6 +25,7 @@ import pytest
 
 from patitas import Markdown
 from patitas.errors import ParseError
+from patitas.lexer import Lexer
 
 
 @pytest.fixture
@@ -86,35 +92,46 @@ class TestMaxNestingDepthIsConfigurable:
         assert md(">" * 200 + " x")
 
 
-class TestKnownOpenHardeningGaps:
-    """Documented, not-yet-fixed adversarial vectors (tracked separately)."""
+class TestPreviouslyOpenHardeningGaps:
+    """Adversarial vectors that previously crashed; now fixed (issue #25)."""
 
-    @pytest.mark.xfail(
-        reason="single-line >*N recurses in the lexer before the parser guard; "
-        "tracked in adversarial-input hardening issue",
-        raises=RecursionError,
-        strict=True,
-    )
     def test_single_line_blockquote_markers_do_not_crash(self, md: Markdown) -> None:
-        md(">" * 2000 + " x")
+        # ``>`` * N on a single line used to recurse in the *lexer* and raise an
+        # uncaught RecursionError before the parser's depth guard could run. The
+        # lexer is now iterative, so this input cleanly exceeds max_nesting_depth
+        # and raises a catchable ParseError (NOT a RecursionError).
+        with pytest.raises(ParseError, match="nesting depth"):
+            md(">" * 2000 + " x")
 
-    @pytest.mark.xfail(
-        reason="render-time recursion on deeply nested inline emphasis; "
-        "tracked in adversarial-input hardening issue",
-        raises=RecursionError,
-        strict=True,
-    )
+    def test_single_line_blockquote_markers_lex_without_recursion(self) -> None:
+        # The Vector 3 fix is in the *lexer*: classifying ``>`` * N on a single
+        # line is now an iterative loop, not tail recursion, so it no longer
+        # raises RecursionError no matter how many markers there are. (Full
+        # parse+render at an artificially high max_nesting_depth would still hit
+        # the parser's own recursive sub-parser -- a separate concern -- so this
+        # asserts specifically that *lexing* is recursion-free.)
+        try:
+            tokens = list(Lexer(">" * 5000 + " x").tokenize())
+        except RecursionError:  # pragma: no cover
+            pytest.fail("RecursionError escaped from the lexer on deep single-line quote")
+        markers = [t for t in tokens if t.type.name == "BLOCK_QUOTE_MARKER"]
+        assert len(markers) == 5000
+
     def test_deeply_nested_emphasis_does_not_crash(self, md: Markdown) -> None:
-        md("*" * 2000 + "x" + "*" * 2000)
+        # Thousands of ``*`` build deeply nested Emphasis/Strong nodes. The inline
+        # renderer used to recurse and raise RecursionError. The fix bounds inline
+        # nesting via max_nesting_depth, so this either renders or raises a
+        # catchable ParseError -- but never a RecursionError.
+        try:
+            md("*" * 2000 + "x" + "*" * 2000)
+        except ParseError:
+            pass  # acceptable: nesting exceeded max_nesting_depth
+        except RecursionError:  # pragma: no cover
+            pytest.fail("RecursionError escaped on deeply nested emphasis")
 
-    @pytest.mark.xfail(
-        reason="O(n^2) inline bracket scan (_find_closing_bracket); "
-        "tracked in adversarial-input hardening issue",
-        strict=True,
-    )
     def test_unmatched_brackets_are_linear(self, md: Markdown) -> None:
-        # Quadratic today: ~4x time per 2x input. Assert a generous linear-ish
-        # bound so this passes only once the scan is fixed.
+        # Previously O(n^2) (~4x time per 2x input). The closing-bracket search is
+        # now amortized O(n), so 20000 unmatched brackets parse well under 0.5s.
         start = time.perf_counter()
         md("[" * 20000)
         assert time.perf_counter() - start < 0.5

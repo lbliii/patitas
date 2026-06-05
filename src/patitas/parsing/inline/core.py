@@ -101,6 +101,11 @@ class InlineParsingCoreMixin:
         pos = 0
         text_len = len(text)  # Cache length for hot loop
         tokens_append = tokens.append  # Local reference for speed
+        # Precompute the index of the final ``]`` ONCE so the closing-bracket
+        # search can short-circuit in O(1) when no ``]`` remains. Without this the
+        # per-``[`` forward scan in _find_closing_bracket is O(n^2) on inputs like
+        # "[[[[...". -1 means "no ``]`` anywhere".
+        last_bracket = text.rfind("]")
 
         while pos < text_len:
             char = text[pos]
@@ -169,6 +174,21 @@ class InlineParsingCoreMixin:
 
             # Link or footnote reference: [text](url) or [^id]
             if char == "[":
+                # Fast path for adversarial input: once we are past the final ``]``
+                # in the text, NO ``[`` from here on can open a link, image, or
+                # footnote reference (all require a closing ``]``, and the presence
+                # of ``]`` at/after a position is monotonic). Coalesce the entire
+                # contiguous run of literal ``[`` into a single text token instead
+                # of emitting one token per ``[``. This keeps "[" * N strictly
+                # linear with a small constant (otherwise N single-char tokens flow
+                # through AST build and rendering).
+                if pos > last_bracket:
+                    run_start = pos
+                    while pos < text_len and text[pos] == "[":
+                        pos += 1
+                    tokens_append(TextToken(content=text[run_start:pos]))
+                    continue
+
                 # Check for footnote reference: [^id]
                 if self._footnotes_enabled and pos + 1 < text_len and text[pos + 1] == "^":
                     fn_result = self._try_parse_footnote_ref(text, pos, location)
@@ -179,7 +199,7 @@ class InlineParsingCoreMixin:
                         continue
 
                 # Try regular link
-                link_result = self._try_parse_link(text, pos, location)
+                link_result = self._try_parse_link(text, pos, location, last_bracket)
                 if link_result:
                     node, new_pos = link_result
                     tokens_append(NodeToken(node=node))
@@ -192,7 +212,7 @@ class InlineParsingCoreMixin:
             # Image: ![alt](url)
             if char == "!":
                 if pos + 1 < text_len and text[pos + 1] == "[":
-                    img_result = self._try_parse_image(text, pos, location)
+                    img_result = self._try_parse_image(text, pos, location, last_bracket)
                     if img_result:
                         node, new_pos = img_result
                         tokens_append(NodeToken(node=node))
@@ -505,6 +525,7 @@ class InlineParsingCoreMixin:
         location: SourceLocation,
         start: int = 0,
         end: int | None = None,
+        depth: int = 0,
     ) -> tuple[Inline, ...]:
         """Build AST from processed tokens using match registry.
 
@@ -517,12 +538,32 @@ class InlineParsingCoreMixin:
             location: Source location for node creation.
             start: Start index in tokens (inclusive). Default 0.
             end: End index in tokens (exclusive). Default len(tokens).
+            depth: Current inline emphasis/strong/strikethrough nesting depth. Each
+                nested span recurses one level deeper here; bounding it with
+                ``max_nesting_depth`` prevents the (mutually recursive) HTML inline
+                renderer from overflowing the interpreter stack on adversarial input
+                such as ``"*" * 5000 + "x" + "*" * 5000``. Consistent with the
+                block-container depth guard, we raise a catchable ``ParseError``.
 
         Returns:
             Tuple of Inline nodes.
         """
         if end is None:
             end = len(tokens)
+
+        # Guard against adversarially deep inline emphasis nesting. The inline
+        # renderer walks this tree recursively, so an unbounded chain of nested
+        # emphasis would crash with an uncaught RecursionError at render time.
+        max_depth = self._config.max_nesting_depth
+        if max_depth and depth > max_depth:
+            from patitas.errors import ParseError
+
+            raise ParseError(
+                f"Maximum nesting depth ({max_depth}) exceeded; input is too "
+                "deeply nested. Raise ParseConfig.max_nesting_depth if this is "
+                "legitimate content.",
+                lineno=location.lineno,
+            )
 
         result: list[Inline] = []
         idx = start
@@ -564,6 +605,23 @@ class InlineParsingCoreMixin:
                         # We need to process innermost (closest closer) first
                         sorted_matches = sorted(all_matches, key=lambda m: m.closer_idx)
 
+                        # Bound inline emphasis nesting. A single delimiter run such as
+                        # ``"*" * N`` produces ONE opener/closer pair whose ``sorted_matches``
+                        # wraps ~N/2 nested Emphasis/Strong nodes in the loops below (NOT via
+                        # recursion). Left unbounded, the recursive HTML inline renderer would
+                        # later overflow the stack. The deepest node built here sits at
+                        # ``depth + len(sorted_matches)``; guard it consistently with the
+                        # block-container depth limit and raise a catchable ParseError.
+                        if max_depth and depth + len(sorted_matches) > max_depth:
+                            from patitas.errors import ParseError
+
+                            raise ParseError(
+                                f"Maximum nesting depth ({max_depth}) exceeded; input is "
+                                "too deeply nested. Raise ParseConfig.max_nesting_depth if "
+                                "this is legitimate content.",
+                                lineno=location.lineno,
+                            )
+
                         # Calculate consumed delimiters (sum of all matches)
                         consumed = sum(m.match_count for m in all_matches)
                         opener_remaining = original_count - consumed
@@ -600,6 +658,7 @@ class InlineParsingCoreMixin:
                                 location,
                                 start=idx + 1,
                                 end=closer_idx_in_tokens,
+                                depth=depth + 1,
                             )
 
                             # Wrap from innermost to outermost
@@ -663,6 +722,7 @@ class InlineParsingCoreMixin:
                                         location,
                                         start=prev_boundary,
                                         end=closer_idx_in_tokens,
+                                        depth=depth + 1,
                                     )
                                 else:
                                     segment_children = ()

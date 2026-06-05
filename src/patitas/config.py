@@ -59,11 +59,13 @@ class ParseConfig:
         directive_registry: Registry for directive handlers
         strict_contracts: Raise errors on directive contract violations
         text_transformer: Optional callback to transform plain text lines
-        max_nesting_depth: Maximum block-container nesting depth (block quotes,
-            lists, directives). Adversarially deep input raises a catchable
-            ``ParseError`` instead of crashing the interpreter with an
-            uncaught ``RecursionError``. Real documents nest only a handful of
-            levels; the default (100) is far above any legitimate content.
+        max_nesting_depth: Maximum nesting depth, bounding BOTH deep
+            block-container nesting (block quotes, lists, directives) AND deep
+            inline emphasis/strong nesting. Adversarially deep input of either
+            kind raises a catchable ``ParseError`` instead of crashing the
+            interpreter with an uncaught ``RecursionError``. Real documents nest
+            only a handful of levels; the default (100) is far above any
+            legitimate content.
 
     """
 

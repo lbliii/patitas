@@ -270,10 +270,12 @@ class Markdown:
             role_registry: Custom role registry for inline roles such as
                 ``{kbd}`Ctrl` `` and ``{ref}`target` `` (uses the built-in
                 roles if None)
-            max_nesting_depth: Maximum block-container nesting depth. Adversarially
-                deep input raises a catchable ``ParseError`` instead of crashing
-                with an uncaught ``RecursionError``. Default (100) is far above
-                any realistic document.
+            max_nesting_depth: Maximum nesting depth, bounding BOTH deep
+                block-container nesting (block quotes, lists, directives) AND deep
+                inline emphasis/strong nesting. Adversarially deep input of either
+                kind raises a catchable ``ParseError`` instead of crashing with an
+                uncaught ``RecursionError``. Default (100) is far above any
+                realistic document.
         """
         self._highlight = highlight
         self._directive_registry = directive_registry or create_default_registry()
