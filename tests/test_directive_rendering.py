@@ -13,8 +13,7 @@ render path fails loudly.
 
 import pytest
 
-from patitas import Markdown, create_registry_with_defaults
-from patitas.directives.decorator import directive
+from patitas import Markdown, create_registry_with_defaults, directive
 
 
 @pytest.fixture

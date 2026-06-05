@@ -202,6 +202,12 @@ def allow_url_schemes(*schemes: str) -> Policy:
 # Block container nodes that add a level of nesting depth.
 _DEPTH_CONTAINERS = (BlockQuote, List, ListItem, Directive)
 
+# Nodes whose children are themselves blocks (so recursion stays in the block
+# tree). Document is the root and does not count as a nesting level. Everything
+# else — leaf blocks and inline-bearing blocks like Paragraph/Heading — is a
+# leaf for depth purposes, so inline content is never traversed.
+_BLOCK_CHILD_NODES = (Document, BlockQuote, List, ListItem, Directive)
+
 
 def limit_depth(max_depth: int = 10) -> Policy:
     """Prune block content nested deeper than ``max_depth`` container levels.
@@ -209,6 +215,11 @@ def limit_depth(max_depth: int = 10) -> Policy:
     Depth counts block containers (block quotes, lists, list items, directives).
     Containers at the limit have their children dropped, protecting downstream
     consumers from adversarially deep AST nesting.
+
+    Only block-level structure is traversed. Inline children (e.g. ``Emphasis``,
+    ``Strong``, ``Link`` text) do not contribute to block nesting depth and are
+    left untouched, so ``limit_depth`` cannot itself recurse into — and crash on —
+    deeply nested inline content.
 
     Note:
         For untrusted *input*, prefer the parser-level ``max_nesting_depth``
@@ -218,6 +229,9 @@ def limit_depth(max_depth: int = 10) -> Policy:
     """
 
     def prune(node: Node, depth: int) -> Node:
+        # Only descend through block containers; never into inline content.
+        if not isinstance(node, _BLOCK_CHILD_NODES):
+            return node
         is_container = isinstance(node, _DEPTH_CONTAINERS)
         cur = depth + 1 if is_container else depth
         children = getattr(node, "children", None)

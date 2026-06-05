@@ -212,3 +212,16 @@ class TestLimitDepth:
     def test_shallow_content_unchanged(self) -> None:
         doc = parse("> a\n\npara")
         assert limit_depth(10)(doc) == doc
+
+    def test_does_not_recurse_into_deep_inline(self) -> None:
+        # limit_depth bounds *block* nesting; it must not traverse (and crash on)
+        # deeply nested inline content such as emphasis runs.
+        import sys
+
+        doc = parse("*" * 400 + "x" + "*" * 400)
+        original_limit = sys.getrecursionlimit()
+        sys.setrecursionlimit(300)
+        try:
+            limit_depth(3)(doc)  # must not raise RecursionError
+        finally:
+            sys.setrecursionlimit(original_limit)
