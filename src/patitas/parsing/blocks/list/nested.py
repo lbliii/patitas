@@ -3,7 +3,7 @@
 Handles detection and parsing of nested lists within list items.
 """
 
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING
 
 from patitas.errors import ParseError
 from patitas.nodes import List, ListItem, Paragraph
@@ -13,21 +13,9 @@ from patitas.parsing.blocks.list.marker import (
 from patitas.tokens import TokenType
 
 if TYPE_CHECKING:
-    from patitas.nodes import Block, Inline
+    from patitas.nodes import Block
+    from patitas.parsing.protocols import ParserHost as ParserProtocol
     from patitas.tokens import Token
-
-
-class ParserProtocol(Protocol):
-    """Protocol for parser methods needed by nested list handlers."""
-
-    _source: str
-
-    def _at_end(self) -> bool: ...
-    def _advance(self) -> Token | None: ...
-    def _parse_inline(self, text: str, location: object) -> tuple[Inline, ...]: ...
-
-    @property
-    def _current(self) -> Token | None: ...
 
 
 def detect_nested_block_in_content(

@@ -484,7 +484,8 @@ def _contains_link(children: tuple[object, ...]) -> bool:
         if isinstance(child, Link):
             return True
         # Check nested children (e.g., inside emphasis)
-        if hasattr(child, "children") and child.children and _contains_link(child.children):
+        nested = getattr(child, "children", None)
+        if isinstance(nested, tuple) and nested and _contains_link(nested):
             return True
     return False
 

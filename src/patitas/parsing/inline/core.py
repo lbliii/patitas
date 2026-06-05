@@ -39,6 +39,7 @@ from patitas.parsing.inline.tokens import (
 
 if TYPE_CHECKING:
     from patitas.location import SourceLocation
+    from patitas.parsing.protocols import InlineParsingHost
 
 
 class InlineParsingCoreMixin:
@@ -71,7 +72,9 @@ class InlineParsingCoreMixin:
     # _footnotes_enabled: bool
     # _link_refs: dict[str, tuple[str, str]]
 
-    def _parse_inline(self, text: str, location: SourceLocation) -> tuple[Inline, ...]:
+    def _parse_inline(
+        self: InlineParsingHost, text: str, location: SourceLocation
+    ) -> tuple[Inline, ...]:
         """Parse inline content using CommonMark delimiter stack algorithm.
 
         This implements the proper flanking delimiter rules for emphasis/strong.
@@ -90,7 +93,9 @@ class InlineParsingCoreMixin:
         # Phase 3: Build AST from processed tokens using registry
         return self._build_inline_ast(tokens, registry, location)
 
-    def _tokenize_inline(self, text: str, location: SourceLocation) -> list[InlineToken]:
+    def _tokenize_inline(
+        self: InlineParsingHost, text: str, location: SourceLocation
+    ) -> list[InlineToken]:
         """Tokenize inline content into typed token objects.
 
         Returns list of InlineToken NamedTuples for type safety and performance.
@@ -157,7 +162,7 @@ class InlineParsingCoreMixin:
 
                 tokens_append(
                     DelimiterToken(
-                        char=delim_char,  # type: ignore[arg-type]
+                        char=delim_char,  # ty: ignore[invalid-argument-type]
                         run_length=count,
                         can_open=can_open,
                         can_close=can_close,

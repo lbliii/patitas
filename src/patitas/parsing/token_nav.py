@@ -4,12 +4,8 @@ Provides mixin for token stream navigation and basic parsing operations.
 """
 
 import bisect
-from typing import TYPE_CHECKING
 
 from patitas.tokens import Token, TokenType
-
-if TYPE_CHECKING:
-    from collections.abc import Sequence
 
 
 class TokenNavigationMixin:
@@ -25,10 +21,12 @@ class TokenNavigationMixin:
 
     """
 
-    _tokens: Sequence[Token]
+    _tokens: list[Token]
+    _tokens_len: int
     _pos: int
     _current: Token | None
     _source: str
+    _line_starts: list[int] | None
 
     def _at_end(self) -> bool:
         """Check if at end of token stream."""

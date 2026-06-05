@@ -75,12 +75,19 @@ def directive(
 
     def decorator(func_or_class: RenderFunc | type) -> type:
         if isinstance(func_or_class, type):
-            # Class decorator — add attributes via setattr to satisfy type checker
-            func_or_class.names = names
-            func_or_class.token_type = effective_token_type
-            func_or_class.contract = contract
-            func_or_class.options_class = effective_options
-            func_or_class.preserves_raw_content = preserves_raw_content
+            # Class decorator — attach directive metadata dynamically. These
+            # attributes are not declared on an arbitrary ``type`` object, so they
+            # are set via a name->value mapping (a dynamic attribute name keeps
+            # both ty and ruff happy without per-line suppressions).
+            directive_attrs = {
+                "names": names,
+                "token_type": effective_token_type,
+                "contract": contract,
+                "options_class": effective_options,
+                "preserves_raw_content": preserves_raw_content,
+            }
+            for _attr, _value in directive_attrs.items():
+                setattr(func_or_class, _attr, _value)
             return func_or_class
         else:
             # Function decorator — wrap in class
