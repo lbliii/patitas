@@ -8,12 +8,23 @@ CommonMark angle-bracket autolinks (``<https://...>``) handled in
 
 Reference: https://github.github.com/gfm/#autolinks-extension-
 
-The public entry point is :func:`scan_text_for_autolinks`, which takes a run of
-plain text (and the character that immediately precedes it in the source) and
-returns a list of inline tokens. Where it finds a valid autolink it emits a
-``NodeToken`` wrapping a :class:`~patitas.nodes.Link`; everything else is
-preserved as ``TextToken`` so behavior is byte-identical to plain text when no
-autolink is present.
+The public entry point is :func:`scan_text_for_autolinks`. It scans the *full*
+inline text from a starting offset so that a URL/``www.`` body can include
+characters that are otherwise inline-special (``& ~ $ _ * [ ! {``) — these are
+ubiquitous in real URLs (query separators, ``~user`` paths, ``Foo_(bar)``
+article slugs). The scan follows the GFM rule that a URL body extends until
+whitespace or ``<`` (with one pragmatic exception below), then applies
+trailing-punctuation / paren-balance / entity trimming. It returns the position
+at which it stopped so the main inline tokenizer can resume there.
+
+Known limitations (honest scope):
+- A code-span backtick terminates a URL body, so ``http://a.com`code` `` keeps
+  the higher-precedence code span rather than swallowing it. (CommonMark/GFM
+  give code spans higher precedence than autolinks.)
+- An email *local part* containing an inline-special delimiter (e.g. the ``_``
+  in ``a_b@example.com``) is split by emphasis tokenization before this scan
+  runs, so such an address links only from the delimiter onward. URL/``www.``
+  bodies do not have this problem.
 
 Thread Safety:
     Pure functions over their arguments; no shared mutable state. Safe for
@@ -25,6 +36,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from patitas.nodes import Link, Text
+from patitas.parsing.charsets import INLINE_SPECIAL
 from patitas.parsing.inline.tokens import InlineToken, NodeToken, TextToken
 
 if TYPE_CHECKING:
@@ -58,6 +70,16 @@ def _is_left_boundary(prev_char: str | None) -> bool:
     if prev_char.isspace():
         return True
     return prev_char in _BOUNDARY_CHARS
+
+
+def _is_url_terminator(c: str) -> bool:
+    """Return True if *c* ends a bare URL/www body.
+
+    GFM extends a URL until whitespace or ``<``. We additionally stop at a
+    backtick so that a code span (higher precedence in CommonMark/GFM) is not
+    swallowed by the URL.
+    """
+    return c.isspace() or c == "<" or c == "`"
 
 
 def _trim_trailing_punctuation(match: str) -> str:
@@ -116,11 +138,11 @@ def _scan_url(text: str, start: int, scheme_len: int) -> int:
     text_len = len(text)
     authority_start = start + scheme_len
 
-    # The authority runs until '/', '?', '#', whitespace, '<', or end.
+    # The authority runs until '/', '?', '#', a URL terminator, or end.
     i = authority_start
     while i < text_len:
         c = text[i]
-        if c.isspace() or c == "<" or c in "/?#":
+        if _is_url_terminator(c) or c in "/?#":
             break
         i += 1
     authority = text[authority_start:i]
@@ -129,10 +151,9 @@ def _scan_url(text: str, start: int, scheme_len: int) -> int:
     if "." not in authority or not authority:
         return start
 
-    # The rest of the link (path/query/fragment) runs until whitespace or '<'.
+    # The rest of the link (path/query/fragment) runs until a URL terminator.
     while i < text_len:
-        c = text[i]
-        if c.isspace() or c == "<":
+        if _is_url_terminator(text[i]):
             break
         i += 1
     return i
@@ -146,11 +167,11 @@ def _scan_www(text: str, start: int) -> int:
     """
     text_len = len(text)
 
-    # Authority runs until '/', '?', '#', whitespace, '<', or end.
+    # Authority runs until '/', '?', '#', a URL terminator, or end.
     i = start
     while i < text_len:
         c = text[i]
-        if c.isspace() or c == "<" or c in "/?#":
+        if _is_url_terminator(c) or c in "/?#":
             break
         i += 1
     authority = text[start:i]
@@ -160,28 +181,29 @@ def _scan_www(text: str, start: int) -> int:
     if not rest or "." not in authority:
         return start
 
-    # Path/query/fragment until whitespace or '<'.
+    # Path/query/fragment until a URL terminator.
     while i < text_len:
-        c = text[i]
-        if c.isspace() or c == "<":
+        if _is_url_terminator(text[i]):
             break
         i += 1
     return i
 
 
-def _scan_email(text: str, at_pos: int) -> tuple[int, int] | None:
+def _scan_email(text: str, at_pos: int, min_start: int) -> tuple[int, int] | None:
     """Scan a bare email around the ``@`` at *at_pos*.
 
     Returns ``(start, end)`` of the matched email (exclusive end), or ``None``
     if there is no valid email. The local part is scanned backwards from the
-    ``@``; the domain forwards.
+    ``@`` (but no earlier than *min_start*, the start of the current scan span,
+    so the local part never crosses an inline-special boundary); the domain
+    forwards.
     """
     text_len = len(text)
 
-    # Scan local part backwards.
+    # Scan local part backwards (bounded at min_start).
     local_end = at_pos
     i = at_pos - 1
-    while i >= 0 and text[i] in _EMAIL_LOCAL_CHARS:
+    while i >= min_start and text[i] in _EMAIL_LOCAL_CHARS:
         i -= 1
     local_start = i + 1
     if local_start >= local_end:
@@ -219,53 +241,63 @@ def _scan_email(text: str, at_pos: int) -> tuple[int, int] | None:
 
 
 def scan_text_for_autolinks(
-    content: str,
+    text: str,
+    start: int,
     prev_char: str | None,
     location: SourceLocation,
-) -> list[InlineToken]:
-    """Split *content* into Text/Link tokens, recognizing GFM autolinks.
+) -> tuple[list[InlineToken], int]:
+    """Scan *text* from *start* for GFM autolinks.
+
+    Consumes plain text and any bare URL / ``www.`` / email autolinks, where a
+    URL body may contain characters that are otherwise inline-special (``& ~ $
+    _ * [ ! {``) — it extends until whitespace, ``<``, or a backtick. Stops at
+    the first inline-special character that is *not* part of an autolink (or at
+    the end of *text*) so the main inline tokenizer can resume from there.
 
     Args:
-        content: A run of plain text.
-        prev_char: The character immediately preceding *content* in the source,
-            or ``None`` if *content* starts the inline text. Used for the GFM
+        text: The full inline text being tokenized.
+        start: Offset into *text* at which to begin scanning. ``text[start]`` is
+            guaranteed by the caller not to be an inline-special character.
+        prev_char: The character immediately preceding *start*, or ``None`` if
+            *start* is the beginning of the inline text. Drives the GFM
             left-boundary rule.
         location: Source location attached to produced nodes.
 
     Returns:
-        A list of :class:`TextToken` / :class:`NodeToken` objects. When no
-        autolink is found this is a single ``TextToken`` equal to *content*.
+        ``(tokens, end_pos)`` — the produced :class:`TextToken` / :class:`NodeToken`
+        objects and the exclusive position at which scanning stopped (always
+        greater than *start*, guaranteeing forward progress).
     """
-    text_len = len(content)
+    text_len = len(text)
     tokens: list[InlineToken] = []
-    pos = 0
-    emitted_start = 0  # start of pending plain-text run not yet flushed
+    pos = start
+    emitted_start = start  # start of pending plain-text run not yet flushed
 
     def flush_text(upto: int) -> None:
         if upto > emitted_start:
-            tokens.append(TextToken(content=content[emitted_start:upto]))
+            tokens.append(TextToken(content=text[emitted_start:upto]))
 
     while pos < text_len:
-        c = content[pos]
+        c = text[pos]
 
         # The character to the left of this candidate.
-        left = content[pos - 1] if pos > 0 else prev_char
+        left = text[pos - 1] if pos > start else prev_char
 
         matched_end = -1
         link_url: str | None = None
         link_text: str | None = None
 
         if (c == "h" or c == "H") and _is_left_boundary(left):
-            lowered = content[pos : pos + 8].lower()
+            lowered = text[pos : pos + 8].lower()
             scheme_len = 0
             if lowered.startswith("https://"):
                 scheme_len = 8
             elif lowered.startswith("http://"):
                 scheme_len = 7
             if scheme_len:
-                raw_end = _scan_url(content, pos, scheme_len)
+                raw_end = _scan_url(text, pos, scheme_len)
                 if raw_end > pos:
-                    match = content[pos:raw_end]
+                    match = text[pos:raw_end]
                     trimmed = _trim_trailing_punctuation(match)
                     if trimmed and "." in trimmed[scheme_len:]:
                         matched_end = pos + len(trimmed)
@@ -276,11 +308,11 @@ def scan_text_for_autolinks(
             matched_end == -1
             and (c == "w" or c == "W")
             and _is_left_boundary(left)
-            and content[pos : pos + 4].lower() == "www."
+            and text[pos : pos + 4].lower() == "www."
         ):
-            raw_end = _scan_www(content, pos)
+            raw_end = _scan_www(text, pos)
             if raw_end > pos:
-                match = content[pos:raw_end]
+                match = text[pos:raw_end]
                 trimmed = _trim_trailing_punctuation(match)
                 if trimmed and "." in trimmed[4:]:
                     matched_end = pos + len(trimmed)
@@ -288,13 +320,13 @@ def scan_text_for_autolinks(
                     link_text = trimmed
 
         if matched_end == -1 and c == "@":
-            email = _scan_email(content, pos)
+            email = _scan_email(text, pos, start)
             if email is not None:
                 e_start, e_end = email
                 # Apply the left-boundary rule to the start of the local part.
-                e_left = content[e_start - 1] if e_start > 0 else prev_char
+                e_left = text[e_start - 1] if e_start > start else prev_char
                 if _is_left_boundary(e_left):
-                    addr = content[e_start:e_end]
+                    addr = text[e_start:e_end]
                     # Flush text up to the start of the local part (the local
                     # part chars were already absorbed into the pending run).
                     flush_text(e_start)
@@ -328,7 +360,13 @@ def scan_text_for_autolinks(
             emitted_start = matched_end
             continue
 
+        # Not the start of an autolink. Hand control back to the main inline
+        # tokenizer at the first inline-special character so code spans,
+        # emphasis, escapes, entities, etc. are processed normally.
+        if c in INLINE_SPECIAL:
+            break
+
         pos += 1
 
-    flush_text(text_len)
-    return tokens
+    flush_text(pos)
+    return tokens, pos

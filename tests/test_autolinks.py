@@ -104,3 +104,57 @@ class TestGfmExtendedAutolinks:
         # GFM requires at least one '.' in the authority.
         out = Markdown(plugins=["autolinks"])("https://localhost here")
         assert "<a " not in out
+
+
+class TestUrlBodyKeepsInlineSpecialChars:
+    """A URL body runs until whitespace/'<', so '& ~ $ _' inside it are kept.
+
+    These are the common real-world cases (query separators, '~user' paths,
+    'Foo_(bar)' slugs) that a naive run-truncated scan would split mid-URL.
+    """
+
+    def test_ampersand_query_separator_kept(self) -> None:
+        out = Markdown(plugins=["autolinks"])("https://example.com/?a=1&b=2 end")
+        # '&' is HTML-escaped to '&amp;' in the rendered href/text but the whole
+        # query string is inside one link.
+        assert (
+            '<a href="https://example.com/?a=1&amp;b=2">https://example.com/?a=1&amp;b=2</a>' in out
+        )
+        assert "end</p>" in out
+
+    def test_tilde_in_path_kept(self) -> None:
+        out = Markdown(plugins=["autolinks"])("https://example.com/~user")
+        assert '<a href="https://example.com/~user">https://example.com/~user</a>' in out
+
+    def test_underscore_and_balanced_parens_in_path_kept(self) -> None:
+        # The Wikipedia 'Foo_(bar)' case: the underscore is part of the path and
+        # the balanced trailing parens are kept; the outer ')' is excluded.
+        out = Markdown(plugins=["autolinks"])("(https://en.wikipedia.org/wiki/Foo_(bar))")
+        assert (
+            '<a href="https://en.wikipedia.org/wiki/Foo_(bar)">'
+            "https://en.wikipedia.org/wiki/Foo_(bar)</a>" in out
+        )
+
+    def test_dollar_in_path_kept(self) -> None:
+        out = Markdown(plugins=["autolinks"])("https://example.com/a$b here")
+        assert '<a href="https://example.com/a$b">https://example.com/a$b</a>' in out
+
+    def test_backtick_ends_url_so_code_span_wins(self) -> None:
+        # Code spans keep higher CommonMark/GFM precedence: a backtick ends the
+        # URL body rather than being swallowed into the link.
+        out = Markdown(plugins=["autolinks"])("see `http://no.link` end")
+        assert "<code>http://no.link</code>" in out
+        assert "<a " not in out
+
+    def test_url_before_code_span_still_links_fully(self) -> None:
+        out = Markdown(plugins=["autolinks"])("use https://a.com/p?x=1&y=2 then `code` end")
+        assert '<a href="https://a.com/p?x=1&amp;y=2">https://a.com/p?x=1&amp;y=2</a>' in out
+        assert "<code>code</code>" in out
+
+    def test_email_local_part_underscore_is_documented_limitation(self) -> None:
+        # Honest pin of a known limitation: an inline-special delimiter ('_') in
+        # an email *local part* splits the run before this scan runs, so the
+        # address links only from the delimiter onward. (URL bodies do not have
+        # this problem; see the tests above.)
+        out = Markdown(plugins=["autolinks"])("a_b@example.com")
+        assert '<a href="mailto:b@example.com">b@example.com</a>' in out

@@ -366,18 +366,25 @@ class InlineParsingCoreMixin:
 
             # Regular text - accumulate using frozenset lookup (O(1) per char)
             text_start = pos
-            while pos < text_len and text[pos] not in INLINE_SPECIAL:
-                pos += 1
-            if pos > text_start:
-                run = text[text_start:pos]
-                if self._autolinks_enabled:
-                    # GFM extended autolinks: scan this plain-text run for bare
-                    # URLs / www links / emails. The character preceding the run
-                    # (or None at start-of-text) drives the left-boundary rule.
-                    prev_char = text[text_start - 1] if text_start > 0 else None
-                    tokens.extend(scan_text_for_autolinks(run, prev_char, location))
-                else:
-                    tokens_append(TextToken(content=run))
+            if self._autolinks_enabled:
+                # GFM extended autolinks: scan the full text from here for bare
+                # URLs / www links / emails. The scanner reads past inline-special
+                # characters that are valid inside a URL body (e.g. '&' '~' '$'
+                # '_'), so it is driven from the full text rather than a run
+                # pre-truncated at the next special char. It returns the position
+                # at which it stopped (the next non-autolink special char, or end)
+                # so the main loop resumes there. The character preceding the
+                # start (or None at start-of-text) drives the left-boundary rule.
+                prev_char = text[text_start - 1] if text_start > 0 else None
+                autolink_tokens, pos = scan_text_for_autolinks(
+                    text, text_start, prev_char, location
+                )
+                tokens.extend(autolink_tokens)
+            else:
+                while pos < text_len and text[pos] not in INLINE_SPECIAL:
+                    pos += 1
+                if pos > text_start:
+                    tokens_append(TextToken(content=text[text_start:pos]))
 
         return tokens
 

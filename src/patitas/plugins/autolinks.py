@@ -22,21 +22,27 @@ Recognized forms (only when this plugin is enabled):
 Rules applied (per the GFM extension):
 - An autolink is recognized only at a *left boundary*: start-of-line/text,
   after whitespace, or after one of ``* _ ~ (``.
+- A URL/``www.`` body runs until whitespace or ``<``, so characters that are
+  otherwise inline-special (``& ~ $ _ * [ ! {``) are kept as part of the link.
+  This means real-world URLs with query separators (``?a=1&b=2``), ``~user``
+  paths, and ``Foo_(bar)`` slugs link in full.
 - Trailing punctuation (``? ! . , : * _ ~``) is excluded from the link. A
   trailing ``)`` is excluded when there are more ``)`` than ``(`` in the match.
   A trailing entity reference (``&...;``) is stripped.
-- ``<`` immediately ends the autolink. The authority must contain at least one
-  ``.`` and no spaces.
+- The authority must contain at least one ``.`` and no spaces.
 
 CommonMark **angle-bracket** autolinks work without this plugin:
 
     >>> Markdown()("Visit <https://example.com>")
     '<p>Visit <a href="https://example.com">https://example.com</a></p>\\n'
 
-Known limitation: because emphasis delimiters ``_`` are tokenized before this
-scan runs, an underscore inside a URL path/local-part can split the surrounding
-text and truncate the autolink (e.g. a Wikipedia URL containing ``Foo_(bar)``).
-Bare URLs without underscores, and all forms above, are handled.
+Known limitations (narrow, honest scope):
+- A backtick ends a URL body so a code span keeps its higher CommonMark/GFM
+  precedence (``http://a.com`code` `` does not swallow the code span).
+- An email *local part* that contains an inline-special delimiter is split by
+  emphasis tokenization before this scan runs, so e.g. ``a_b@example.com``
+  links only from the ``_`` onward. URL and ``www.`` bodies are not affected by
+  this (an ``_`` inside a URL path links correctly).
 
 Thread Safety:
 This plugin is stateless and thread-safe.
