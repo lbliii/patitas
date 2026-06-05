@@ -21,10 +21,6 @@ from patitas.parsing.blocks.quote_fast_path import (
     is_simple_block_quote,
     parse_simple_block_quote,
 )
-from patitas.parsing.blocks.quote_token_reuse import (
-    can_use_token_reuse,
-    parse_blockquote_with_token_reuse,
-)
 from patitas.parsing.protocols import BlockParsingHost, ParserHost, TokenNavHost
 from patitas.tokens import TokenType
 
@@ -425,7 +421,7 @@ class BlockParsingCoreMixin:
                     )
                 i += 1
 
-        # Fast path 1: simple block quotes with single paragraph
+        # Fast path: simple block quotes with single paragraph
         # Bypasses recursive sub-parser for ~3-5% performance gain
         if is_simple_block_quote(self._tokens, self._pos):
             quote_node, new_pos = parse_simple_block_quote(
@@ -434,18 +430,6 @@ class BlockParsingCoreMixin:
                 self._parse_inline,
             )
             # Update parser position
-            self._pos = new_pos
-            self._current = self._tokens[new_pos] if new_pos < len(self._tokens) else None
-            return quote_node
-
-        # Fast path 2: token reuse for multi-paragraph block quotes
-        # Avoids re-tokenization by reusing existing tokens directly
-        if can_use_token_reuse(self._tokens, self._pos):
-            quote_node, new_pos = parse_blockquote_with_token_reuse(
-                self._tokens,
-                self._pos,
-                self._parse_inline,
-            )
             self._pos = new_pos
             self._current = self._tokens[new_pos] if new_pos < len(self._tokens) else None
             return quote_node
