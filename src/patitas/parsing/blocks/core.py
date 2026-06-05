@@ -382,6 +382,46 @@ class BlockParsingCoreMixin:
         start_token = self._current
         assert start_token is not None and start_token.type == TokenType.BLOCK_QUOTE_MARKER
 
+        # Early nesting-depth guard for adversarial single-line input.
+        #
+        # ``>`` * N on ONE line lexes (linearly) into N BLOCK_QUOTE_MARKER tokens.
+        # The normal path collects each nested marker as literal ``"> "`` content and
+        # re-lexes it via a recursive sub-parser, one level per marker. The recursion
+        # itself is bounded by ``max_nesting_depth`` (raised in _parse_nested_content),
+        # but each of those levels still re-lexes O(N) markers, so reaching the guard
+        # costs O(N * max_nesting_depth) -- tens of seconds for N = 100_000.
+        #
+        # Counting the run of same-line markers up front lets us raise the SAME
+        # catchable ParseError immediately, in O(max_nesting_depth), without the
+        # quadratic re-lexing. Normal documents have a tiny same-line marker run, so
+        # this scan is cheap and never changes their behavior.
+        max_depth = self._config.max_nesting_depth
+        if max_depth:
+            line = start_token.location.lineno
+            tokens = self._tokens
+            n_tokens = len(tokens)
+            # Budget: how many more nested markers we can tolerate on this line
+            # before the depth guard would fire. +1 so we only raise once strictly
+            # past the limit (matching _parse_nested_content's ``depth > max_depth``).
+            budget = max_depth - self._nesting_depth + 1
+            same_line_markers = 0
+            i = self._pos
+            while i < n_tokens:
+                tok = tokens[i]
+                if tok.type != TokenType.BLOCK_QUOTE_MARKER or tok.location.lineno != line:
+                    break
+                same_line_markers += 1
+                if same_line_markers > budget:
+                    from patitas.errors import ParseError
+
+                    raise ParseError(
+                        f"Maximum nesting depth ({max_depth}) exceeded; input is too "
+                        "deeply nested. Raise ParseConfig.max_nesting_depth if this is "
+                        "legitimate content.",
+                        lineno=start_token.location.lineno,
+                    )
+                i += 1
+
         # Fast path 1: simple block quotes with single paragraph
         # Bypasses recursive sub-parser for ~3-5% performance gain
         if is_simple_block_quote(self._tokens, self._pos):
