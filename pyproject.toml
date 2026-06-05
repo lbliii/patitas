@@ -62,6 +62,7 @@ addopts = ["-ra", "-q", "--strict-markers"]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "commonmark: CommonMark spec compliance tests",
+    "gfm: GitHub Flavored Markdown (GFM) spec compliance tests",
     "property: property-based tests (may take longer)",
 ]
 
