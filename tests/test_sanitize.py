@@ -1,21 +1,37 @@
 """Tests for sanitization policies."""
 
+import pytest
+
 from patitas import parse, sanitize
 from patitas.location import SourceLocation
 from patitas.nodes import (
+    BlockQuote,
     HtmlBlock,
     HtmlInline,
+    Link,
     Paragraph,
     Text,
 )
 from patitas.sanitize import (
+    allow_url_schemes,
+    limit_depth,
     llm_safe,
     normalize_unicode,
+    strict,
     strip_dangerous_urls,
     strip_html,
     strip_images,
     strip_raw_code,
+    web_safe,
 )
+
+
+def _links(doc) -> list:
+    """All Link nodes in the first paragraph of a parsed doc."""
+    if not doc.children:
+        return []
+    para = doc.children[0]
+    return [c for c in getattr(para, "children", ()) if isinstance(c, Link)]
 
 LOC = SourceLocation(lineno=1, col_offset=0)
 
@@ -131,3 +147,67 @@ class TestPolicyOr:
         for child in para.children:
             if isinstance(child, Text):
                 assert "\u200b" not in child.content
+
+
+class TestDangerousUrlObfuscationBypass:
+    """The scheme check must see through entity/whitespace/case obfuscation."""
+
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "javascript:alert(1)",
+            "JavaScript:alert(1)",
+            "&#106;avascript:alert(1)",  # entity-encoded 'j'
+            "&#x6a;avascript:alert(1)",  # hex entity
+            "java\tscript:alert(1)",  # embedded tab
+            "  javascript:alert(1)",  # leading whitespace
+        ],
+    )
+    def test_obfuscated_javascript_is_stripped(self, url: str) -> None:
+        doc = parse(f"[x]({url})")
+        for policy in (strip_dangerous_urls, llm_safe, web_safe, strict):
+            assert _links(policy(doc)) == [], f"{policy} kept dangerous url {url!r}"
+
+    def test_data_uri_stripped(self) -> None:
+        doc = parse("[x](&#100;ata:text/html,<script>)")
+        assert _links(llm_safe(doc)) == []
+
+
+class TestAllowListKeepsSafeUrls:
+    """Allow-list filtering must keep relative/fragment/known-scheme links."""
+
+    @pytest.mark.parametrize(
+        "url", ["/relative/path", "#anchor", "page.html", "https://ok.com", "mailto:a@b.com"]
+    )
+    def test_safe_urls_kept(self, url: str) -> None:
+        doc = parse(f"[x]({url})")
+        assert len(_links(allow_url_schemes()(doc))) == 1, f"dropped safe url {url!r}"
+
+    def test_unknown_scheme_dropped_by_default(self) -> None:
+        doc = parse("[x](ftp://host/file)")
+        assert _links(allow_url_schemes()(doc)) == []
+
+    def test_custom_allowed_scheme(self) -> None:
+        doc = parse("[x](ftp://host/file)")
+        assert len(_links(allow_url_schemes("ftp")(doc))) == 1
+
+
+class TestLimitDepth:
+    """limit_depth must actually prune (it used to be a documented no-op)."""
+
+    def test_prunes_deep_blockquotes(self) -> None:
+        doc = parse(">" * 8 + " deep")
+        pruned = limit_depth(3)(doc)
+
+        def block_depth(node, d=0):
+            if isinstance(node, BlockQuote):
+                d += 1
+            kids = getattr(node, "children", ())
+            return max((block_depth(c, d) for c in kids), default=d)
+
+        assert block_depth(doc) > 3
+        assert block_depth(pruned) <= 3
+
+    def test_shallow_content_unchanged(self) -> None:
+        doc = parse("> a\n\npara")
+        assert limit_depth(10)(doc) == doc

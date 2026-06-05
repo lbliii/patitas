@@ -472,20 +472,24 @@ class HtmlRenderer:
         """Render directive block.
 
         If a directive registry is configured and has a handler for this
-        directive, use it. Otherwise, render as a generic container.
+        directive, delegate to the handler per the ``DirectiveHandler``
+        contract: ``render(node, rendered_children, sb) -> None``. Children
+        are rendered first and passed as a string. Unknown (unregistered)
+        directive names fall back to a generic container.
+
+        Handler exceptions are intentionally NOT swallowed: a broken handler
+        must surface loudly rather than silently emit wrong-but-plausible HTML.
         """
         if self._directive_registry:
-            try:
-                handler = self._directive_registry.get(directive.name)
-                if handler:
-                    result = handler.render(directive, self)
-                    sb.append(result)
-                    return
-            except Exception:
-                # Log directive rendering errors for debugging
-                logger.debug("Directive handler %r failed", directive.name, exc_info=True)
+            handler = self._directive_registry.get(directive.name)
+            if handler:
+                child_sb = StringBuilder()
+                for child in directive.children:
+                    self._render_block(child, child_sb, ctx)
+                handler.render(directive, child_sb.build(), sb)
+                return
 
-        # Default: render as container
+        # Default: render unknown directives as a generic container.
         title_html = html_escape(directive.title) if directive.title else ""
         sb.append(f'<div class="directive directive-{html_escape(directive.name)}">\n')
         if title_html:

@@ -21,15 +21,15 @@ html = md("# Hello **World**")
 ## What is Patitas?
 
 Patitas is a pure-Python Markdown parser that parses to a typed AST and renders to
-HTML. It's CommonMark 0.31.2 compliant, has zero runtime dependencies, and is built
-for Python 3.14+.
+HTML. It's CommonMark 0.31.2 compliant, has a single runtime dependency (PyYAML,
+used for frontmatter), and is built for Python 3.14+.
 
 **Why people pick it:**
 
-- **ReDoS-proof** — O(n) finite state machine lexer, no regex backtracking. Safe for untrusted input in web apps and APIs.
+- **ReDoS-resistant** — hand-written FSM lexer, no regex backtracking; a bounded nesting depth guards against stack exhaustion on adversarial input. See [security](docs/security.md) for the current threat model.
 - **Typed AST** — Frozen dataclasses (`Heading`, `Paragraph`, `Strong`, etc.) with IDE autocomplete and type checking.
 - **CommonMark** — Full 0.31.2 spec compliance (652 examples).
-- **Incremental parsing** — Re-parse only changed blocks; ~200x faster for small edits than full re-parse.
+- **Incremental parsing** — Re-parse only changed blocks; ~170x faster for small edits than full re-parse (up to ~430x for edits near the start of a document).
 - **Free-threading native** — Frozen AST, `ContextVar` config, no shared mutable parser state. Parallel speedups vary by Python build, hardware, and corpus.
 - **LLM-safe** — `render_llm` + composable `sanitize` policies for RAG, retrieval, safe context.
 - **Directives** — MyST-style blocks (admonition, dropdown, tabs) plus custom directives.
@@ -71,10 +71,10 @@ reference says otherwise.
 
 ## More Features
 
-- **ReDoS-proof** — O(n) finite state machine lexer, no regex backtracking. Safe for untrusted input in web apps and APIs.
+- **ReDoS-resistant** — hand-written FSM lexer, no regex backtracking; a bounded nesting depth guards against stack exhaustion on adversarial input. See [security](docs/security.md) for the current threat model.
 - **Typed AST** — Frozen dataclasses (`Heading`, `Paragraph`, `Strong`, etc.) with IDE autocomplete and type checking.
 - **CommonMark** — Full 0.31.2 spec compliance (652 examples).
-- **Incremental parsing** — Re-parse only changed blocks; ~200x faster for small edits than full re-parse.
+- **Incremental parsing** — Re-parse only changed blocks; ~170x faster for small edits than full re-parse (up to ~430x for edits near the start of a document).
 - **Free-threading native** — Frozen AST, `ContextVar` config, no shared mutable parser state. Parallel speedups vary by Python build, hardware, and corpus.
 - **LLM-safe** — `render_llm` + composable `sanitize` policies for RAG, retrieval, safe context.
 - **Directives** — MyST-style blocks (admonition, dropdown, tabs) plus custom directives.
@@ -177,7 +177,7 @@ Patitas uses a hand-written finite state machine lexer:
 ## Performance
 
 - **652 CommonMark examples** — measure on your machine with `benchmarks/benchmark_vs_mistune.py`; recent Python 3.14.2 free-threaded local runs are in the low tens of milliseconds.
-- **Incremental parsing** — For a 1-char edit in a ~100KB doc, `parse_incremental` can be roughly 200x faster than full re-parse in the bundled benchmark.
+- **Incremental parsing** — For a 1-char edit in a ~100KB doc, `parse_incremental` is roughly 170x faster than full re-parse in the bundled benchmark (and up to ~430x for edits near the start of the document).
 - **Parallel scaling** — Free-threaded speedups depend on Python build, hardware, corpus size, and optional comparator packages. Run `python benchmarks/benchmark_parallel.py` to see results on your machine. One recent local run on Python 3.14.2 with 1,000 CommonMark documents:
 
   ```

@@ -287,7 +287,7 @@ A Markdown LSP powered by Patitas:
 
 | Item | Reason |
 |---|---|
-| **Beating mistune on raw single-thread speed** | Diminishing returns. The FSM architecture has a floor. The 6ms gap on the full CommonMark spec is imperceptible. Focus on where the architecture wins: safety, threading, typed AST. |
+| **Beating mistune on raw single-thread speed** | Diminishing returns. The FSM architecture has a floor. The gap on the full CommonMark spec is ~17ms (~2.3x slower than mistune; ~1.2x slower than markdown-it-py) and imperceptible for typical documents. Focus on where the architecture wins: safety, threading, typed AST, incremental. |
 | **Python-Markdown compatibility layer** | Different spec, different API, different audience. Not worth the bridge. |
 | **Python < 3.14 support** | The free-threading and modern syntax requirements are core to Patitas's identity. Backporting would compromise the design. If demand materializes, consider a `patitas-compat` package with `threading.Lock` fallbacks, but don't dilute the main package. |
 | **Non-Markdown input formats** | Patitas parses Markdown. RST, AsciiDoc, and other formats are out of scope. |

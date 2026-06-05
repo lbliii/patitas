@@ -11,10 +11,13 @@ Example:
 """
 
 import dataclasses
+import html as _html
 import re
 from collections.abc import Callable
 
 from patitas.nodes import (
+    BlockQuote,
+    Directive,
     Document,
     FencedCode,
     HtmlBlock,
@@ -22,6 +25,8 @@ from patitas.nodes import (
     Image,
     IndentedCode,
     Link,
+    List,
+    ListItem,
     Node,
     Text,
 )
@@ -32,21 +37,51 @@ _NORMALIZE_UNICODE_PATTERN = re.compile(
     "[\u200b\u200c\u200d\u200e\u200f\u202a\u202b\u202c\u202d\u202e\ufeff]+"
 )
 
-_DANGEROUS_SCHEMES = frozenset(("javascript:", "data:", "vbscript:"))
+_DANGEROUS_SCHEMES = frozenset(("javascript", "data", "vbscript"))
 
 _DEFAULT_ALLOWED_SCHEMES = frozenset(("https", "http", "mailto"))
 
+# A URL scheme is an ASCII letter followed by letters/digits/+/-/. (RFC 3986).
+_URL_SCHEME_RE = re.compile(r"[a-z][a-z0-9+.\-]*")
+
+
+def _url_scheme(url: str) -> str | None:
+    """Extract a URL's scheme, robust to obfuscation; None if scheme-less.
+
+    Browsers ignore HTML entities and embedded control/whitespace characters
+    when resolving a URL scheme, so ``javascript:`` can hide as
+    ``&#106;avascript:`` or ``java&Tab;script:``. We decode entities and strip
+    ASCII control/whitespace before reading the scheme so the dangerous-scheme
+    check cannot be bypassed.
+
+    Returns the lowercased scheme (without the trailing colon), or None for
+    scheme-less URLs (relative paths, fragments, protocol-relative ``//``),
+    which are always safe.
+    """
+    decoded = _html.unescape(url)
+    # Drop ASCII control chars and whitespace (everything <= 0x20, plus DEL).
+    stripped = "".join(ch for ch in decoded if 0x20 < ord(ch) != 0x7F)
+    colon = stripped.find(":")
+    if colon <= 0:
+        return None
+    scheme = stripped[:colon].lower()
+    return scheme if _URL_SCHEME_RE.fullmatch(scheme) else None
+
 
 def _is_dangerous_url(url: str) -> bool:
-    """Check if URL uses a dangerous scheme."""
-    lower = url.strip().lower()
-    return any(lower.startswith(s) for s in _DANGEROUS_SCHEMES)
+    """Check if a URL uses a known-dangerous scheme (after de-obfuscation)."""
+    scheme = _url_scheme(url)
+    return scheme is not None and scheme in _DANGEROUS_SCHEMES
 
 
 def _scheme_allowed(url: str, allowed: frozenset[str]) -> bool:
-    """Check if URL scheme is in allowed set."""
-    lower = url.strip().lower()
-    return any(lower.startswith(scheme + ":") for scheme in allowed)
+    """Check if a URL's scheme is allowed.
+
+    Scheme-less/relative URLs (``/path``, ``#frag``, ``//host``) are always
+    allowed; only an explicit, disallowed scheme is rejected.
+    """
+    scheme = _url_scheme(url)
+    return scheme is None or scheme in allowed
 
 
 class Policy:
@@ -164,21 +199,50 @@ def allow_url_schemes(*schemes: str) -> Policy:
     return Policy(lambda d: transform(d, fn))
 
 
+# Block container nodes that add a level of nesting depth.
+_DEPTH_CONTAINERS = (BlockQuote, List, ListItem, Directive)
+
+
 def limit_depth(max_depth: int = 10) -> Policy:
-    """Placeholder for depth limiting (prevent adversarial nesting).
+    """Prune block content nested deeper than ``max_depth`` container levels.
 
-    Intended to remove blocks exceeding max_depth levels. Currently a pass-through;
-    full implementation would track depth in transform.
+    Depth counts block containers (block quotes, lists, list items, directives).
+    Containers at the limit have their children dropped, protecting downstream
+    consumers from adversarially deep AST nesting.
+
+    Note:
+        For untrusted *input*, prefer the parser-level ``max_nesting_depth``
+        config (see ``ParseConfig``), which stops a deeply nested document from
+        ever being built — and from exhausting the stack during parsing.
+        ``limit_depth`` operates on an already-parsed AST.
     """
-    return Policy(lambda d: d)
+
+    def prune(node: Node, depth: int) -> Node:
+        is_container = isinstance(node, _DEPTH_CONTAINERS)
+        cur = depth + 1 if is_container else depth
+        children = getattr(node, "children", None)
+        if not children:
+            return node
+        if is_container and cur >= max_depth:
+            # This container is at the depth limit: keep it, drop nested content.
+            return dataclasses.replace(node, children=())
+        new_children = tuple(prune(c, cur) for c in children)
+        return dataclasses.replace(node, children=new_children)
+
+    return Policy(lambda d: prune(d, 0))
 
 
-# Pre-built policy sets
-llm_safe: Policy = strip_html | strip_dangerous_urls | normalize_unicode
+# Pre-built policy sets.
+#
+# URL filtering uses an allow-list (allow_url_schemes) rather than a block-list:
+# a block-list is bypassable by any novel dangerous scheme, whereas an allow-list
+# only permits known-safe schemes (https/http/mailto) and scheme-less/relative
+# URLs. Both reject obfuscated schemes (entity-encoded, embedded whitespace).
+_safe_urls: Policy = allow_url_schemes()
+
+llm_safe: Policy = strip_html | _safe_urls | normalize_unicode
 web_safe: Policy = llm_safe  # Alias: same policy for web display of untrusted content
-strict: Policy = (
-    strip_html | strip_dangerous_urls | normalize_unicode | strip_images | strip_raw_code
-)
+strict: Policy = strip_html | _safe_urls | normalize_unicode | strip_images | strip_raw_code
 
 
 def sanitize(doc: Document, *, policy: Policy | Callable[[Document], Document]) -> Document:

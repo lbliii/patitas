@@ -20,6 +20,7 @@ from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING
 
 from patitas.config import ParseConfig, get_parse_config
+from patitas.errors import ParseError
 from patitas.lexer import Lexer
 from patitas.location import SourceLocation
 from patitas.nodes import Block, FencedCode
@@ -136,6 +137,10 @@ class Parser(
         self._config_cache = None
         self._line_starts = None
 
+        # Block-container nesting depth (block quotes, list items). Guards
+        # against adversarially deep input exhausting the interpreter stack.
+        self._nesting_depth = 0
+
     def _reinit(self, source: str, source_file: str | None = None) -> None:
         """Reinitialize parser for reuse (enables pooling).
 
@@ -170,6 +175,7 @@ class Parser(
         self._allow_setext_headings = True
         self._config_cache = None
         self._line_starts = None
+        self._nesting_depth = 0
 
     # =========================================================================
     # Configuration Properties (read from ContextVar)
@@ -348,8 +354,23 @@ class Parser(
         if not content.strip():
             return ()
 
+        # Guard against adversarially deep nesting before recursing. Without
+        # this, deeply nested block quotes/lists crash with an uncaught
+        # RecursionError (a sub-1KB input is enough). Raise a catchable
+        # ParseError instead.
+        depth = self._nesting_depth + 1
+        max_depth = self._config.max_nesting_depth
+        if max_depth and depth > max_depth:
+            raise ParseError(
+                f"Maximum nesting depth ({max_depth}) exceeded; input is too "
+                "deeply nested. Raise ParseConfig.max_nesting_depth if this is "
+                "legitimate content.",
+                lineno=location.lineno,
+            )
+
         # Create sub-parser (config inherited automatically via ContextVar!)
         sub_parser = Parser(content, self._source_file)
+        sub_parser._nesting_depth = depth
 
         # Setext heading control (per-parse state, not config)
         sub_parser._allow_setext_headings = allow_setext_headings
