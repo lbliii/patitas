@@ -59,6 +59,11 @@ class ParseConfig:
         directive_registry: Registry for directive handlers
         strict_contracts: Raise errors on directive contract violations
         text_transformer: Optional callback to transform plain text lines
+        max_nesting_depth: Maximum block-container nesting depth (block quotes,
+            lists, directives). Adversarially deep input raises a catchable
+            ``ParseError`` instead of crashing the interpreter with an
+            uncaught ``RecursionError``. Real documents nest only a handful of
+            levels; the default (100) is far above any legitimate content.
 
     """
 
@@ -71,6 +76,7 @@ class ParseConfig:
     directive_registry: DirectiveRegistry | None = None
     strict_contracts: bool = False
     text_transformer: Callable[[str], str] | None = None
+    max_nesting_depth: int = 100
 
     @classmethod
     def from_dict(cls, config_dict: dict) -> ParseConfig:

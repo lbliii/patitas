@@ -5,6 +5,7 @@ Handles detection and parsing of nested lists within list items.
 
 from typing import TYPE_CHECKING, Protocol
 
+from patitas.errors import ParseError
 from patitas.nodes import List, ListItem, Paragraph
 from patitas.parsing.blocks.list.marker import (
     is_list_marker,
@@ -114,10 +115,44 @@ def parse_nested_list_inline(
 
     # Config is inherited automatically via ContextVar!
     nested_parser = Parser(line + "\n")
+    # Carry nesting depth across the sub-parser boundary so the depth guard
+    # cannot be reset (and bypassed) by nested list content.
+    nested_parser._nesting_depth = getattr(parser, "_nesting_depth", 0)
     return list(nested_parser.parse())
 
 
 def parse_nested_list_from_indented_code(
+    token: Token,
+    original_indent: int,
+    parent_content_indent: int,
+    parser: ParserProtocol,
+) -> List | None:
+    """Parse a nested list from an INDENTED_CODE token, guarding nesting depth.
+
+    Thin wrapper around the implementation that bounds recursion depth. This
+    function recurses once per deeper nested level, so adversarially deep
+    indented-code list nesting would otherwise crash with an uncaught
+    ``RecursionError``. Raises a catchable ``ParseError`` past the limit.
+    """
+    parser._nesting_depth += 1
+    max_depth = parser._config.max_nesting_depth
+    if max_depth and parser._nesting_depth > max_depth:
+        parser._nesting_depth -= 1
+        raise ParseError(
+            f"Maximum nesting depth ({max_depth}) exceeded; input is too "
+            "deeply nested. Raise ParseConfig.max_nesting_depth if this is "
+            "legitimate content.",
+            lineno=token.location.lineno,
+        )
+    try:
+        return _parse_nested_list_from_indented_code_impl(
+            token, original_indent, parent_content_indent, parser
+        )
+    finally:
+        parser._nesting_depth -= 1
+
+
+def _parse_nested_list_from_indented_code_impl(
     token: Token,
     original_indent: int,
     parent_content_indent: int,

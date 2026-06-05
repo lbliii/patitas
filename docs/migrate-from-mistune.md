@@ -28,15 +28,22 @@ html = md(source)
 
 ## Plugins
 
+Like mistune, Patitas keeps GFM-style syntax **opt-in** — enable it via the
+`plugins=[...]` argument. Plain `Markdown()` is pure CommonMark. Use
+`Markdown(plugins=["all"])` to enable every built-in plugin at once.
+
+Available plugin names: `table`, `strikethrough`, `task_lists`, `footnotes`,
+`math`, `autolinks`.
+
 ### Tables
 
 ```python
 # mistune
 md = mistune.create_markdown(plugins=['table'])
 
-# Patitas — tables enabled by default via plugins
+# Patitas — enable explicitly
 from patitas import Markdown
-md = Markdown()  # Tables work out of the box
+md = Markdown(plugins=["table"])
 ```
 
 ### Strikethrough
@@ -45,8 +52,8 @@ md = Markdown()  # Tables work out of the box
 # mistune
 md = mistune.create_markdown(plugins=['strikethrough'])
 
-# Patitas — enabled by default
-md = Markdown()  # ~~strikethrough~~ works
+# Patitas
+md = Markdown(plugins=["strikethrough"])  # ~~strikethrough~~ works
 ```
 
 ### Footnotes
@@ -55,8 +62,8 @@ md = Markdown()  # ~~strikethrough~~ works
 # mistune
 md = mistune.create_markdown(plugins=['footnotes'])
 
-# Patitas — enabled by default
-md = Markdown()  # [^1] footnotes work
+# Patitas
+md = Markdown(plugins=["footnotes"])  # [^1] footnotes work
 ```
 
 ## Directives
@@ -195,15 +202,22 @@ Content
 :::
 ```
 
-### "HTML not rendering"
+### "Raw HTML / `javascript:` URLs pass through"
 
-By default, Patitas escapes HTML for security. To allow raw HTML:
+Like mistune with `escape=False` (and markdown-it-py with `html: true`), the
+default Patitas renderer is CommonMark-compliant and does **not** sanitize: raw
+HTML and `javascript:`/`data:` URLs are emitted verbatim. To strip unsafe content
+from untrusted input, sanitize the AST before rendering:
 
 ```python
-# Enable raw HTML in content
-md = Markdown()
-html = md(source)  # HTML is escaped by default
+from patitas import parse, sanitize, render
+from patitas.sanitize import web_safe
+
+doc = parse(untrusted_source)
+html = render(sanitize(doc, policy=web_safe))  # HTML + unsafe URLs removed
 ```
+
+See [Security](security.md#output-sanitization) for the full threat model.
 
 ### "Tables look different"
 

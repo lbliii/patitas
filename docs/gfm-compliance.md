@@ -12,10 +12,10 @@ reported GFM-compliant parser.
 
 | Feature | Patitas support | Current verification |
 |---|---|---|
-| Tables | `Markdown(plugins=["table"])` | Unit, integration, property, and docs tests |
-| Task list items | `Markdown(plugins=["task_lists"])` | Unit and renderer edge-case tests |
+| Tables | `Markdown(plugins=["table"])` | Unit, integration, property, and docs tests. Known divergences from GFM: tables without outer pipes, ragged-row pad/truncate, and paragraph interruption are not yet handled. |
+| Task list items | `Markdown(plugins=["task_lists"])` | Unit and renderer edge-case tests. Missing GitHub's `contains-task-list`/`task-list-item` CSS classes (cosmetic). |
 | Strikethrough | `Markdown(plugins=["strikethrough"])` | Inline/parser/serialization tests |
-| Autolinks | `Markdown(plugins=["autolinks"])` | Plugin integration and config tests |
+| Autolinks (bare URL/email) | not yet implemented | **No-op today** — the `autolinks` plugin sets a config flag but bare-URL/email linking is not yet wired up (tracked separately). CommonMark angle-bracket autolinks `<https://...>` work without any plugin. |
 
 Footnotes and math are supported plugin families, but they are tracked as
 Patitas extensions here rather than counted toward a GFM pass rate.

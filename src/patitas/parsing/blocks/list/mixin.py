@@ -6,6 +6,7 @@ using the modular helper functions.
 
 from typing import TYPE_CHECKING
 
+from patitas.errors import ParseError
 from patitas.lexer.modes import (
     HTML_BLOCK_TYPE1_TAGS,
     HTML_BLOCK_TYPE6_TAGS,
@@ -251,6 +252,47 @@ class ListParsingMixin:
         )
 
     def _parse_list_item(
+        self,
+        marker_token: Token,
+        start_indent: int,
+        content_indent: int,
+        ordered: bool,
+        bullet_char: str,
+        ordered_marker_char: str,
+        marker_stripped: str,
+    ) -> ListItem:
+        """Parse a single list item, guarding against deep nesting.
+
+        Lists recurse in-parser (item content can contain further lists), so
+        a depth counter on the parser instance bounds nesting here the same way
+        ``_parse_nested_content`` bounds block-quote nesting. Adversarially deep
+        input raises a catchable ``ParseError`` instead of an uncaught
+        ``RecursionError``.
+        """
+        self._nesting_depth += 1
+        max_depth = self._config.max_nesting_depth
+        if max_depth and self._nesting_depth > max_depth:
+            self._nesting_depth -= 1
+            raise ParseError(
+                f"Maximum nesting depth ({max_depth}) exceeded; input is too "
+                "deeply nested. Raise ParseConfig.max_nesting_depth if this is "
+                "legitimate content.",
+                lineno=marker_token.location.lineno,
+            )
+        try:
+            return self._parse_list_item_impl(
+                marker_token,
+                start_indent,
+                content_indent,
+                ordered,
+                bullet_char,
+                ordered_marker_char,
+                marker_stripped,
+            )
+        finally:
+            self._nesting_depth -= 1
+
+    def _parse_list_item_impl(
         self,
         marker_token: Token,
         start_indent: int,

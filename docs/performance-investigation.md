@@ -122,9 +122,9 @@ Suggests heavy use of dynamic dispatch and list building. Pre-allocation or more
 
 The performance gap is **architectural**, not a bug. Patitas trades raw speed for:
 
-- O(n) guaranteed parsing (ReDoS-proof)
+- O(n) lexing (FSM, no regex backtracking); bounded nesting depth on untrusted input
 - Typed, immutable AST
 - Full thread-safety (free-threading)
-- Incremental re-parse (~200x faster for small edits)
+- Incremental re-parse (~170x faster for small edits; up to ~430x near the document start)
 
 The highest-leverage fix is **caching ParseConfig** to avoid repeated ContextVar lookups. List parsing optimization is the next best target. Beyond that, Cython or accepting the 2x gap as the cost of safety and type safety are the main options.

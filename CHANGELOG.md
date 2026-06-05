@@ -7,6 +7,68 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Directive rendering was broken end-to-end.** `HtmlRenderer._render_directive`
+  called handlers with the wrong arity (`handler.render(directive, self)` instead
+  of the documented `render(node, rendered_children, sb)` contract). The resulting
+  `TypeError` was swallowed by a bare `except`, so **every** directive — including
+  all five builtins (`note`/admonitions, `tab-set`/`tab-item`, `dropdown`,
+  `container`) and any custom `@directive` — silently degraded to a generic
+  `<div>`. Tabs rendered without tab navigation and dropdowns without
+  `<details>`/`<summary>`. Handlers are now invoked correctly, and handler
+  exceptions propagate instead of being silently swallowed.
+
+- **Sanitizer URL-scheme bypass (XSS).** `_is_dangerous_url`/`_scheme_allowed`
+  compared the raw URL string, so entity-encoded (`&#106;avascript:`), mixed-case
+  (`JavaScript:`), and whitespace/control-obfuscated (`java\tscript:`) schemes
+  slipped through `strip_dangerous_urls`, `llm_safe`, `web_safe`, and `strict`.
+  URLs are now HTML-unescaped and control/whitespace-stripped before the scheme
+  check. `allow_url_schemes` no longer drops scheme-less/relative URLs
+  (`/path`, `#frag`, `page.html`).
+
+- **Uncaught `RecursionError` on deeply nested input.** Deeply nested block
+  quotes / lists / directives crashed the interpreter (a sub-1KB input was
+  enough). Nesting is now bounded by `max_nesting_depth` and raises a catchable
+  `ParseError`. (Single-line `>`*N lexer recursion, deeply nested inline
+  emphasis, and the O(n²) inline bracket scan remain — tracked separately.)
+
+- **`limit_depth()` was a documented no-op.** It now actually prunes block
+  content nested beyond the limit.
+
+### Added
+
+- **`max_nesting_depth`** — new `ParseConfig` field and `Markdown(...)` argument
+  (default 100) bounding block-container nesting depth for untrusted input.
+- **Pre-built sanitize policies now use a URL allow-list.** `llm_safe`/`web_safe`/
+  `strict` permit only `https`/`http`/`mailto` (plus relative URLs) rather than
+  blocking a fixed deny-list, closing the novel-scheme gap.
+- **`directive` decorator is now a public export** (`from patitas import directive`),
+  matching the documented custom-directive workflow.
+- **Behavioral test suites** — `tests/test_directive_rendering.py`,
+  `tests/test_adversarial_input.py`, `tests/test_autolinks.py`, and new
+  `tests/test_sanitize.py` cases assert real rendered output / behavior through
+  the public API (the previous tests asserted config flags or called handlers
+  directly, which is how the directive and autolinks breakage shipped green).
+
+### Changed
+
+- **Docs corrected to match measured reality** — README ("zero dependencies" →
+  one dependency, PyYAML; incremental "~200x" → "~170x, up to ~430x"; ReDoS
+  wording), ROADMAP ("6ms gap" → "~17ms / ~2.3x"), `docs/security.md` (default
+  `render()` does **not** sanitize HTML/URLs; added nesting limits, known
+  limitations, and output-sanitization sections), `docs/migrate-from-mistune.md`
+  (plugins are opt-in, not default; HTML is not escaped by default), and
+  `docs/gfm-compliance.md` (autolinks is a no-op; table divergences noted).
+
+### Known Issues (tracked)
+
+- The `autolinks` plugin is a no-op: bare-URL/email autolinking is not yet
+  implemented (CommonMark angle-bracket autolinks work without it).
+- Adversarial-input hardening remains for the O(n²) inline bracket scan,
+  deeply nested inline emphasis (render recursion), and single-line `>`*N
+  lexer recursion.
+
 ## [0.3.5] - 2026-03-09
 
 ### Added

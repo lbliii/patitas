@@ -42,6 +42,7 @@ from patitas.config import (
 )
 from patitas.context import CONTENT_CONTEXT_MAP, context_paths_for
 from patitas.differ import ASTChange, diff_documents
+from patitas.directives.decorator import directive
 from patitas.directives.registry import (
     DirectiveRegistry,
     DirectiveRegistryBuilder,
@@ -239,6 +240,7 @@ class Markdown:
         highlight: bool = False,
         plugins: list[str] | None = None,
         directive_registry: DirectiveRegistry | None = None,
+        max_nesting_depth: int = 100,
     ) -> None:
         """Initialize Markdown processor.
 
@@ -247,6 +249,10 @@ class Markdown:
             plugins: List of plugin names to enable (e.g., ["table", "math"]).
                 Use ["all"] to enable all built-in plugins.
             directive_registry: Custom directive registry (uses defaults if None)
+            max_nesting_depth: Maximum block-container nesting depth. Adversarially
+                deep input raises a catchable ``ParseError`` instead of crashing
+                with an uncaught ``RecursionError``. Default (100) is far above
+                any realistic document.
         """
         self._highlight = highlight
         self._directive_registry = directive_registry or create_default_registry()
@@ -269,6 +275,7 @@ class Markdown:
             math_enabled="math" in self._plugins,
             autolinks_enabled="autolinks" in self._plugins,
             directive_registry=self._directive_registry,
+            max_nesting_depth=max_nesting_depth,
         )
 
     def __call__(self, source: str) -> str:
@@ -478,6 +485,7 @@ __all__ = [  # noqa: RUF022 — grouped by category for maintainability
     "DirectiveRegistryBuilder",
     "create_default_registry",
     "create_registry_with_defaults",
+    "directive",
     # Parser components
     "Lexer",
     "Parser",
