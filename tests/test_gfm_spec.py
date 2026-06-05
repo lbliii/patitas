@@ -52,7 +52,7 @@ SPEC_TESTS: list[dict[str, Any]] = _load_spec()
 
 # Measured pass-count baseline (ratchet). Update upward only — never lower it to
 # accommodate a regression. Measured against GFM 0.29 with GFM_PLUGINS enabled.
-GFM_PASS_BASELINE = 647
+GFM_PASS_BASELINE = 653
 GFM_TOTAL = 672
 
 # Known-failing examples with honest reasons. Each is xfailed (strict=False) so
@@ -95,18 +95,34 @@ KNOWN_FAIL: dict[int, str] = {
     474: "CommonMark 0.28 vs 0.31.2 emphasis nesting drift (Patitas matches 0.31.2).",
     475: "CommonMark 0.28 vs 0.31.2 emphasis nesting drift (Patitas matches 0.31.2).",
     477: "CommonMark 0.28 vs 0.31.2 emphasis nesting drift (Patitas matches 0.31.2).",
-    # --- Autolinks (extension): GFM extended autolinks not implemented ---
-    621: "GFM extended autolink (bare www.) not implemented.",
-    622: "GFM extended autolink (bare www.) not implemented.",
-    623: "GFM extended autolink (bare www.) not implemented.",
-    624: "GFM extended autolink (bare www.) not implemented.",
-    625: "GFM extended autolink (bare www.) not implemented.",
-    626: "GFM extended autolink (bare www.) not implemented.",
-    627: "GFM extended autolink (bare www.) not implemented.",
-    628: "GFM extended autolink (bare URL) not implemented.",
-    629: "GFM extended autolink (bare email) not implemented.",
-    630: "GFM extended autolink (bare email) not implemented.",
-    631: "GFM extended autolink (bare email) not implemented.",
+    # --- Autolinks (core CommonMark section): these examples assume the GFM
+    # extended-autolink extension is OFF. With the extension enabled (as GFM
+    # intends, and as the `autolinks` plugin does here), Patitas links the bare
+    # URL/email, so it diverges from these pre-extension examples. ---
+    616: (
+        "Core CommonMark 'Autolinks' example assuming the extended-autolink "
+        "extension is off; with it enabled Patitas links the bare URL."
+    ),
+    619: (
+        "Core CommonMark 'Autolinks' example assuming the extended-autolink "
+        "extension is off; with it enabled Patitas links the bare URL."
+    ),
+    620: (
+        "Core CommonMark 'Autolinks' example assuming the extended-autolink "
+        "extension is off; with it enabled Patitas links the bare email."
+    ),
+    # --- Autolinks (extension): two remaining edge cases (621-627, 629-630
+    # now PASS). ---
+    628: (
+        "GFM extended autolink: Patitas links the http(s) sub-cases but not the "
+        "ftp:// one in this example (only http/https/www/mailto are linkified)."
+    ),
+    631: (
+        "GFM extended autolink: an email local part containing an inline-special "
+        "delimiter ('_') is split by emphasis tokenization before the autolink "
+        "scan, so Patitas links only the post-delimiter portion. Documented "
+        "limitation in the autolinks plugin."
+    ),
     # --- Disallowed Raw HTML (extension) ---
     652: "GFM tagfilter (disallowed raw HTML) extension not implemented.",
 }

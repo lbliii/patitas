@@ -82,10 +82,11 @@ reference says otherwise.
 - **Minimal dependencies** — PyYAML for frontmatter; core parser is pure Python.
 
 GFM-style features are available through plugins. Measured GFM 0.29 compliance is
-**647/672 (96.3%)** with the GFM plugins enabled
+**653/672 (97.2%)** with the GFM plugins enabled
 (`Markdown(plugins=["table", "strikethrough", "task_lists", "autolinks"])`); the
-remaining gap is GFM extended autolinks, the tagfilter extension, and CommonMark
-0.28-vs-0.31.2 emphasis drift. See [GFM compliance tracking](docs/gfm-compliance.md).
+remaining gap is the tagfilter extension, CommonMark 0.28-vs-0.31.2 emphasis
+drift, and a few autolink edge cases. See
+[GFM compliance tracking](docs/gfm-compliance.md).
 
 ---
 
