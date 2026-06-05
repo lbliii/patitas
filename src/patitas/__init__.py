@@ -93,6 +93,14 @@ from patitas.profiling import ParseAccumulator, get_parse_accumulator, profiled_
 from patitas.renderers.html import HtmlRenderer
 from patitas.renderers.llm import LlmRenderer, render_llm
 from patitas.renderers.protocol import ASTRenderer
+from patitas.roles import (
+    RoleHandler,
+    RoleRegistry,
+    RoleRegistryBuilder,
+)
+from patitas.roles import (
+    create_default_registry as create_default_role_registry,
+)
 from patitas.sanitize import Policy, sanitize
 from patitas.serialization import from_dict, from_json, to_dict, to_json
 from patitas.text import extract_text
@@ -184,6 +192,7 @@ def render(
     source: str = "",
     highlight: bool = False,
     directive_registry: DirectiveRegistry | None = None,
+    role_registry: RoleRegistry | None = None,
 ) -> str:
     """Render an AST Document to HTML.
 
@@ -192,6 +201,8 @@ def render(
         source: Original source (needed for zero-copy code block extraction)
         highlight: Enable syntax highlighting for code blocks
         directive_registry: Custom directive registry for rendering
+        role_registry: Custom role registry for rendering inline roles
+            (e.g. ``{kbd}`Ctrl` ``). Uses the built-in roles if None.
 
     Returns:
         HTML string
@@ -203,7 +214,13 @@ def render(
         <h1 id="hello">Hello</h1>
     """
     registry = directive_registry or create_default_registry()
-    renderer = HtmlRenderer(source=source, highlight=highlight, directive_registry=registry)
+    roles = role_registry or create_default_role_registry()
+    renderer = HtmlRenderer(
+        source=source,
+        highlight=highlight,
+        directive_registry=registry,
+        role_registry=roles,
+    )
     return renderer.render(doc)
 
 
@@ -232,7 +249,7 @@ class Markdown:
 
     """
 
-    __slots__ = ("_config", "_directive_registry", "_highlight", "_plugins")
+    __slots__ = ("_config", "_directive_registry", "_highlight", "_plugins", "_role_registry")
 
     def __init__(
         self,
@@ -240,6 +257,7 @@ class Markdown:
         highlight: bool = False,
         plugins: list[str] | None = None,
         directive_registry: DirectiveRegistry | None = None,
+        role_registry: RoleRegistry | None = None,
         max_nesting_depth: int = 100,
     ) -> None:
         """Initialize Markdown processor.
@@ -249,13 +267,19 @@ class Markdown:
             plugins: List of plugin names to enable (e.g., ["table", "math"]).
                 Use ["all"] to enable all built-in plugins.
             directive_registry: Custom directive registry (uses defaults if None)
-            max_nesting_depth: Maximum block-container nesting depth. Adversarially
-                deep input raises a catchable ``ParseError`` instead of crashing
-                with an uncaught ``RecursionError``. Default (100) is far above
-                any realistic document.
+            role_registry: Custom role registry for inline roles such as
+                ``{kbd}`Ctrl` `` and ``{ref}`target` `` (uses the built-in
+                roles if None)
+            max_nesting_depth: Maximum nesting depth, bounding BOTH deep
+                block-container nesting (block quotes, lists, directives) AND deep
+                inline emphasis/strong nesting. Adversarially deep input of either
+                kind raises a catchable ``ParseError`` instead of crashing with an
+                uncaught ``RecursionError``. Default (100) is far above any
+                realistic document.
         """
         self._highlight = highlight
         self._directive_registry = directive_registry or create_default_registry()
+        self._role_registry = role_registry or create_default_role_registry()
 
         # Expand "all" to all built-in plugin names
         raw_plugins = plugins or []
@@ -296,6 +320,7 @@ class Markdown:
             source=source,
             highlight=self._highlight,
             directive_registry=self._directive_registry,
+            role_registry=self._role_registry,
         )
         return renderer.render(doc)
 
@@ -431,6 +456,7 @@ class Markdown:
             source=source,
             highlight=self._highlight,
             directive_registry=self._directive_registry,
+            role_registry=self._role_registry,
         )
         return renderer.render(doc)
 
@@ -486,6 +512,11 @@ __all__ = [  # noqa: RUF022 — grouped by category for maintainability
     "create_default_registry",
     "create_registry_with_defaults",
     "directive",
+    # Roles
+    "RoleHandler",
+    "RoleRegistry",
+    "RoleRegistryBuilder",
+    "create_default_role_registry",
     # Parser components
     "Lexer",
     "Parser",

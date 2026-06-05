@@ -29,7 +29,7 @@ Thread Safety:
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
 
 from patitas.location import SourceLocation
 from patitas.nodes import (
@@ -143,6 +143,7 @@ class InlineParsingHost(TokenNavHost, ConfigHost, Protocol):
         location: SourceLocation,
         start: int = 0,
         end: int | None = None,
+        depth: int = 0,
     ) -> tuple[Inline, ...]: ...
 
     # Emphasis (EmphasisParsingMixin).
@@ -155,10 +156,10 @@ class InlineParsingHost(TokenNavHost, ConfigHost, Protocol):
 
     # Links / images / footnote refs (LinkParsingMixin).
     def _try_parse_link(
-        self, text: str, pos: int, location: SourceLocation
+        self, text: str, pos: int, location: SourceLocation, last_bracket: int | None = None
     ) -> tuple[Link, int] | None: ...
     def _try_parse_image(
-        self, text: str, pos: int, location: SourceLocation
+        self, text: str, pos: int, location: SourceLocation, last_bracket: int | None = None
     ) -> tuple[Image, int] | None: ...
     def _try_parse_footnote_ref(
         self, text: str, pos: int, location: SourceLocation
@@ -194,6 +195,13 @@ class BlockParsingHost(TokenNavHost, Protocol):
     def _parse_directive(self) -> Directive: ...
     def _parse_footnote_def(self) -> FootnoteDef: ...
     def _try_parse_table(self, lines: list[str], location: SourceLocation) -> Table | None: ...
+
+    # Table helpers (TableParsingMixin) called across mixin boundaries.
+    def _starts_table_here(self, header_line: str) -> bool: ...
+    def _parse_table_row(self, line: str) -> list[str] | None: ...
+    def _parse_table_delimiter(
+        self, line: str, expected_cols: int
+    ) -> tuple[Literal["left", "center", "right"] | None, ...] | None: ...
 
     # Block core internals (BlockParsingCoreMixin).
     def _parse_atx_heading(self) -> Heading: ...

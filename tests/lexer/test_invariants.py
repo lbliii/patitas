@@ -28,21 +28,17 @@ class TestBasicInvariants:
 
     @given(st.text(max_size=500))
     @settings(max_examples=100)
-    def test_no_empty_value_for_content_tokens(self, source: str) -> None:
-        """Content tokens (non-structural) should not have empty values unexpectedly."""
+    def test_paragraph_lines_carry_nonempty_values(self, source: str) -> None:
+        """PARAGRAPH_LINE tokens must always carry non-empty text.
+
+        (Was a documentation-only no-op; now a real invariant: a paragraph line
+        with no content would be a structural token, not a PARAGRAPH_LINE.)
+        """
         tokens = list(Lexer(source).tokenize())
 
-        # These token types are allowed to have empty values
-        allowed_empty = {
-            TokenType.EOF,
-            TokenType.BLANK_LINE,
-        }
-
         for token in tokens:
-            if token.type not in allowed_empty:
-                # Most tokens with content should have non-empty values
-                # (though some edge cases exist)
-                pass  # This is more of a documentation than strict assertion
+            if token.type == TokenType.PARAGRAPH_LINE:
+                assert token.value != "", f"PARAGRAPH_LINE with empty value at {token.location}"
 
     @given(st.text(max_size=500))
     @settings(max_examples=100)
@@ -119,19 +115,21 @@ class TestContentPreservation:
     @given(st.text(alphabet=st.characters(blacklist_categories=("Cs",)), max_size=300))
     @settings(max_examples=100)
     def test_significant_chars_preserved(self, source: str) -> None:
-        """Significant characters from source should appear in token values."""
+        """Alphanumeric characters from source should survive into token values.
+
+        (Was a no-op `pass`; now asserts the preservation invariant for the
+        set of alnum characters actually present in the source.)
+        """
         if not source.strip():
             return  # Skip empty/whitespace-only
 
         tokens = list(Lexer(source).tokenize())
-        "".join(t.value for t in tokens if t.type != TokenType.EOF)
+        combined = "".join(t.value for t in tokens if t.type != TokenType.EOF)
 
-        # Check that alphanumeric characters are preserved
-        for char in source:
-            if char.isalnum():
-                # The character should appear somewhere in tokens
-                # (may be transformed but core content preserved)
-                pass  # Relaxed check - just ensure no crash
+        source_alnum = {c for c in source if c.isalnum()}
+        token_chars = set(combined)
+        missing = source_alnum - token_chars
+        assert not missing, f"alnum chars dropped during tokenization: {sorted(missing)!r}"
 
     @given(st.from_regex(r"[a-zA-Z0-9 \n]{1,100}", fullmatch=True))
     @settings(max_examples=50)

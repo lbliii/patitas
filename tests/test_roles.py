@@ -831,3 +831,106 @@ class TestDefaultRegistry:
             handler.render(node, sb)
             result = sb.build()
             assert result, f"Empty render result for {role_name}"
+
+
+# =============================================================================
+# End-to-end API Tests (issue #29): roles work out of the box via Markdown,
+# render(), and a custom registry can be supplied.
+# =============================================================================
+
+
+class TestRolesEndToEnd:
+    """Built-in roles must render through the public API without extra setup."""
+
+    def test_kbd_renders_out_of_the_box(self) -> None:
+        """Markdown()('{kbd}`Ctrl`') renders <kbd>, not an escaped span."""
+        from patitas import Markdown
+
+        html = Markdown()("{kbd}`Ctrl`")
+        assert "<kbd>Ctrl</kbd>" in html
+        assert 'class="role role-kbd"' not in html
+
+    def test_ref_renders_out_of_the_box(self) -> None:
+        """Markdown()('{ref}`target`') renders a reference link."""
+        from patitas import Markdown
+
+        html = Markdown()("{ref}`target`")
+        assert '<a class="reference internal" href="#target">target</a>' in html
+        assert 'class="role role-ref"' not in html
+
+    def test_kbd_multikey_renders(self) -> None:
+        """The kbd role still splits multi-key shortcuts end-to-end."""
+        from patitas import Markdown
+
+        html = Markdown()("{kbd}`Ctrl+C`")
+        assert "<kbd>Ctrl</kbd>+<kbd>C</kbd>" in html
+
+    def test_top_level_render_function_renders_roles(self) -> None:
+        """The top-level render() also wires the default role registry."""
+        from patitas import parse, render
+
+        html = render(parse("{kbd}`Ctrl`"))
+        assert "<kbd>Ctrl</kbd>" in html
+
+    def test_role_api_exported_from_top_level(self) -> None:
+        """The role API is importable from the top-level patitas package."""
+        from patitas import (
+            RoleHandler,
+            RoleRegistry,
+            RoleRegistryBuilder,
+            create_default_role_registry,
+        )
+
+        assert isinstance(create_default_role_registry(), RoleRegistry)
+        assert RoleHandler is not None
+        assert RoleRegistryBuilder is not None
+
+    def test_custom_role_registry_is_used(self) -> None:
+        """A custom RoleRegistryBuilder registry passed to Markdown is used."""
+        from patitas import Markdown, RoleRegistryBuilder
+        from patitas.nodes import Role
+
+        class ShoutRole:
+            names = ("shout",)
+            token_type = "shout"
+
+            def parse(self, name: str, content: str, location: SourceLocation) -> Role:
+                return Role(location=location, name=name, content=content)
+
+            def render(self, node: Role, sb: StringBuilder) -> None:
+                sb.append(f"<strong>{node.content.upper()}</strong>")
+
+        registry = RoleRegistryBuilder().register(ShoutRole()).build()
+        md = Markdown(role_registry=registry)
+
+        html = md("{shout}`hi`")
+        assert "<strong>HI</strong>" in html
+
+        # The custom registry replaces the defaults: built-in kbd is no longer
+        # registered and falls back to the default span rendering.
+        kbd_html = md("{kbd}`Ctrl`")
+        assert "<kbd>Ctrl</kbd>" not in kbd_html
+        assert 'class="role role-kbd"' in kbd_html
+
+    def test_custom_registry_extending_defaults(self) -> None:
+        """A custom registry built on the defaults keeps the built-in roles."""
+        from patitas import Markdown, RoleRegistryBuilder, create_default_role_registry
+        from patitas.nodes import Role
+
+        class ShoutRole:
+            names = ("shout",)
+            token_type = "shout"
+
+            def parse(self, name: str, content: str, location: SourceLocation) -> Role:
+                return Role(location=location, name=name, content=content)
+
+            def render(self, node: Role, sb: StringBuilder) -> None:
+                sb.append(f"<strong>{node.content.upper()}</strong>")
+
+        builder = RoleRegistryBuilder()
+        builder.register_all(list(create_default_role_registry().handlers))
+        builder.register(ShoutRole())
+        md = Markdown(role_registry=builder.build())
+
+        assert "<strong>HI</strong>" in md("{shout}`hi`")
+        assert "<kbd>Ctrl</kbd>" in md("{kbd}`Ctrl`")

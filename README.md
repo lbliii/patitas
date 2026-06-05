@@ -81,8 +81,12 @@ reference says otherwise.
 - **Plugins** — Tables, footnotes, math, strikethrough, task lists.
 - **Minimal dependencies** — PyYAML for frontmatter; core parser is pure Python.
 
-GFM-style features are available through plugins, but official GFM spec pass counts
-are not published yet. See [GFM compliance tracking](docs/gfm-compliance.md).
+GFM-style features are available through plugins. Measured GFM 0.29 compliance is
+**653/672 (97.2%)** with the GFM plugins enabled
+(`Markdown(plugins=["table", "strikethrough", "task_lists", "autolinks"])`); the
+remaining gap is the tagfilter extension, CommonMark 0.28-vs-0.31.2 emphasis
+drift, and a few autolink edge cases. See
+[GFM compliance tracking](docs/gfm-compliance.md).
 
 ---
 

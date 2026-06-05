@@ -352,7 +352,7 @@ def _skip_html_tag(text: str, pos: int) -> int:
     return pos
 
 
-def _find_closing_bracket(text: str, start: int) -> int:
+def _find_closing_bracket(text: str, start: int, last_bracket: int | None = None) -> int:
     """Find closing bracket ] while respecting code spans, HTML tags, and nested brackets.
 
     CommonMark: Code spans have higher precedence than link text brackets.
@@ -363,11 +363,21 @@ def _find_closing_bracket(text: str, start: int) -> int:
     Args:
         text: Full text to search
         start: Position to start searching (should be after opening [)
+        last_bracket: Precomputed index of the last ``]`` in ``text`` (``text.rfind("]")``),
+            or ``None`` if unknown. The presence of any ``]`` at/after a position is
+            monotonic, so when ``start`` is past the last ``]`` there cannot be a closing
+            bracket and we return ``-1`` in O(1). Passing this in (computed once per inline
+            text) keeps the overall closing-bracket search amortized O(n) instead of O(n^2).
 
     Returns:
         Position of closing ] or -1 if not found
 
     """
+    # Fast monotonic short-circuit: if there is no ``]`` at or after ``start``,
+    # the forward scan can only ever return -1, so skip it entirely.
+    if last_bracket is not None and start > last_bracket:
+        return -1
+
     pos = start
     text_len = len(text)
     bracket_depth = 0  # Track nested [ ]
@@ -537,7 +547,11 @@ class LinkParsingMixin:
         return FootnoteRef(location=location, identifier=identifier), bracket_pos + 1
 
     def _try_parse_link(
-        self, text: str, pos: int, location: SourceLocation
+        self,
+        text: str,
+        pos: int,
+        location: SourceLocation,
+        last_bracket: int | None = None,
     ) -> tuple[Link, int] | None:
         """Try to parse a link at position.
 
@@ -553,7 +567,7 @@ class LinkParsingMixin:
             return None
 
         # Find ] while respecting code spans (CommonMark precedence)
-        bracket_pos = _find_closing_bracket(text, pos + 1)
+        bracket_pos = _find_closing_bracket(text, pos + 1, last_bracket)
         if bracket_pos == -1:
             return None
 
@@ -621,7 +635,11 @@ class LinkParsingMixin:
         return None
 
     def _try_parse_image(
-        self, text: str, pos: int, location: SourceLocation
+        self,
+        text: str,
+        pos: int,
+        location: SourceLocation,
+        last_bracket: int | None = None,
     ) -> tuple[Image, int] | None:
         """Try to parse an image at position.
 
@@ -638,7 +656,7 @@ class LinkParsingMixin:
             return None
 
         # Find ] while respecting code spans (CommonMark precedence)
-        bracket_pos = _find_closing_bracket(text, pos + 2)
+        bracket_pos = _find_closing_bracket(text, pos + 2, last_bracket)
         if bracket_pos == -1:
             return None
 

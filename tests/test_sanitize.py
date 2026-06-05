@@ -218,7 +218,11 @@ class TestLimitDepth:
         # deeply nested inline content such as emphasis runs.
         import sys
 
-        doc = parse("*" * 400 + "x" + "*" * 400)
+        from patitas import Markdown
+
+        # Deep inline emphasis is now bounded by max_nesting_depth (issue #25), so
+        # raise the limit to actually build a deep inline AST for this test.
+        doc = Markdown(max_nesting_depth=2000).parse("*" * 400 + "x" + "*" * 400)
         original_limit = sys.getrecursionlimit()
         sys.setrecursionlimit(300)
         try:
