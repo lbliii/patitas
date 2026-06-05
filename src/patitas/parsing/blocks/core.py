@@ -696,6 +696,13 @@ class BlockParsingCoreMixin:
                     pending_setext_underline = stripped_line
                     self._advance()
                     break
+                # GFM: a table can interrupt a paragraph. If we have already
+                # collected paragraph text and the current line begins a valid
+                # table (a row immediately followed by a matching delimiter row),
+                # stop the paragraph here and let the table be parsed as its own
+                # block on the next dispatch.
+                if self._tables_enabled and lines and self._starts_table_here(stripped_line):
+                    break
                 lines.append(stripped_line)
                 last_line_was_indented_code = False
                 self._advance()
@@ -858,3 +865,22 @@ class BlockParsingCoreMixin:
             return False
         # All remaining characters must be the same (= or -)
         return all(c == char for c in stripped.rstrip())
+
+    def _starts_table_here(self, header_line: str) -> bool:
+        """Whether ``header_line`` begins a GFM table at the current token.
+
+        Used to let a table interrupt a paragraph: returns True only when
+        ``header_line`` is a valid table row AND the immediately following
+        PARAGRAPH_LINE token is a valid delimiter row whose column count
+        matches the header. Does not consume any tokens.
+        """
+        if "|" not in header_line:
+            return False
+        header_cells = self._parse_table_row(header_line)
+        if not header_cells:
+            return False
+        next_token = self._peek()
+        if next_token is None or next_token.type != TokenType.PARAGRAPH_LINE:
+            return False
+        delimiter = next_token.value.strip()
+        return self._parse_table_delimiter(delimiter, len(header_cells)) is not None
