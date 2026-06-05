@@ -58,6 +58,7 @@ from patitas.parsing.containers import (
     ContainerFrame,
     ContainerType,
 )
+from patitas.parsing.protocols import ParserHost, TokenNavHost
 from patitas.tokens import TokenType
 
 if TYPE_CHECKING:
@@ -89,12 +90,12 @@ class ListParsingMixin:
     """
 
     _source: str
-    _tokens: list
+    _tokens: list[Token]
     _pos: int
     _current: Token | None
     _containers: ContainerStack
 
-    def _parse_list(self, parent_indent: int = -1) -> List:
+    def _parse_list(self: ParserHost, parent_indent: int = -1) -> List:
         """Parse list (unordered or ordered) with nested list support.
 
         Args:
@@ -166,11 +167,16 @@ class ListParsingMixin:
             if token.type == TokenType.BLANK_LINE:
                 # Phase 3.2: Use stack-based loose detection
                 self._containers.mark_loose()
-                while not self._at_end() and self._current.type == TokenType.BLANK_LINE:
+                while (
+                    not self._at_end()
+                    and (cur := self._current) is not None
+                    and cur.type == TokenType.BLANK_LINE
+                ):
                     self._advance()
                 if self._at_end():
                     break
                 token = self._current
+                assert token is not None
                 if token.type != TokenType.LIST_ITEM_MARKER:
                     break
 
@@ -252,7 +258,7 @@ class ListParsingMixin:
         )
 
     def _parse_list_item(
-        self,
+        self: ParserHost,
         marker_token: Token,
         start_indent: int,
         content_indent: int,
@@ -293,7 +299,7 @@ class ListParsingMixin:
             self._nesting_depth -= 1
 
     def _parse_list_item_impl(
-        self,
+        self: ParserHost,
         marker_token: Token,
         start_indent: int,
         content_indent: int,
@@ -580,7 +586,11 @@ class ListParsingMixin:
 
                 self._advance()
                 # Consume consecutive blank lines
-                while not self._at_end() and self._current.type == TokenType.BLANK_LINE:
+                while (
+                    not self._at_end()
+                    and (cur := self._current) is not None
+                    and cur.type == TokenType.BLANK_LINE
+                ):
                     self._advance()
 
                 if self._at_end():
@@ -737,6 +747,7 @@ class ListParsingMixin:
                     # This makes the outer list loose
                     if not self._at_end():
                         next_tok = self._current
+                        assert next_tok is not None
                         # Check if there was a blank line before current token by looking at source
                         if next_tok.location.offset > 0:
                             # Find the line start
@@ -769,6 +780,7 @@ class ListParsingMixin:
                     self._advance()
                     if not self._at_end():
                         next_tok = self._current
+                        assert next_tok is not None
                         if next_tok.type == TokenType.PARAGRAPH_LINE:
                             marker_content += " " + next_tok.value.lstrip()
                             self._advance()
@@ -826,7 +838,9 @@ class ListParsingMixin:
             checked=checked,
         )
 
-    def _calculate_actual_content_indent(self, tok: Token, marker_stripped: str) -> int:
+    def _calculate_actual_content_indent(
+        self: TokenNavHost, tok: Token, marker_stripped: str
+    ) -> int:
         """Calculate actual content indent from first content line.
 
         CommonMark: The content indent is the column position where the first
@@ -865,7 +879,7 @@ class ListParsingMixin:
         return marker_end_col + spaces_after
 
     def _handle_indented_code_in_item(
-        self,
+        self: ParserHost,
         tok: Token,
         marker_token: Token,
         content_lines: list[str],
@@ -987,7 +1001,7 @@ class ListParsingMixin:
         return get_marker_indent(marker_value)
 
     def _parse_nested_list_from_indented_code(
-        self, token: Token, original_indent: int, parent_content_indent: int
+        self: ParserHost, token: Token, original_indent: int, parent_content_indent: int
     ) -> List | None:
         """Parse a nested list from an INDENTED_CODE token containing a list marker."""
         return parse_nested_list_from_indented_code(

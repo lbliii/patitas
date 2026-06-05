@@ -6,6 +6,7 @@ Handles MyST-style directive blocks with contract validation.
 from typing import TYPE_CHECKING
 
 from patitas.nodes import Block, Directive
+from patitas.parsing.protocols import ParserHost
 from patitas.tokens import TokenType
 
 if TYPE_CHECKING:
@@ -35,7 +36,7 @@ class DirectiveParsingMixin:
     # _directive_stack: list[str]
     # _strict_contracts: bool
 
-    def _parse_directive(self) -> Directive:
+    def _parse_directive(self: ParserHost) -> Directive:
         """Parse directive block (:::{name} ... :::).
 
         Returns Directive with typed options. If a handler is registered,

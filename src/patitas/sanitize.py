@@ -243,7 +243,14 @@ def limit_depth(max_depth: int = 10) -> Policy:
         new_children = tuple(prune(c, cur) for c in children)
         return dataclasses.replace(node, children=new_children)
 
-    return Policy(lambda d: prune(d, 0))
+    def _policy(doc: Document) -> Document:
+        # prune() preserves the node type it is given; the root is a Document,
+        # so the result is too. assert keeps the static type precise.
+        result = prune(doc, 0)
+        assert isinstance(result, Document)
+        return result
+
+    return Policy(_policy)
 
 
 # Pre-built policy sets.

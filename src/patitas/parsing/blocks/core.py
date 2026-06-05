@@ -25,6 +25,7 @@ from patitas.parsing.blocks.quote_token_reuse import (
     can_use_token_reuse,
     parse_blockquote_with_token_reuse,
 )
+from patitas.parsing.protocols import BlockParsingHost, ParserHost, TokenNavHost
 from patitas.tokens import TokenType
 
 if TYPE_CHECKING:
@@ -120,7 +121,7 @@ class BlockParsingCoreMixin:
     # _current: Token | None
     # _tables_enabled: bool
 
-    def _parse_block(self) -> Block | None:
+    def _parse_block(self: ParserHost) -> Block | None:
         """Parse a single block element."""
         if self._at_end():
             return None
@@ -183,7 +184,7 @@ class BlockParsingCoreMixin:
                 self._advance()
                 return None
 
-    def _parse_atx_heading(self) -> Heading:
+    def _parse_atx_heading(self: ParserHost) -> Heading:
         """Parse ATX heading (# Heading).
 
         Supports MyST-compatible explicit anchor syntax: ## Title {#custom-id}
@@ -218,13 +219,15 @@ class BlockParsingCoreMixin:
 
         return Heading(
             location=token.location,
-            level=level,  # type: ignore[arg-type]
+            level=level,  # ty: ignore[invalid-argument-type]
             children=children,
             style="atx",
             explicit_id=explicit_id,
         )
 
-    def _parse_fenced_code(self, override_fence_indent: int | None = None) -> FencedCode:
+    def _parse_fenced_code(
+        self: TokenNavHost, override_fence_indent: int | None = None
+    ) -> FencedCode:
         """Parse fenced code block with zero-copy coordinates.
 
         Args:
@@ -298,11 +301,11 @@ class BlockParsingCoreMixin:
             source_start=content_start if content_start is not None else 0,
             source_end=content_end,
             info=info,
-            marker=marker,  # type: ignore[arg-type]
+            marker=marker,  # ty: ignore[invalid-argument-type]
             fence_indent=fence_indent,
         )
 
-    def _parse_orphaned_fence_content(self) -> Paragraph:
+    def _parse_orphaned_fence_content(self: ParserHost) -> Paragraph:
         """Parse orphaned FENCED_CODE_CONTENT as paragraph.
 
         This happens when a fenced code block is interrupted (e.g., by block quote
@@ -327,7 +330,7 @@ class BlockParsingCoreMixin:
         children = self._parse_inline(content, token.location)
         return Paragraph(location=token.location, children=children)
 
-    def _parse_orphaned_fence_end(self) -> FencedCode:
+    def _parse_orphaned_fence_end(self: TokenNavHost) -> FencedCode:
         """Parse orphaned FENCED_CODE_END as new unclosed fenced code block.
 
         This happens when a fenced code block is interrupted, and the closing fence
@@ -347,11 +350,11 @@ class BlockParsingCoreMixin:
             source_start=0,
             source_end=0,
             info=None,
-            marker=marker,  # type: ignore[arg-type]
+            marker=marker,  # ty: ignore[invalid-argument-type]
             fence_indent=0,
         )
 
-    def _parse_thematic_break(self) -> ThematicBreak:
+    def _parse_thematic_break(self: TokenNavHost) -> ThematicBreak:
         """Parse thematic break (---, ***, ___)."""
         token = self._current
         assert token is not None and token.type == TokenType.THEMATIC_BREAK
@@ -359,7 +362,7 @@ class BlockParsingCoreMixin:
 
         return ThematicBreak(location=token.location)
 
-    def _parse_html_block(self) -> HtmlBlock:
+    def _parse_html_block(self: TokenNavHost) -> HtmlBlock:
         """Parse HTML block (raw HTML content passed through unchanged)."""
         token = self._current
         assert token is not None and token.type == TokenType.HTML_BLOCK
@@ -367,7 +370,7 @@ class BlockParsingCoreMixin:
 
         return HtmlBlock(location=token.location, html=token.value)
 
-    def _parse_block_quote(self) -> BlockQuote:
+    def _parse_block_quote(self: ParserHost) -> BlockQuote:
         """Parse block quote (> quoted).
 
         CommonMark 5.1: Block quotes can contain any block-level content,
@@ -634,7 +637,7 @@ class BlockParsingCoreMixin:
 
         return BlockQuote(location=start_token.location, children=())
 
-    def _parse_indented_code(self) -> IndentedCode:
+    def _parse_indented_code(self: TokenNavHost) -> IndentedCode:
         """Parse indented code block."""
         start_token = self._current
         assert start_token is not None and start_token.type == TokenType.INDENTED_CODE
@@ -702,7 +705,7 @@ class BlockParsingCoreMixin:
 
         return IndentedCode(location=start_token.location, code=code)
 
-    def _parse_paragraph(self) -> Paragraph | Table | Heading:
+    def _parse_paragraph(self: ParserHost) -> Paragraph | Table | Heading:
         """Parse paragraph (consecutive text lines), table, or setext heading.
 
         If the second line is a setext underline (=== or ---), returns Heading.
@@ -906,7 +909,7 @@ class BlockParsingCoreMixin:
         # All remaining characters must be the same (= or -)
         return all(c == char for c in stripped.rstrip())
 
-    def _starts_table_here(self, header_line: str) -> bool:
+    def _starts_table_here(self: BlockParsingHost, header_line: str) -> bool:
         """Whether ``header_line`` begins a GFM table at the current token.
 
         Used to let a table interrupt a paragraph: returns True only when

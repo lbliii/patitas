@@ -4,7 +4,7 @@ Handles parsing of block elements (thematic breaks, fenced code, block quotes,
 indented code) that appear within list items.
 """
 
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING
 
 from patitas.nodes import (
     BlockQuote,
@@ -16,24 +16,9 @@ from patitas.nodes import (
 from patitas.tokens import TokenType
 
 if TYPE_CHECKING:
-    from patitas.nodes import Block, Inline
+    from patitas.nodes import Block
+    from patitas.parsing.protocols import ParserHost as ParserProtocol
     from patitas.tokens import Token
-
-
-class ParserProtocol(Protocol):
-    """Protocol for parser methods needed by block handlers."""
-
-    _source: str
-
-    def _at_end(self) -> bool: ...
-    def _advance(self) -> Token | None: ...
-    def _parse_inline(self, text: str, location: object) -> tuple[Inline, ...]: ...
-    def _parse_fenced_code(self, override_fence_indent: int | None = None) -> FencedCode: ...
-    def _get_line_at(self, offset: int) -> str: ...
-    def _strip_columns(self, text: str, count: int) -> str: ...
-
-    @property
-    def _current(self) -> Token | None: ...
 
 
 def handle_thematic_break(

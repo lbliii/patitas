@@ -2,6 +2,7 @@
 
 from collections.abc import Iterator
 
+from patitas.lexer.classifiers.protocols import LexerClassifierHost
 from patitas.parsing.charsets import (
     FENCE_CHARS,
     THEMATIC_BREAK_CHARS,
@@ -31,7 +32,7 @@ class ListClassifierMixin:
         raise NotImplementedError
 
     def _try_classify_list_marker(
-        self, content: str, line_start: int, indent: int = 0
+        self: LexerClassifierHost, content: str, line_start: int, indent: int = 0
     ) -> Iterator[Token] | None:
         """Try to classify content as list item marker."""
         if not content:
@@ -80,7 +81,7 @@ class ListClassifierMixin:
         return None
 
     def _yield_list_marker_and_content(
-        self, marker: str, remaining: str, line_start: int, indent: int = 0
+        self: LexerClassifierHost, marker: str, remaining: str, line_start: int, indent: int = 0
     ) -> Iterator[Token]:
         """Yield list marker token and optional content tokens.
 
@@ -117,31 +118,23 @@ class ListClassifierMixin:
         # Check for block-level elements in remaining content
         # Note: Methods below are provided by other classifier mixins when composed
         if stripped.startswith("#"):
-            token = self._try_classify_atx_heading(  # type: ignore[attr-defined]
-                stripped, line_start, content_col
-            )
+            token = self._try_classify_atx_heading(stripped, line_start, content_col)
             if token:
                 yield token
                 return
 
         if stripped.startswith(">"):
-            yield from self._classify_block_quote(  # type: ignore[attr-defined]
-                stripped, line_start, content_col
-            )
+            yield from self._classify_block_quote(stripped, line_start, content_col)
             return
 
         if stripped[0] in THEMATIC_BREAK_CHARS:
-            token = self._try_classify_thematic_break(  # type: ignore[attr-defined]
-                stripped, line_start, content_col
-            )
+            token = self._try_classify_thematic_break(stripped, line_start, content_col)
             if token:
                 yield token
                 return
 
         if stripped[0] in FENCE_CHARS:
-            token = self._try_classify_fence_start(  # type: ignore[attr-defined]
-                stripped, line_start, content_col
-            )
+            token = self._try_classify_fence_start(stripped, line_start, content_col)
             if token:
                 yield token
                 return
