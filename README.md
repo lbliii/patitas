@@ -174,6 +174,20 @@ Patitas uses a hand-written finite state machine lexer:
 - **Linear time guaranteed** — Processing time scales with input length
 - **Safe for untrusted input** — Use in web apps, APIs, user-facing tools
 
+> ⚠️ **`render()` does not sanitize output.** The default renderer is
+> CommonMark-compliant and passes raw HTML and `javascript:`/`data:` URLs
+> through verbatim. For untrusted content, sanitize the AST before rendering
+> (or render to plain text with `render_llm()`):
+
+```python
+from patitas import parse, render, sanitize
+from patitas.sanitize import web_safe
+
+doc = parse(untrusted_markdown)
+# Strip HTML + disallowed URL schemes, then render HTML
+html = render(sanitize(doc, policy=web_safe))
+```
+
 [Learn more about Patitas security →](docs/security.md)
 
 ---
