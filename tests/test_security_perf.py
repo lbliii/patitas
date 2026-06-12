@@ -98,3 +98,47 @@ def test_single_line_blockquote_lexes_without_recursion() -> None:
     assert len(markers) == 100_000
     # Lexing must be linear, not the former O(n^2) re-expansion of the tail.
     assert elapsed < 3.0, f"lexing 100k '>' took {elapsed:.2f}s (expected < 3s)"
+
+
+# ---------------------------------------------------------------------------
+# Bracket-heavy inputs that remain super-linear (issue #39).
+#
+# The inline bracket scan is still O(n^2) on adversarial input (documented under
+# "Known limitations" in docs/security.md; the README no longer claims strict
+# O(n)). These do NOT assert a fast/linear bound -- that would be dishonest and
+# fragile. They assert only that the parser *completes* within a very generous
+# bound, so the inputs stay exercised and any blow-up to worse-than-quadratic
+# (or exponential) behavior is caught as a regression.
+# ---------------------------------------------------------------------------
+
+# Modest size: large enough to be clearly quadratic, small enough that the
+# generous bound below leaves ample headroom for noisy CI.
+_PATHOLOGICAL_N = 2000
+
+# Generous upper bound (seconds). Locally these complete in well under a second
+# at this size; the bound only fails if the path degrades badly past quadratic.
+_PATHOLOGICAL_BUDGET = 10.0
+
+
+@pytest.mark.parametrize(
+    ("label", "make_source"),
+    [
+        ("unmatched-open", lambda n: "[" * n + "x]"),
+        ("balanced-brackets", lambda n: "[" * n + "x" + "]" * n),
+        ("empty-link-open-paren", lambda n: "[](" * n),
+    ],
+)
+def test_bracket_heavy_input_completes_within_budget(md: Markdown, label: str, make_source) -> None:
+    """Bracket-heavy adversarial inputs complete within a generous bound.
+
+    The inline bracket scan is O(n^2) here (see docs/security.md "Known
+    limitations"), so this only guards against a worse-than-quadratic blow-up,
+    not against quadratic time itself.
+    """
+    source = make_source(_PATHOLOGICAL_N)
+    start = time.perf_counter()
+    md(source)
+    elapsed = time.perf_counter() - start
+    assert elapsed < _PATHOLOGICAL_BUDGET, (
+        f"{label} (n={_PATHOLOGICAL_N}) took {elapsed:.2f}s (expected < {_PATHOLOGICAL_BUDGET}s)"
+    )
