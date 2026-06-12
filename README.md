@@ -166,13 +166,15 @@ Traditional Markdown parsers use regex patterns vulnerable to catastrophic backt
 # Malicious input that can freeze regex-based parsers
 evil = "a](" + "\\)" * 10000
 
-# Patitas: completes in milliseconds (O(n) guaranteed)
+# Patitas: completes in milliseconds (no catastrophic backtracking)
 ```
 
 Patitas uses a hand-written finite state machine lexer:
 - **Single character lookahead** — No backtracking, ever
-- **Linear time guaranteed** — Processing time scales with input length
-- **Safe for untrusted input** — Use in web apps, APIs, user-facing tools
+- **Linear time for typical input** — a few non-lexer paths remain super-linear on
+  adversarial input; see [Known limitations](docs/security.md#known-limitations)
+- **Safe for untrusted input** — pair with input-size limits and timeouts; see
+  [Recommendations](docs/security.md#recommendations)
 
 > ⚠️ **`render()` does not sanitize output.** The default renderer is
 > CommonMark-compliant and passes raw HTML and `javascript:`/`data:` URLs

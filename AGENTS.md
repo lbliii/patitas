@@ -4,7 +4,7 @@
 Patitas exists to prove that a pure-Python Markdown parser can be CommonMark-compliant, ReDoS-safe, typed, immutable, extension-friendly, and ready for Python 3.14 free-threading without coupling itself to Bengal, Purr, Kida, or any other orchestrator.
 
 ## Non-Negotiables
-- Preserve CommonMark 0.31.2 compliance and the security promise of O(n), no-backtracking parsing.
+- Preserve CommonMark 0.31.2 compliance and the security promise of no catastrophic backtracking (linear time for typical input; a few non-lexer paths remain super-linear on adversarial input — see docs/security.md#known-limitations).
 - Keep AST nodes frozen, slotted, typed, and safe to share across threads.
 - Keep parser and renderer state per-call or ContextVar-scoped; do not introduce shared mutable runtime state.
 - Keep runtime dependencies minimal and explicit; optional features stay optional.

@@ -3,12 +3,15 @@
 These exercise the same three vectors as ``TestPreviouslyOpenHardeningGaps`` in
 ``tests/test_adversarial_input.py`` but at larger sizes that would have crashed or
 hung before the fix. They are marked ``slow`` so they stay out of the default fast
-path; CI's primary step runs them. Every bound here must be *fast* and *bounded* --
-the whole point is that the fixes make these inputs cheap, not that they take a long
-time to fail.
+path; the nightly ``slow-tests`` CI job runs them. Most bounds here must be *fast*
+and *bounded* -- the fixes make those inputs cheap, not slow to fail. The exception
+is the bracket-scan regression below (Vector 1), which only guards a generous upper
+bound on a path that is still O(n^2) by design.
 
 Vectors:
-  1. O(n^2) inline bracket scan -> now amortized O(n).
+  1. O(n^2) inline bracket scan -> the unmatched-``[`` case (no closing bracket) is
+     now linear (#36); other bracket-heavy inputs remain O(n^2) but bounded and
+     documented (see issue #39 and docs/security.md#known-limitations).
   2. Render-time recursion on deeply nested inline emphasis -> now bounded by
      ``max_nesting_depth`` (catchable ParseError, never RecursionError).
   3. Single-line ``>`` * N lexer recursion -> lexer is now iterative; the parser
@@ -98,3 +101,47 @@ def test_single_line_blockquote_lexes_without_recursion() -> None:
     assert len(markers) == 100_000
     # Lexing must be linear, not the former O(n^2) re-expansion of the tail.
     assert elapsed < 3.0, f"lexing 100k '>' took {elapsed:.2f}s (expected < 3s)"
+
+
+# ---------------------------------------------------------------------------
+# Bracket-heavy inputs that remain super-linear (issue #39).
+#
+# The inline bracket scan is still O(n^2) on adversarial input (documented under
+# "Known limitations" in docs/security.md; the README no longer claims strict
+# O(n)). These do NOT assert a fast/linear bound -- that would be dishonest and
+# fragile. They assert only that the parser *completes* within a very generous
+# bound, so the inputs stay exercised and any blow-up to worse-than-quadratic
+# (or exponential) behavior is caught as a regression.
+# ---------------------------------------------------------------------------
+
+# Modest size: large enough to be clearly quadratic, small enough that the
+# generous bound below leaves ample headroom for noisy CI.
+_PATHOLOGICAL_N = 2000
+
+# Generous upper bound (seconds). Locally these complete in well under a second
+# at this size; the bound only fails if the path degrades badly past quadratic.
+_PATHOLOGICAL_BUDGET = 10.0
+
+
+@pytest.mark.parametrize(
+    ("label", "make_source"),
+    [
+        ("unmatched-open", lambda n: "[" * n + "x]"),
+        ("balanced-brackets", lambda n: "[" * n + "x" + "]" * n),
+        ("empty-link-open-paren", lambda n: "[](" * n),
+    ],
+)
+def test_bracket_heavy_input_completes_within_budget(md: Markdown, label: str, make_source) -> None:
+    """Bracket-heavy adversarial inputs complete within a generous bound.
+
+    The inline bracket scan is O(n^2) here (see docs/security.md "Known
+    limitations"), so this only guards against a worse-than-quadratic blow-up,
+    not against quadratic time itself.
+    """
+    source = make_source(_PATHOLOGICAL_N)
+    start = time.perf_counter()
+    md(source)
+    elapsed = time.perf_counter() - start
+    assert elapsed < _PATHOLOGICAL_BUDGET, (
+        f"{label} (n={_PATHOLOGICAL_N}) took {elapsed:.2f}s (expected < {_PATHOLOGICAL_BUDGET}s)"
+    )
