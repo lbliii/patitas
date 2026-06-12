@@ -3,12 +3,15 @@
 These exercise the same three vectors as ``TestPreviouslyOpenHardeningGaps`` in
 ``tests/test_adversarial_input.py`` but at larger sizes that would have crashed or
 hung before the fix. They are marked ``slow`` so they stay out of the default fast
-path; CI's primary step runs them. Every bound here must be *fast* and *bounded* --
-the whole point is that the fixes make these inputs cheap, not that they take a long
-time to fail.
+path; the nightly ``slow-tests`` CI job runs them. Most bounds here must be *fast*
+and *bounded* -- the fixes make those inputs cheap, not slow to fail. The exception
+is the bracket-scan regression below (Vector 1), which only guards a generous upper
+bound on a path that is still O(n^2) by design.
 
 Vectors:
-  1. O(n^2) inline bracket scan -> now amortized O(n).
+  1. O(n^2) inline bracket scan -> the unmatched-``[`` case (no closing bracket) is
+     now linear (#36); other bracket-heavy inputs remain O(n^2) but bounded and
+     documented (see issue #39 and docs/security.md#known-limitations).
   2. Render-time recursion on deeply nested inline emphasis -> now bounded by
      ``max_nesting_depth`` (catchable ParseError, never RecursionError).
   3. Single-line ``>`` * N lexer recursion -> lexer is now iterative; the parser
