@@ -143,3 +143,63 @@ class TestConfigHashCacheIsolation:
 
         assert isinstance(doc2.children[0], Table)
         assert isinstance(doc1.children[0], Paragraph)
+
+    def test_different_max_nesting_depth_different_hash(self) -> None:
+        """Configs differing only in max_nesting_depth hash differently."""
+        config_deep = ParseConfig(max_nesting_depth=100)
+        config_shallow = ParseConfig(max_nesting_depth=5)
+        assert hash_config(config_deep) != hash_config(config_shallow)
+
+    def test_different_max_nesting_depth_no_shared_cache_entry(self) -> None:
+        """A doc cached at one depth limit is not reused at another."""
+        from patitas.location import SourceLocation
+
+        cache = DictParseCache()
+        loc = SourceLocation(1, 1, 0, 5, None)
+        doc = Document(location=loc, children=())
+
+        deep_hash = hash_config(ParseConfig(max_nesting_depth=100))
+        shallow_hash = hash_config(ParseConfig(max_nesting_depth=5))
+
+        cache.put("content", deep_hash, doc)
+        # The shallow-depth config must miss; it has a distinct config hash.
+        assert cache.get("content", shallow_hash) is None
+        assert cache.get("content", deep_hash) is doc
+
+    def test_semantically_identical_registries_same_hash(self) -> None:
+        """Registries with the same directive names hash identically.
+
+        Hashing by registry contents (sorted names) rather than id() means
+        two independently built but equivalent registries share a cache key.
+        """
+        from patitas.directives.registry import (
+            create_default_registry,
+            create_registry_with_defaults,
+        )
+
+        reg_a = create_default_registry()
+        reg_b = create_registry_with_defaults().build()
+
+        assert reg_a is not reg_b
+        config_a = ParseConfig(directive_registry=reg_a)
+        config_b = ParseConfig(directive_registry=reg_b)
+        assert hash_config(config_a) == hash_config(config_b)
+
+    def test_different_registries_different_hash(self) -> None:
+        """Registries with different directive names hash differently."""
+        from patitas.directives.registry import (
+            create_default_registry,
+            create_registry_with_defaults,
+        )
+
+        class _StubDirective:
+            names = ("custom-stub",)
+            token_type = "custom-stub"
+
+        default = create_default_registry()
+        extended = create_registry_with_defaults()
+        extended.register(_StubDirective())
+
+        config_default = ParseConfig(directive_registry=default)
+        config_extended = ParseConfig(directive_registry=extended.build())
+        assert hash_config(config_default) != hash_config(config_extended)

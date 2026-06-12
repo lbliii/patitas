@@ -23,6 +23,7 @@ from patitas.utils.hashing import hash_str
 
 if TYPE_CHECKING:
     from patitas.config import ParseConfig
+    from patitas.directives.registry import DirectiveRegistry
     from patitas.nodes import Document
 
 
@@ -97,9 +98,34 @@ def hash_config(config: ParseConfig) -> str:
         str(config.math_enabled),
         str(config.autolinks_enabled),
         str(config.strict_contracts),
-        str(id(config.directive_registry)),
+        # max_nesting_depth changes parse behavior (deeper nesting raises
+        # ParseError), so configs differing only in depth must not collide.
+        str(config.max_nesting_depth),
+        # Hash the registry by its registered directive names (semantic key)
+        # rather than id(): id() is non-deterministic across processes and
+        # gives distinct keys to semantically identical registries. None ->
+        # "" keeps the no-registry case stable.
+        _registry_key(config.directive_registry),
     )
     return hash_str("|".join(parts))
+
+
+def _registry_key(registry: DirectiveRegistry | None) -> str:
+    """Build a deterministic key from a directive registry's contents.
+
+    Uses the sorted set of registered directive names so that two
+    semantically identical registries produce the same cache key, regardless
+    of construction order or object identity.
+
+    Args:
+        registry: Directive registry to key, or None.
+
+    Returns:
+        Comma-joined sorted directive names, or "" when registry is None.
+    """
+    if registry is None:
+        return ""
+    return ",".join(sorted(registry.names))
 
 
 __all__ = [
