@@ -75,7 +75,7 @@ class BlockScannerMixin:
 
     # Classifier methods (provided by classifier mixins)
     def _try_classify_fence_start(
-        self, content: str, line_start: int, indent: int = 0
+        self, content: str, line_start: int, indent: int = 0, *, change_mode: bool = True
     ) -> Token | None:
         raise NotImplementedError
 

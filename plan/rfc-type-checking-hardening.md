@@ -1,8 +1,15 @@
 # RFC: Type Checking Hardening for Patitas
 
-**Status:** Draft  
+**Status:** Superseded  
 **Created:** 2026-01-12  
 **Authors:** AI Assistant  
+
+> **Superseded:** Patitas no longer targets `mypy --strict`. Type checking is now
+> governed by `ty` (Astral) and enforced as a real CI gate (pre-commit + `make ty`)
+> via PR #34. This RFC is retained for its decision history; the `mypy`-specific
+> goal and success criteria below no longer reflect the project's type-checking
+> strategy. Several of the code-grounded sub-fixes it identified have since been
+> addressed (e.g., the `_try_classify_fence_start` mixin signature alignment).
 
 ---
 
