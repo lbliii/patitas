@@ -81,7 +81,27 @@ Output:
 </ul>
 ```
 
-## Step 4: All-in-One
+> ⚠️ **`render()` does not sanitize output.** It is CommonMark-compliant and
+> passes raw HTML and `javascript:`/`data:` URLs through verbatim. For untrusted
+> content, sanitize the AST first (or render to plain text with `render_llm()`).
+
+## Step 4: Sanitize Untrusted Input
+
+When rendering Markdown you did not write, strip HTML and disallowed URL schemes
+before rendering to HTML:
+
+```python
+from patitas import parse, render, sanitize
+from patitas.sanitize import web_safe
+
+doc = parse(untrusted_markdown)
+html = render(sanitize(doc, policy=web_safe))
+```
+
+See [[docs/extending/llm-safety|LLM Safety]] for sanitization policies
+(`web_safe`, `llm_safe`, `strict`) and the `render_llm()` pipeline.
+
+## Step 5: All-in-One
 
 For simple use cases, use the `Markdown` class:
 
