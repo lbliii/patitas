@@ -261,6 +261,11 @@ class TestFootnoteEdgeCases:
         assert 'id="fnref-note-1"' in html
         assert 'id="fnref-note-2"' in html
         assert 'id="fnref-note-3"' in html
+        assert 'href="#fnref-note-1"' in html
+        assert 'href="#fnref-note-2"' in html
+        assert 'href="#fnref-note-3"' in html
+        assert "↩<sup>2</sup>" in html
+        assert "↩<sup>3</sup>" in html
 
     def test_footnote_ref_without_definition(self, loc: SourceLocation) -> None:
         """Footnote reference without definition still renders (no crash)."""

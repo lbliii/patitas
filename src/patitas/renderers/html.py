@@ -614,10 +614,16 @@ class HtmlRenderer:
             if identifier in ctx.footnote_defs and identifier not in rendered_footnotes:
                 rendered_footnotes.add(identifier)
                 fn_def = ctx.footnote_defs[identifier]
-                sb.append(f'<li id="fn-{html_escape(identifier)}">\n')
+                esc_id = html_escape(identifier)
+                sb.append(f'<li id="fn-{esc_id}">\n')
                 for child in fn_def.children:
                     self._render_block(child, sb, ctx)
-                sb.append(f'<a href="#fnref-{html_escape(identifier)}-1">↩</a>\n')
+                backref_num = 0
+                for ref_num, ref_identifier in enumerate(ctx.footnote_refs, start=1):
+                    if ref_identifier == identifier:
+                        backref_num += 1
+                        label = "↩" if backref_num == 1 else f"↩<sup>{backref_num}</sup>"
+                        sb.append(f'<a href="#fnref-{esc_id}-{ref_num}">{label}</a>\n')
                 sb.append("</li>\n")
 
         sb.append("</ol>\n")
