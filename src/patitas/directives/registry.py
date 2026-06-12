@@ -16,6 +16,8 @@ Example:
 """
 
 import threading
+from collections.abc import Mapping
+from types import MappingProxyType
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -29,10 +31,15 @@ class DirectiveRegistry:
     and rendering.
 
     Thread Safety:
-        Immutable after creation. Safe to share across threads.
+        Truly immutable after creation (uses MappingProxyType).
+        Safe to share across threads.
     """
 
     __slots__ = ("_by_name", "_by_token_type", "_handlers")
+
+    _handlers: tuple[DirectiveHandler, ...]
+    _by_name: Mapping[str, DirectiveHandler]
+    _by_token_type: Mapping[str, DirectiveHandler]
 
     def __init__(
         self,
@@ -45,8 +52,9 @@ class DirectiveRegistry:
         Use DirectiveRegistryBuilder to create instances.
         """
         self._handlers = handlers
-        self._by_name = by_name
-        self._by_token_type = by_token_type
+        # Wrap in MappingProxyType for true immutability
+        self._by_name = MappingProxyType(by_name)
+        self._by_token_type = MappingProxyType(by_token_type)
 
     def get(self, name: str) -> DirectiveHandler | None:
         """Get handler for directive name.
