@@ -10,7 +10,9 @@ These tests would have caught the "table" vs "tables" naming mismatch.
 
 from typing import ClassVar
 
-from patitas import Markdown, ParseConfig
+import pytest
+
+from patitas import HtmlRenderer, Lexer, Markdown, ParseConfig, Parser
 from patitas.nodes import (
     FootnoteDef,
     FootnoteRef,
@@ -19,7 +21,7 @@ from patitas.nodes import (
     Strikethrough,
     Table,
 )
-from patitas.plugins import BUILTIN_PLUGINS, PatitasPlugin
+from patitas.plugins import BUILTIN_PLUGINS, PatitasPlugin, apply_plugins
 
 
 class TestPluginNameConsistency:
@@ -198,6 +200,11 @@ class TestPluginCombinations:
 
 class TestPluginErrorHandling:
     """Test plugin error handling."""
+
+    def test_apply_plugins_warns_that_it_is_deprecated(self) -> None:
+        """The backward-compatible no-op should direct users to Markdown."""
+        with pytest.warns(DeprecationWarning, match="Markdown"):
+            apply_plugins([], Lexer, Parser, HtmlRenderer)
 
     def test_unknown_plugin_name_in_markdown(self) -> None:
         """Unknown plugin names should not crash, just be ignored."""

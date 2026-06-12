@@ -40,6 +40,7 @@ Multiple threads can use the same plugin instances concurrently.
 
 """
 
+import warnings
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
@@ -147,8 +148,12 @@ def apply_plugins(
         renderer_class: Renderer class to extend (unused)
 
     """
-    # Configuration is now handled via ParseConfig/ContextVars
-    # This function is a no-op for backward compatibility
+    warnings.warn(
+        "apply_plugins() is deprecated and no longer has any effect. "
+        "Configure plugins with Markdown(plugins=...) instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 
 
 # Import built-in plugins to register them
