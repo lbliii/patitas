@@ -51,6 +51,69 @@ class TestDirectiveRegistry:
         assert "note" in handler.names
 
 
+class TestDirectiveRegistryImmutability:
+    """Tests for true immutability of DirectiveRegistry."""
+
+    def test_cannot_modify_by_name_after_creation(self) -> None:
+        """Registry's by_name mapping must be immutable."""
+        import pytest
+
+        from patitas.directives import create_default_registry
+
+        registry = create_default_registry()
+
+        with pytest.raises(TypeError):
+            registry._by_name["hacked"] = "bad"  # type: ignore
+
+    def test_cannot_modify_by_token_type_after_creation(self) -> None:
+        """Registry's by_token_type mapping must be immutable."""
+        import pytest
+
+        from patitas.directives import create_default_registry
+
+        registry = create_default_registry()
+
+        with pytest.raises(TypeError):
+            registry._by_token_type["hacked"] = "bad"  # type: ignore
+
+    def test_cannot_delete_from_by_name(self) -> None:
+        """Cannot delete entries from by_name mapping."""
+        import pytest
+
+        from patitas.directives import create_default_registry
+
+        registry = create_default_registry()
+
+        with pytest.raises(TypeError):
+            del registry._by_name["note"]  # type: ignore
+
+    def test_cannot_delete_from_by_token_type(self) -> None:
+        """Cannot delete entries from by_token_type mapping."""
+        import pytest
+
+        from patitas.directives import create_default_registry
+
+        registry = create_default_registry()
+
+        with pytest.raises(TypeError):
+            del registry._by_token_type["admonition"]  # type: ignore
+
+    def test_handlers_tuple_is_immutable(self) -> None:
+        """Registry's handlers must be a tuple (immutable sequence)."""
+        from patitas.directives import create_default_registry
+
+        registry = create_default_registry()
+        assert isinstance(registry.handlers, tuple)
+
+    def test_names_returns_frozenset(self) -> None:
+        """names property returns frozenset (immutable)."""
+        from patitas.directives import create_default_registry
+
+        registry = create_default_registry()
+        names = registry.names
+        assert isinstance(names, frozenset)
+
+
 class TestDirectiveContracts:
     """Tests for directive contracts."""
 
