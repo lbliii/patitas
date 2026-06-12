@@ -48,6 +48,12 @@ CommonMark-compliant content processing.
 :description: Free-threading and concurrency
 :::{/card}
 
+:::{card} Parser Comparison
+:icon: table
+:link: ./comparison
+:description: Patitas vs markdown-it-py, Python-Markdown, mistune
+:::{/card}
+
 :::{card} Ecosystem
 :icon: layers
 :link: ./ecosystem
