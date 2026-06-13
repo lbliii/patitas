@@ -36,13 +36,12 @@ CommonMark **angle-bracket** autolinks work without this plugin:
     >>> Markdown()("Visit <https://example.com>")
     '<p>Visit <a href="https://example.com">https://example.com</a></p>\\n'
 
-Known limitations (narrow, honest scope):
+Precedence (GFM: code spans > autolinks > emphasis):
 - A backtick ends a URL body so a code span keeps its higher CommonMark/GFM
   precedence (``http://a.com`code` `` does not swallow the code span).
-- An email *local part* that contains an inline-special delimiter is split by
-  emphasis tokenization before this scan runs, so e.g. ``a_b@example.com``
-  links only from the ``_`` onward. URL and ``www.`` bodies are not affected by
-  this (an ``_`` inside a URL path links correctly).
+- An ``_`` inside an email *local part* is recognized as part of the address
+  before emphasis tokenization, so e.g. ``a_b@example.com`` links in full. (``*``
+  and ``~`` are not valid email-local-part characters, so only ``_`` matters.)
 
 Thread Safety:
 This plugin is stateless and thread-safe.

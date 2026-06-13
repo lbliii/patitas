@@ -26,7 +26,10 @@ from patitas.parsing.charsets import (
     HEX_DIGITS,
     INLINE_SPECIAL,
 )
-from patitas.parsing.inline.gfm_autolinks import scan_text_for_autolinks
+from patitas.parsing.inline.gfm_autolinks import (
+    scan_text_for_autolinks,
+    try_email_autolink_at_delimiter,
+)
 from patitas.parsing.inline.match_registry import MatchRegistry
 from patitas.parsing.inline.tokens import (
     CodeSpanToken,
@@ -141,6 +144,32 @@ class InlineParsingCoreMixin:
 
             # Emphasis delimiters: * or _
             if char in "*_":
+                # GFM precedence: autolinks > emphasis. An email local part may
+                # contain '_' (e.g. "a_b@example.com"), so before treating '_'
+                # as an emphasis delimiter, check whether it lies inside a valid
+                # bare-email autolink. ('*' is not a valid local-part char, so
+                # only '_' needs this.) If it does, link the full address —
+                # retracting the local-part prefix already emitted as text — and
+                # resume past the email. See gfm_autolinks for the scan rules.
+                if char == "_" and self._autolinks_enabled:
+                    email_hit = try_email_autolink_at_delimiter(text, pos, location)
+                    if email_hit is not None:
+                        local_start, email_end, email_node = email_hit
+                        # Retract the local-part prefix [local_start, pos) that
+                        # the plain-text scan already emitted as the suffix of
+                        # the last TextToken (a contiguous local-part run has no
+                        # inline-special chars, so it is a single text token).
+                        retract = pos - local_start
+                        if retract > 0 and tokens and isinstance(tokens[-1], TextToken):
+                            kept = tokens[-1].content[:-retract]
+                            if kept:
+                                tokens[-1] = TextToken(content=kept)
+                            else:
+                                tokens.pop()
+                        tokens_append(NodeToken(node=email_node))
+                        pos = email_end
+                        continue
+
                 delim_start = pos
                 delim_char = char
                 count = 0
