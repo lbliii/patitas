@@ -109,6 +109,21 @@ Contact us at <email@example.com> or visit https://example.com.""",
 
 
 @pytest.fixture
+def real_world_corpus() -> list[str]:
+    """Representative real-world Markdown docs (README, guide, changelog).
+
+    Prose- and structure-heavy documents that exercise the common path, as a
+    counterpoint to the adversarial CommonMark spec corpus. Loaded from
+    ``benchmarks/fixtures/real_world/`` so the corpus can grow without editing code.
+    """
+    corpus_dir = FIXTURES_DIR / "real_world"
+    docs = [p.read_text() for p in sorted(corpus_dir.glob("*.md"))]
+    if not docs:
+        pytest.skip(f"No real-world corpus found in {corpus_dir}")
+    return docs
+
+
+@pytest.fixture
 def plugin_heavy_doc() -> str:
     """Document exercising tables, math, footnotes, strikethrough, task lists (~2KB)."""
     return """# Plugin-Heavy Document

@@ -191,6 +191,20 @@ jobs:
         run: |
           uv run python benchmarks/check_scaling.py
 
+      # Memory regression gate: nightly/manual only (keeps PR runs fast).
+      - name: Run memory benchmark
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        env:
+          CI: true
+          PYTHON_GIL: "0"
+        run: |
+          uv run python benchmarks/memory_bench.py --json benchmarks/memory_results.json
+
+      - name: Check memory footprint
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: |
+          uv run python benchmarks/check_memory.py
+
   slow-tests:
     # The expensive perf-bound + differential-fuzz suites (pytest -m slow) are
     # deselected from per-PR runs above. Run them nightly (cron) and on demand
