@@ -392,3 +392,266 @@ class TestIncrementalThreadSafety:
             assert r is not None, f"Thread {i} produced no result"
             assert isinstance(r, Document)
             assert len(r.children) >= 2
+
+
+# ---------------------------------------------------------------------------
+# Deep offset accuracy — re-parsed subtree must match a full re-parse
+# ---------------------------------------------------------------------------
+
+
+def _collect_locations(node: object, out: list[tuple[str, int, int]]) -> None:
+    """Walk a node tree, recording (type, offset, end_offset) for every node."""
+    from dataclasses import fields
+
+    from patitas.nodes import Node
+
+    if not isinstance(node, Node):
+        return
+    out.append((type(node).__name__, node.location.offset, node.location.end_offset))
+    for field in fields(node):
+        value = getattr(node, field.name)
+        if isinstance(value, Node):
+            _collect_locations(value, out)
+        elif isinstance(value, tuple):
+            for item in value:
+                _collect_locations(item, out)
+
+
+class TestDeepOffsetAccuracy:
+    """Re-parsed blocks must have *all* descendant offsets adjusted, not just
+    the top-level block — matching a full re-parse exactly (issue #71)."""
+
+    def test_inline_offsets_match_full_reparse(self) -> None:
+        old_source = "# Title\n\nFirst **bold** para.\n\nSecond *em* para.\n\nThird para.\n"
+        new_source = "# Title\n\nFirst **bold** para.\n\nSecond CHANGED *em* para.\n\nThird para.\n"
+        old_doc = parse(old_source)
+        edit_start = old_source.index("Second")
+        edit_end = edit_start + len("Second")
+        new_length = len("Second CHANGED")
+
+        result = parse_incremental(new_source, old_doc, edit_start, edit_end, new_length)
+        full = parse(new_source)
+
+        inc_locs: list[tuple[str, int, int]] = []
+        full_locs: list[tuple[str, int, int]] = []
+        for child in result.children:
+            _collect_locations(child, inc_locs)
+        for child in full.children:
+            _collect_locations(child, full_locs)
+
+        assert inc_locs == full_locs
+
+    def test_shifted_block_inline_children_are_shifted(self) -> None:
+        """A block *after* the edit must have its inline children shifted too,
+        not just its top-level location."""
+        from patitas.nodes import Paragraph, Text
+
+        old_source = "Edit me.\n\nUntouched body.\n"
+        new_source = "Edit me a lot more.\n\nUntouched body.\n"
+        old_doc = parse(old_source)
+        edit_start = len("Edit me")
+        edit_end = edit_start
+        new_length = len(" a lot more")
+
+        result = parse_incremental(new_source, old_doc, edit_start, edit_end, new_length)
+        full = parse(new_source)
+
+        # Last block is the untouched paragraph, shifted by the edit delta.
+        inc_para = result.children[-1]
+        full_para = full.children[-1]
+        assert isinstance(inc_para, Paragraph)
+        assert isinstance(full_para, Paragraph)
+        assert inc_para.location.offset == full_para.location.offset
+        # The inline Text child's offset must match the full re-parse, proving
+        # the shift recursed into children (not just the top-level block).
+        inc_text = inc_para.children[0]
+        full_text = full_para.children[0]
+        assert isinstance(inc_text, Text)
+        assert isinstance(full_text, Text)
+        assert inc_text.location.offset == full_text.location.offset
+        assert inc_text.location.end_offset == full_text.location.end_offset
+
+    def test_fenced_code_source_offsets_match_full_reparse(self) -> None:
+        """FencedCode.source_start/source_end index into source and must shift
+        so get_code() returns the right slice after an incremental parse."""
+        from patitas.nodes import FencedCode
+
+        old_source = "Intro.\n\n```py\nx = 1\n```\n\nEnd.\n"
+        new_source = "Intro longer text.\n\n```py\nx = 1\n```\n\nEnd.\n"
+        old_doc = parse(old_source)
+        edit_start = len("Intro")
+        edit_end = edit_start
+        new_length = len(" longer text")
+
+        result = parse_incremental(new_source, old_doc, edit_start, edit_end, new_length)
+        full = parse(new_source)
+
+        def fenced(doc: Document) -> list[tuple[int, int, str]]:
+            return [
+                (c.source_start, c.source_end, c.get_code(new_source))
+                for c in doc.children
+                if isinstance(c, FencedCode)
+            ]
+
+        assert fenced(result) == fenced(full)
+        # And the extracted code is the real code, not a stale slice.
+        assert fenced(result)[0][2] == "x = 1\n"
+
+
+# ---------------------------------------------------------------------------
+# Custom directive registry — incremental must honor it like full parse()
+# ---------------------------------------------------------------------------
+
+
+def _raw_directive_registry() -> object:
+    """A registry with a directive whose presence changes the *parse-time*
+    AST (preserves_raw_content keeps raw_content and drops parsed children)."""
+    from patitas.directives import DirectiveRegistryBuilder
+    from patitas.directives.decorator import directive
+
+    @directive("rawdir", preserves_raw_content=True)
+    def render_rawdir(node: object, children: str, sb: object) -> None:
+        return None
+
+    builder = DirectiveRegistryBuilder()
+    builder.register(render_rawdir())
+    return builder.build()
+
+
+class TestCustomRegistry:
+    """parse_incremental must thread directive_registry through to the
+    re-parsed region (issue #71)."""
+
+    def test_directive_registry_honored_when_edit_touches_directive(self) -> None:
+        from patitas.nodes import Directive
+
+        reg = _raw_directive_registry()
+        old_source = "Top.\n\n:::{rawdir}\n- a\n:::\n\nBottom.\n"
+        new_source = "Top.\n\n:::{rawdir}\n- a\n- b\n:::\n\nBottom.\n"
+        old_doc = parse(old_source, directive_registry=reg)
+        edit_start = old_source.index("- a") + len("- a")
+        edit_end = edit_start
+        new_length = len("\n- b")
+
+        with_reg = parse_incremental(
+            new_source,
+            old_doc,
+            edit_start,
+            edit_end,
+            new_length,
+            directive_registry=reg,
+        )
+        full = parse(new_source, directive_registry=reg)
+
+        def directive_info(doc: Document) -> list[tuple[str, str | None, int]]:
+            return [
+                (c.name, c.raw_content, len(c.children))
+                for c in doc.children
+                if isinstance(c, Directive)
+            ]
+
+        # Matches the full parse: raw_content preserved, no parsed children.
+        assert directive_info(with_reg) == directive_info(full)
+        assert directive_info(with_reg) == [("rawdir", "- a\n- b", 0)]
+
+    def test_without_registry_differs_from_with_registry(self) -> None:
+        """Without the registry, the re-parsed directive falls back to default
+        behavior (children parsed, raw_content None) — proving the registry is
+        what changes the result."""
+        from patitas.nodes import Directive
+
+        reg = _raw_directive_registry()
+        old_source = "Top.\n\n:::{rawdir}\n- a\n:::\n\nBottom.\n"
+        new_source = "Top.\n\n:::{rawdir}\n- a\n- b\n:::\n\nBottom.\n"
+        old_doc = parse(old_source, directive_registry=reg)
+        edit_start = old_source.index("- a") + len("- a")
+        edit_end = edit_start
+        new_length = len("\n- b")
+
+        without_reg = parse_incremental(new_source, old_doc, edit_start, edit_end, new_length)
+
+        def directive_info(doc: Document) -> list[tuple[str, str | None, int]]:
+            return [
+                (c.name, c.raw_content, len(c.children))
+                for c in doc.children
+                if isinstance(c, Directive)
+            ]
+
+        # Default registry doesn't know "rawdir" preserves raw content.
+        assert directive_info(without_reg) == [("rawdir", None, 1)]
+
+
+# ---------------------------------------------------------------------------
+# Failure modes — recoverable fallback vs. non-opaque fatal error
+# ---------------------------------------------------------------------------
+
+
+class TestFailureModes:
+    """Region-parse failures fall back safely; a failing *full* re-parse must
+    not be swallowed (issue #71)."""
+
+    def test_region_failure_falls_back_to_full_parse(self, monkeypatch) -> None:
+        import patitas
+
+        old_source = "A.\n\nB.\n\nC.\n"
+        old_doc = parse(old_source)
+        new_source = "A.\n\nBX.\n\nC.\n"
+        edit_start = old_source.index("B")
+        edit_end = edit_start + 1
+        new_length = 2
+
+        real_parse = patitas.parse
+
+        def flaky_parse(source: str, **kwargs: object) -> Document:
+            # Fail only on the small region parse; succeed on the full document.
+            if len(source) < len(old_source):
+                raise ValueError("region boom")
+            return real_parse(source, **kwargs)  # type: ignore[arg-type]
+
+        monkeypatch.setattr(patitas, "parse", flaky_parse)
+
+        # Should NOT raise — safe fallback to full re-parse.
+        result = parse_incremental(new_source, old_doc, edit_start, edit_end, new_length)
+        assert isinstance(result, Document)
+        assert len(result.children) == 3
+
+    def test_full_parse_failure_propagates_with_chained_cause(self, monkeypatch) -> None:
+        import patitas
+
+        old_source = "A.\n\nB.\n\nC.\n"
+        old_doc = parse(old_source)
+        new_source = "A.\n\nBX.\n\nC.\n"
+        edit_start = old_source.index("B")
+        edit_end = edit_start + 1
+        new_length = 2
+
+        def always_fail(source: str, **kwargs: object) -> Document:
+            raise ValueError("total boom")
+
+        monkeypatch.setattr(patitas, "parse", always_fail)
+
+        import pytest
+
+        # Region parse fails AND the fallback full parse fails — must raise,
+        # not silently return, and must chain the region error as the cause.
+        with pytest.raises(ValueError, match="total boom") as exc_info:
+            parse_incremental(new_source, old_doc, edit_start, edit_end, new_length)
+        assert exc_info.value.__cause__ is not None
+
+    def test_invalid_bounds_full_parse_failure_propagates(self, monkeypatch) -> None:
+        import patitas
+
+        old_source = "A.\n\nB.\n"
+        old_doc = parse(old_source)
+
+        def always_fail(source: str, **kwargs: object) -> Document:
+            raise ValueError("bounds boom")
+
+        monkeypatch.setattr(patitas, "parse", always_fail)
+
+        import pytest
+
+        # Invalid bounds route straight to the full re-parse; if that fails the
+        # error must surface (no opaque swallow).
+        with pytest.raises(ValueError, match="bounds boom"):
+            parse_incremental("X", old_doc, 5, 3, 0)  # edit_start > edit_end
