@@ -7,11 +7,24 @@ Demonstrates near-linear thread scaling when parsing many documents in parallel
 under Python 3.14t free-threading. Uses stdlib only (concurrent.futures, time, sys).
 """
 
+import argparse
 import json
+import os
+import platform
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+
+
+def collect_env() -> dict[str, object]:
+    """Capture the machine/runtime context needed to interpret a scaling run."""
+    return {
+        "gil_enabled": getattr(sys, "_is_gil_enabled", lambda: True)(),
+        "python_version": sys.version.split()[0],
+        "platform": platform.platform(),
+        "cpu_count": os.cpu_count() or 1,
+    }
 
 
 def get_commonmark_corpus() -> list[str]:
@@ -42,18 +55,26 @@ def run_parallel_benchmark(docs: list[str], num_threads: int, iterations: int = 
 
 
 def main() -> None:
-    """Run parallel parsing benchmark and print results."""
+    """Run parallel parsing benchmark, print results, and optionally write JSON."""
+    parser = argparse.ArgumentParser(description="Parallel parsing scaling benchmark.")
+    parser.add_argument(
+        "--json",
+        type=Path,
+        default=None,
+        metavar="PATH",
+        help="Write machine-readable results (env header + per-thread speedup) to PATH.",
+    )
+    args = parser.parse_args()
+
     from patitas import parse
 
-    # GIL detection
-    gil_enabled = getattr(sys, "_is_gil_enabled", lambda: True)()
-    if gil_enabled:
+    env = collect_env()
+    if env["gil_enabled"]:
         print("Free-threaded build: No (GIL enabled)")
         print("\nRun with Python 3.14t (free-threading) to see parallel scaling.")
         print("Example: python3.14t benchmarks/benchmark_parallel.py")
     else:
-        version = sys.version.split()[0]
-        print(f"Free-threaded build: Yes ({version})")
+        print(f"Free-threaded build: Yes ({env['python_version']})")
 
     # Load corpus; repeat to reach 1000 docs for scaling demo
     print("\nLoading CommonMark corpus...")
@@ -84,6 +105,17 @@ def main() -> None:
     for num_threads, elapsed, speedup in results:
         print(f"  {num_threads:<10} {elapsed:.2f}s     {speedup:.2f}x")
     print()
+
+    if args.json is not None:
+        max_speedup = max((s for _, _, s in results), default=1.0)
+        payload = {
+            "env": env,
+            "n_docs": n_docs,
+            "results": [{"threads": t, "time_s": e, "speedup": s} for t, e, s in results],
+            "max_speedup": max_speedup,
+        }
+        args.json.write_text(json.dumps(payload, indent=2))
+        print(f"Wrote scaling results to {args.json}")
 
 
 if __name__ == "__main__":
