@@ -92,6 +92,7 @@ uv.lock
 .benchmarks/
 benchmarks/ci_results.json
 benchmarks/scaling_results.json
+benchmarks/memory_results.json
 
 # DORI (local/ephemeral)
 .dori/local/

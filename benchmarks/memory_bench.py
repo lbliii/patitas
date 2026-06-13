@@ -7,8 +7,11 @@ Or for basic memory stats:
     uv run python benchmarks/memory_bench.py
 """
 
+import argparse
 import gc
 import json
+import os
+import platform
 import sys
 from pathlib import Path
 
@@ -18,6 +21,53 @@ try:
     TRACEMALLOC_AVAILABLE = True
 except ImportError:
     TRACEMALLOC_AVAILABLE = False
+
+
+def collect_env() -> dict[str, object]:
+    """Capture machine/runtime context for reproducible memory results."""
+    return {
+        "gil_enabled": getattr(sys, "_is_gil_enabled", lambda: True)(),
+        "python_version": sys.version.split()[0],
+        "platform": platform.platform(),
+        "cpu_count": os.cpu_count() or 1,
+    }
+
+
+def measure_phases() -> dict[str, object]:
+    """Measure per-phase memory: retained AST after parse, and render peak.
+
+    - ``parse.retained_bytes_per_doc``: live allocation after parsing the whole
+      corpus into a retained list of ASTs (the persistent document footprint).
+    - ``render.peak_bytes_per_doc``: tracemalloc peak while rendering those ASTs
+      to HTML (the transient render working set).
+    """
+    from patitas import Markdown
+
+    md = Markdown()
+    docs = get_commonmark_corpus()
+    n = len(docs) or 1
+
+    gc.collect()
+    tracemalloc.start()
+    asts = [md.parse(d) for d in docs]
+    parse_current, _ = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+
+    gc.collect()
+    tracemalloc.start()
+    for ast in asts:
+        md.render(ast)
+    _, render_peak = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+
+    return {
+        "docs": len(docs),
+        # Retained AST footprint per doc — the stable, gateable memory metric.
+        "parse": {"retained_bytes_per_doc": parse_current / n},
+        # Transient render working set across the whole corpus (a single peak,
+        # not a per-doc figure) — reported for visibility, not gated.
+        "render": {"peak_bytes": render_peak},
+    }
 
 
 def get_commonmark_corpus() -> list[str]:
@@ -118,6 +168,25 @@ def profile_with_memory_profiler() -> None:
 
 def main() -> None:
     """Run memory profiling."""
+    parser = argparse.ArgumentParser(description="Patitas memory profiling.")
+    parser.add_argument(
+        "--json",
+        type=Path,
+        default=None,
+        metavar="PATH",
+        help="Write per-phase memory results (env header + bytes/doc) to PATH and exit.",
+    )
+    args = parser.parse_args()
+
+    if args.json is not None:
+        if not TRACEMALLOC_AVAILABLE:
+            print("tracemalloc unavailable; cannot produce JSON memory results.")
+            return
+        payload = {"env": collect_env(), **measure_phases()}
+        args.json.write_text(json.dumps(payload, indent=2))
+        print(f"Wrote memory results to {args.json}")
+        return
+
     print("Patitas Memory Profiling")
     print("=" * 60)
     print(f"Python {sys.version.split()[0]}\n")
