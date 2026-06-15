@@ -61,6 +61,26 @@ class TestGfmExtendedAutolinks:
         out = Markdown(plugins=["autolinks"])("mail a@foo_bar.example.com here")
         assert '<a href="mailto:a@foo_bar.example.com">a@foo_bar.example.com</a>' in out
 
+    def test_email_trailing_dash_invalidates_address(self) -> None:
+        # GFM: "The last character must not be one of '-' or '_'." A trailing
+        # '-' invalidates the whole email (it is NOT trimmed-then-linked).
+        out = Markdown(plugins=["autolinks"])("a.b-c_d@a.b-")
+        assert "<a " not in out
+        assert "a.b-c_d@a.b-" in out
+
+    def test_email_trailing_underscore_invalidates_address(self) -> None:
+        # GFM: a trailing '_' likewise invalidates the whole email.
+        out = Markdown(plugins=["autolinks"])("a.b-c_d@a.b_")
+        assert "<a " not in out
+        assert "a.b-c_d@a.b_" in out
+
+    def test_email_trailing_period_excluded_but_linked(self) -> None:
+        # GFM: a trailing '.' is excluded from the link but the address is still
+        # valid (the period is left as plain text).
+        out = Markdown(plugins=["autolinks"])("a.b-c_d@a.b.")
+        assert '<a href="mailto:a.b-c_d@a.b">a.b-c_d@a.b</a>' in out
+        assert out.rstrip().endswith(".</p>")
+
     def test_trailing_period_excluded(self) -> None:
         out = Markdown(plugins=["autolinks"])("see https://example.com.")
         assert '<a href="https://example.com">https://example.com</a>' in out
@@ -159,10 +179,25 @@ class TestUrlBodyKeepsInlineSpecialChars:
         assert '<a href="https://a.com/p?x=1&amp;y=2">https://a.com/p?x=1&amp;y=2</a>' in out
         assert "<code>code</code>" in out
 
-    def test_email_local_part_underscore_is_documented_limitation(self) -> None:
-        # Honest pin of a known limitation: an inline-special delimiter ('_') in
-        # an email *local part* splits the run before this scan runs, so the
-        # address links only from the delimiter onward. (URL bodies do not have
-        # this problem; see the tests above.)
+    def test_email_local_part_underscore_linked(self) -> None:
+        # GFM precedence: autolinks > emphasis. An '_' in an email *local part*
+        # is recognized as part of the address before emphasis tokenization, so
+        # the FULL local part is linked. (Previously this was a documented
+        # limitation that linked only the post-delimiter portion; the inline
+        # tokenizer now resolves the autolink first. Closes GFM example 631.)
         out = Markdown(plugins=["autolinks"])("a_b@example.com")
-        assert '<a href="mailto:b@example.com">b@example.com</a>' in out
+        assert '<a href="mailto:a_b@example.com">a_b@example.com</a>' in out
+
+    def test_email_local_part_underscore_mid_paragraph_linked(self) -> None:
+        # Same precedence rule when the address is surrounded by other text: the
+        # preceding local-part chars are pulled into the link, not left as text.
+        out = Markdown(plugins=["autolinks"])("ping a.b-c_d@a.b please")
+        assert '<a href="mailto:a.b-c_d@a.b">a.b-c_d@a.b</a>' in out
+        assert "ping <a " in out
+
+    def test_email_emphasis_still_works_near_address(self) -> None:
+        # The autolink check only fires when '_' is inside a valid email local
+        # part; ordinary emphasis is untouched.
+        out = Markdown(plugins=["autolinks"])("_emph_ and a_b@x.com")
+        assert "<em>emph</em>" in out
+        assert '<a href="mailto:a_b@x.com">a_b@x.com</a>' in out

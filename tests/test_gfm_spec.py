@@ -52,7 +52,7 @@ SPEC_TESTS: list[dict[str, Any]] = _load_spec()
 
 # Measured pass-count baseline (ratchet). Update upward only — never lower it to
 # accommodate a regression. Measured against GFM 0.29 with GFM_PLUGINS enabled.
-GFM_PASS_BASELINE = 653
+GFM_PASS_BASELINE = 654
 GFM_TOTAL = 672
 
 # Known-failing examples with honest reasons. Each is xfailed (strict=False) so
@@ -116,12 +116,6 @@ KNOWN_FAIL: dict[int, str] = {
     628: (
         "GFM extended autolink: Patitas links the http(s) sub-cases but not the "
         "ftp:// one in this example (only http/https/www/mailto are linkified)."
-    ),
-    631: (
-        "GFM extended autolink: an email local part containing an inline-special "
-        "delimiter ('_') is split by emphasis tokenization before the autolink "
-        "scan, so Patitas links only the post-delimiter portion. Documented "
-        "limitation in the autolinks plugin."
     ),
     # --- Disallowed Raw HTML (extension) ---
     652: "GFM tagfilter (disallowed raw HTML) extension not implemented.",

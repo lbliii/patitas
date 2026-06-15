@@ -103,6 +103,32 @@ def test_single_line_blockquote_lexes_without_recursion() -> None:
     assert elapsed < 3.0, f"lexing 100k '>' took {elapsed:.2f}s (expected < 3s)"
 
 
+def test_email_underscore_delimiter_scan_scales_linearly() -> None:
+    """A long run of email-local-part chars with no '@' must stay linear.
+
+    With the ``autolinks`` plugin on, the inline tokenizer checks each '_' for a
+    bare-email autolink (so an '_' inside an email local part outranks emphasis,
+    e.g. ``a_b@example.com``). The forward '@' probe is capped at the RFC 5321
+    local-part length so an adversarial ``"a_" * N`` (no '@' anywhere) does not
+    become O(n^2). Guard that doubling the input does not quadruple the time.
+    """
+    md = Markdown(plugins=["autolinks"])
+
+    def timed(n: int) -> float:
+        best = float("inf")
+        for _ in range(3):
+            start = time.perf_counter()
+            md("a_" * n)
+            best = min(best, time.perf_counter() - start)
+        return best
+
+    t1 = timed(20_000)
+    t2 = timed(40_000)
+    # Quadratic would be ~4x; allow generous headroom for noise but stay well
+    # below quadratic.
+    assert t2 < t1 * 3.0, f"non-linear email-underscore scan: t(20k)={t1:.4f}s t(40k)={t2:.4f}s"
+
+
 # ---------------------------------------------------------------------------
 # Bracket-heavy inputs that remain super-linear (issue #39).
 #

@@ -17,14 +17,15 @@ whitespace or ``<`` (with one pragmatic exception below), then applies
 trailing-punctuation / paren-balance / entity trimming. It returns the position
 at which it stopped so the main inline tokenizer can resume there.
 
-Known limitations (honest scope):
+Precedence (GFM: code spans > autolinks > emphasis):
 - A code-span backtick terminates a URL body, so ``http://a.com`code` `` keeps
   the higher-precedence code span rather than swallowing it. (CommonMark/GFM
   give code spans higher precedence than autolinks.)
-- An email *local part* containing an inline-special delimiter (e.g. the ``_``
-  in ``a_b@example.com``) is split by emphasis tokenization before this scan
-  runs, so such an address links only from the delimiter onward. URL/``www.``
-  bodies do not have this problem.
+- An email *local part* may contain ``_`` (the one emphasis delimiter that is a
+  valid local-part character), e.g. ``a_b@example.com``. The inline tokenizer
+  resolves such a bare email *before* treating the ``_`` as emphasis (via
+  :func:`try_email_autolink_at_delimiter`), so the full local part is linked.
+  ``*`` and ``~`` are not valid local-part characters, so they never need this.
 
 Thread Safety:
     Pure functions over their arguments; no shared mutable state. Safe for
@@ -54,6 +55,13 @@ _TRAILING_PUNCT = frozenset("?!.,:*_~")
 
 # Characters allowed in an email local part (GFM extension).
 _EMAIL_LOCAL_CHARS = frozenset("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.+_-")
+
+# RFC 5321 caps an email local part at 64 octets. The forward scan for the
+# ``@`` that anchors a bare email is bounded by this so that a long run of
+# local-part characters with no ``@`` (e.g. ``"a_" * N``) does not turn the
+# per-delimiter autolink check into O(n^2) work — see
+# :func:`try_email_autolink_at_delimiter`. No valid email exceeds it.
+_MAX_EMAIL_LOCAL_LEN = 64
 
 # Characters allowed within a single email domain segment (GFM extension).
 _EMAIL_DOMAIN_CHARS = frozenset("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_")
@@ -231,10 +239,10 @@ def _scan_email(text: str, at_pos: int, min_start: int) -> tuple[int, int] | Non
 
     domain_end = last_segment_end
 
-    # The last segment must not end in '-' or '_'.
-    while domain_end > at_pos + 1 and text[domain_end - 1] in "-_":
-        domain_end -= 1
-    if domain_end <= at_pos + 1:
+    # GFM: "The last character must not be one of '-' or '_'." Unlike a trailing
+    # '.', which is excluded above (the period is not part of the link), a
+    # trailing '-' or '_' invalidates the whole email rather than being trimmed.
+    if domain_end <= at_pos + 1 or text[domain_end - 1] in "-_":
         return None
 
     # GFM: "no underscores may be present in the last two segments of the
@@ -244,6 +252,91 @@ def _scan_email(text: str, at_pos: int, min_start: int) -> tuple[int, int] | Non
         return None
 
     return local_start, domain_end
+
+
+def try_email_autolink_at_delimiter(
+    text: str,
+    delim_pos: int,
+    location: SourceLocation,
+) -> tuple[int, int, Link] | None:
+    """Try to recognize a bare email whose local part spans an emphasis delimiter.
+
+    The main inline tokenizer dispatches an emphasis delimiter (``_``) before the
+    plain-text autolink scan runs, which would otherwise split an email local
+    part such as the ``a_b`` in ``a_b@example.com``. GFM gives autolinks higher
+    precedence than emphasis, so this is called *first* at a ``_`` candidate: it
+    looks for an ``@`` reachable forward through valid local-part characters,
+    recovers the full local part backwards (honoring the GFM left-boundary
+    rule), and validates the domain. Only ``_`` needs this treatment: ``*`` and
+    ``~`` are not valid GFM email-local-part characters, so they can never sit
+    inside a linkable local part.
+
+    Args:
+        text: The full inline text being tokenized.
+        delim_pos: Index of the candidate ``_`` delimiter.
+        location: Source location attached to the produced node.
+
+    Returns:
+        ``(local_start, email_end, link)`` where ``local_start`` is the index of
+        the first local-part character (``<= delim_pos``) and ``email_end`` is
+        the exclusive end of the matched address, or ``None`` if no valid email
+        autolink covers this delimiter.
+    """
+    text_len = len(text)
+
+    # The delimiter must itself be a valid local-part character; ``_`` is, ``*``
+    # and ``~`` are not, so callers should only invoke this for ``_``.
+    if text[delim_pos] not in _EMAIL_LOCAL_CHARS:
+        return None
+
+    # Find the next ``@`` reachable through only local-part characters. The
+    # search is capped at the RFC 5321 local-part limit so a long local-char run
+    # with no ``@`` stays O(1) per delimiter (overall linear) rather than
+    # rescanning to end-of-text from every ``_``.
+    at_pos = -1
+    scan_limit = min(text_len, delim_pos + _MAX_EMAIL_LOCAL_LEN + 1)
+    k = delim_pos
+    while k < scan_limit:
+        ch = text[k]
+        if ch == "@":
+            at_pos = k
+            break
+        if ch not in _EMAIL_LOCAL_CHARS:
+            break
+        k += 1
+    if at_pos == -1:
+        return None
+
+    # Recover the full local part and validate the domain. The backward local
+    # scan is bounded by the RFC 5321 local-part limit (not by a run start), so
+    # the local part can include text already emitted before the delimiter while
+    # the scan stays O(1) per delimiter; the left-boundary rule below rejects
+    # matches that do not begin at a valid boundary. ``delim_pos`` is always
+    # within this window because the forward ``@`` search above is capped the
+    # same way.
+    min_local_start = max(0, at_pos - _MAX_EMAIL_LOCAL_LEN)
+    email = _scan_email(text, at_pos, min_local_start)
+    if email is None:
+        return None
+    local_start, email_end = email
+
+    # The delimiter must actually lie inside the recovered local part.
+    if not (local_start <= delim_pos < at_pos):
+        return None
+
+    # GFM left-boundary rule applied to the start of the local part.
+    left = text[local_start - 1] if local_start > 0 else None
+    if not _is_left_boundary(left):
+        return None
+
+    addr = text[local_start:email_end]
+    link = Link(
+        location=location,
+        url=f"mailto:{addr}",
+        title=None,
+        children=(Text(location=location, content=addr),),
+    )
+    return local_start, email_end, link
 
 
 def scan_text_for_autolinks(
