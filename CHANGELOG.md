@@ -38,6 +38,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Content linting** — `lint(source)` and a `LintRule` protocol that inspect the
+  typed AST plus raw source, emitting `Diagnostic`s that reuse `node.location`.
+  `lint` accepts a Markdown string (parsed internally) or a pre-parsed `Document`
+  with its raw source via `text=`. Three starter rules ship: `heading-increment`
+  (no skipped heading levels), `no-empty-link`, and `trailing-whitespace` (which
+  excludes code-block content). `Diagnostic`, `LintRule`, and `Severity` (with
+  `.to_lsp()`) are exported from `patitas.linting` and `patitas` top-level; the rich
+  surface (`Linter`, `LintContext`, `LintRuleRegistry`/`Builder`,
+  `create_default_lint_registry`, and the rule classes) lives in `patitas.linting`.
+  See `docs/linting.md`.
 - **`max_nesting_depth`** — new `ParseConfig` field and `Markdown(...)` argument
   (default 100) bounding block-container nesting depth for untrusted input.
 - **Pre-built sanitize policies now use a URL allow-list.** `llm_safe`/`web_safe`/

@@ -114,3 +114,29 @@ def test_import_parser() -> None:
 
     # Parser class exists and can be referenced
     assert Parser is not None
+
+
+def test_import_lint() -> None:
+    """Test the patitas.linting submodule imports and exports its public names.
+
+    The top-level ``lint`` function and the ``patitas.linting`` submodule have
+    distinct names, so the submodule is reachable via plain attribute access.
+    """
+    import patitas.linting
+
+    assert patitas.linting.__all__  # non-empty
+    for name in patitas.linting.__all__:
+        assert hasattr(patitas.linting, name), f"{name!r} in linting.__all__ but not importable"
+
+    # The documented import path must work.
+    from patitas.linting import (  # noqa: F401
+        Diagnostic,
+        LintContext,
+        Linter,
+        LintRule,
+        LintRuleRegistry,
+        LintRuleRegistryBuilder,
+        Severity,
+        create_default_lint_registry,
+        lint,
+    )

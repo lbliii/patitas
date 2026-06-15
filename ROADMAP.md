@@ -234,18 +234,39 @@ Things only Patitas can do because of its typed, immutable, thread-safe architec
 
 ### Content Linting Framework
 
-A `ruff`-for-Markdown powered by the typed AST. Pattern matching on frozen dataclasses makes rule authoring trivial compared to regex-based linters.
+A `ruff`-for-Markdown powered by the typed AST. Pattern matching on frozen
+dataclasses makes rule authoring trivial compared to regex-based linters.
+
+Shipped (Phase 1, issue #56): `lint(source)` plus a stateless `LintRule`
+protocol with a single `check(ctx)` method, three starter rules
+(`heading-increment`, `no-empty-link`, `trailing-whitespace`), and a
+registry/builder. See `docs/linting.md`.
 
 ```python
-from patitas.lint import lint, LintRule
+from dataclasses import dataclass
+from typing import ClassVar
 
-class NoSkippedHeadings(LintRule):
-    id = "heading-increment"
+from patitas import Diagnostic, Severity, lint
+from patitas.linting import LintContext
 
-    def check_heading(self, node: Heading, prev_level: int) -> Diagnostic | None:
-        if node.level > prev_level + 1:
-            return Diagnostic(node.location, f"Heading skips from h{prev_level} to h{node.level}")
+
+@dataclass(frozen=True, slots=True)
+class NoSkippedHeadings:
+    rule_id: ClassVar[str] = "heading-increment"
+    default_severity: ClassVar[Severity] = Severity.WARNING
+
+    def check(self, ctx: LintContext):
+        prev = None
+        for h in ctx.headings():
+            if prev is not None and h.level > prev + 1:
+                yield Diagnostic(self.rule_id, f"Heading skips h{prev}->h{h.level}", h.location)
+            prev = h.level
+
+
+diags = lint("# Title\n\n### Skipped")
 ```
+
+Future: a `bengal lint` CLI command and LSP-backed lint-on-save.
 
 ### Incremental Parsing
 

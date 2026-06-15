@@ -56,6 +56,7 @@ used for frontmatter), and is built for Python 3.14+.
 | `render(doc)` | Render AST to HTML |
 | `render_llm(doc)` | Render AST to LLM-friendly plain text (no HTML) |
 | `sanitize(doc, policy)` | Strip HTML, dangerous URLs, zero-width chars |
+| `lint(source)` | Lint Markdown over the typed AST, returning `Diagnostic`s |
 | `extract_text(node)` | Extract plain text from any AST node |
 | `extract_excerpt(ast, source, ...)` | Structurally correct excerpt from AST (list previews, meta) |
 | `extract_meta_description(ast, source)` | Meta description from first paragraph/heading |
@@ -79,6 +80,7 @@ reference says otherwise.
 - **LLM-safe** — `render_llm` + composable `sanitize` policies for RAG, retrieval, safe context.
 - **Directives** — MyST-style blocks (admonition, dropdown, tabs) plus custom directives.
 - **Plugins** — Tables, footnotes, math, strikethrough, task lists.
+- **Linting** — `lint(source)` + a stateless `LintRule` protocol; a ruff-for-Markdown with three starter rules. See [linting](docs/linting.md).
 - **Minimal dependencies** — PyYAML for frontmatter; core parser is pure Python.
 
 GFM-style features are available through plugins. Measured GFM 0.29 compliance is
