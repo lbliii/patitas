@@ -23,6 +23,7 @@ uv run python examples/basic/hello_markdown.py
 | [notebooks/parse_notebook.py](notebooks/parse_notebook.py) | Jupyter .ipynb parsing, zero deps |
 | [ast/typed_ast_walk.py](ast/typed_ast_walk.py) | Visitor: collect headings for TOC |
 | [ast/transform_headings.py](ast/transform_headings.py) | Immutable AST transform |
+| [linting/lint_markdown.py](linting/lint_markdown.py) | Lint Markdown + write a custom rule |
 | [directives/builtin_directives.py](directives/builtin_directives.py) | Admonition, dropdown, tabs |
 | [directives/custom_directive.py](directives/custom_directive.py) | Add your own directive |
 | [incremental/edit_simulation.py](incremental/edit_simulation.py) | O(change) re-parse |

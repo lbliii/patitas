@@ -52,6 +52,22 @@ Import these from the top level, e.g. `from patitas import Markdown, parse`.
   produces `<kbd>Ctrl</kbd>`. Pass a custom `role_registry=` to `Markdown`,
   `render`, to override or extend them.
 
+### Linting
+
+- `lint` — lint Markdown (a string or a pre-parsed `Document`) and return a
+  sorted `list[Diagnostic]`.
+- `Diagnostic` — a single lint finding (rule id, message, `SourceLocation`,
+  `Severity`). Reuses `SourceLocation`; `str(diag)` prints
+  `file:line:col: [rule-id] message`.
+- `LintRule` — `@runtime_checkable` protocol for custom rules (`rule_id` /
+  `default_severity` class vars + a `check(ctx)` method).
+- `Severity` — `ERROR` / `WARNING` / `INFO` enum, with `.to_lsp()` for the LSP
+  `DiagnosticSeverity` integer.
+
+  The rich surface — `Linter`, `LintContext`, `LintRuleRegistry`,
+  `LintRuleRegistryBuilder`, `create_default_lint_registry`, and the built-in
+  rule classes — lives in the `patitas.linting` submodule. See `docs/linting.md`.
+
 ### Renderers
 
 - `HtmlRenderer`, `LlmRenderer`, `render_llm`, `ASTRenderer`

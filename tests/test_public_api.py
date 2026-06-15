@@ -80,6 +80,11 @@ EXPECTED_PUBLIC_API: frozenset[str] = frozenset(
         "render_llm",
         # Text extraction
         "extract_text",
+        # Linting
+        "lint",
+        "Diagnostic",
+        "LintRule",
+        "Severity",
         # Sanitization
         "sanitize",
         "Policy",
@@ -156,6 +161,18 @@ def test_role_api_is_public() -> None:
         "RoleRegistry",
         "RoleRegistryBuilder",
         "create_default_role_registry",
+    ):
+        assert name in patitas.__all__
+        assert hasattr(patitas, name)
+
+
+def test_lint_api_is_public() -> None:
+    """The lint API added in issue #56 must be part of the public surface."""
+    for name in (
+        "lint",
+        "Diagnostic",
+        "LintRule",
+        "Severity",
     ):
         assert name in patitas.__all__
         assert hasattr(patitas, name)

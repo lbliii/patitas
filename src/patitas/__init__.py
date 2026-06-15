@@ -53,6 +53,7 @@ from patitas.excerpt import extract_excerpt, extract_meta_description
 from patitas.frontmatter import extract_body, parse_frontmatter
 from patitas.incremental import parse_incremental
 from patitas.lexer import Lexer
+from patitas.linting import Diagnostic, LintRule, Severity, lint
 from patitas.location import SourceLocation
 from patitas.nodes import (
     Block,
@@ -527,6 +528,11 @@ __all__ = [  # noqa: RUF022 — grouped by category for maintainability
     "render_llm",
     # Text extraction
     "extract_text",
+    # Linting
+    "lint",
+    "Diagnostic",
+    "LintRule",
+    "Severity",
     # Sanitization
     "sanitize",
     "Policy",
