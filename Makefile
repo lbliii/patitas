@@ -19,7 +19,7 @@ help:
 	@echo "  make commonmark  Run CommonMark compliance tests"
 	@echo ""
 	@echo "Code Quality:"
-	@echo "  make lint        Run ruff linter"
+	@echo "  make lint        Run ruff linter + format check (CI parity)"
 	@echo "  make ty          Run ty type checker (fast, Rust-based)"
 	@echo "  make format      Format code with ruff"
 	@echo "  make check       Run all checks (lint + ty)"
@@ -66,6 +66,7 @@ commonmark:
 
 lint:
 	uv run ruff check src/ tests/
+	uv run ruff format --check src/ tests/
 
 ty:
 	@echo "Running ty type checker (Astral, Rust-based)..."
