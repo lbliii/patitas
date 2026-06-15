@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-06-15
+
 ### Fixed
 
 - **Directive rendering was broken end-to-end.** `HtmlRenderer._render_directive`
@@ -280,7 +282,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`DelimiterToken`** — Renamed `count` attribute to `run_length` for clarity (vs Bengal's embedded version).
 
-[Unreleased]: https://github.com/lbliii/patitas/compare/v0.3.5...HEAD
+[Unreleased]: https://github.com/lbliii/patitas/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/lbliii/patitas/compare/v0.3.5...v0.4.0
 [0.3.5]: https://github.com/lbliii/patitas/compare/v0.3.4...v0.3.5
 [0.3.4]: https://github.com/lbliii/patitas/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/lbliii/patitas/compare/v0.3.2...v0.3.3

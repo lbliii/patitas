@@ -27,6 +27,7 @@ Release history and changelogs.
 
 ## Latest Release
 
+- [[releases/0.4.0|0.4.0]] — Content linting, sanitizer XSS fix, directive rendering fix, nesting limits (2026-06-15)
 - [[releases/0.3.5|0.3.5]] — O(log n) line lookup, benchmark suite, excerpt/directive fixes (2026-03-09)
 - [[releases/0.3.4|0.3.4]] — Fix preserves_raw_content for list-table directives (2026-03-06)
 - [[releases/0.3.3|0.3.3]] — Frontmatter parsing (parse_frontmatter, extract_body) (2026-03-01)
