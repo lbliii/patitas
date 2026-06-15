@@ -588,9 +588,7 @@ class TestPropertyCleanInput:
         # Lines whose rstrip() == line produce zero diagnostics.
         lines = [w.rstrip() for w in words]
         src = "\n".join(lines)
-        diags = list(
-            TrailingWhitespaceRule().check(LintContext(document=_doc(), source=src))
-        )
+        diags = list(TrailingWhitespaceRule().check(LintContext(document=_doc(), source=src)))
         assert diags == []
 
 

@@ -126,9 +126,7 @@ def test_import_lint() -> None:
 
     assert patitas.linting.__all__  # non-empty
     for name in patitas.linting.__all__:
-        assert hasattr(
-            patitas.linting, name
-        ), f"{name!r} in linting.__all__ but not importable"
+        assert hasattr(patitas.linting, name), f"{name!r} in linting.__all__ but not importable"
 
     # The documented import path must work.
     from patitas.linting import (  # noqa: F401
