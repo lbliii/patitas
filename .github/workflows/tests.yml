@@ -20,7 +20,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.14t"]
+        include:
+          - python-version: "3.14"
+            python-gil: "1"
+          - python-version: "3.14t"
+            python-gil: "0"
 
     steps:
       - uses: actions/checkout@v6
@@ -44,7 +48,7 @@ jobs:
       - name: Run tests (fast; slow perf/differential tests run in the nightly slow-tests job)
         env:
           CI: true
-          PYTHON_GIL: "0"
+          PYTHON_GIL: ${{ matrix.python-gil }}
         run: |
           uv run pytest -n auto -q --tb=short --dist worksteal -m "not slow"
 
@@ -52,9 +56,9 @@ jobs:
         if: matrix.python-version == '3.14t'
         env:
           CI: true
-          PYTHON_GIL: "0"
+          PYTHON_GIL: ${{ matrix.python-gil }}
         run: |
-          uv run pytest -n 0 -q --tb=short -m "not slow" --cov=patitas --cov-report=xml --cov-fail-under=67
+          uv run pytest -n 0 -q --tb=short -m "not slow" --cov=patitas --cov-report=xml --cov-fail-under=80
 
       - name: Upload coverage to Codecov
         if: matrix.python-version == '3.14t'

@@ -24,7 +24,12 @@ match token:
 
 """
 
-from typing import Literal, NamedTuple
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Literal, NamedTuple
+
+if TYPE_CHECKING:
+    from patitas.nodes import Inline
 
 # Inline token type tags for O(1) dispatch
 TOKEN_TEXT = 0
@@ -93,7 +98,7 @@ class CodeSpanToken(NamedTuple):
 class NodeToken(NamedTuple):
     """Pre-parsed AST node token (links, images, etc.)."""
 
-    node: object  # Inline node type
+    node: Inline
     tag: int = TOKEN_NODE
 
     @property

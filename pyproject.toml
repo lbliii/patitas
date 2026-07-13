@@ -70,13 +70,14 @@ markers = [
 source = ["src/patitas"]
 omit = ["*/tests/*", "*/benchmarks/*"]
 
-# Enforced coverage floor (a ratchet). Measured total after issue #28 was
-# ~67.8%; we pin the floor to the honest current number so a coverage DROP
-# fails locally and in CI. Raise this as coverage improves -- never lower it.
+# Enforced coverage floor (a ratchet). The non-slow suite measured 88% in the
+# 0.4.x release-readiness pass; 80% leaves cross-platform headroom while making
+# a meaningful drop fail locally and in CI. Raise as coverage improves -- never
+# lower it.
 [tool.coverage.report]
 # Enforced in CI: pytest-cov applies fail_under during the `pytest --cov` step
 # (exits non-zero if total coverage < fail_under).
-fail_under = 67
+fail_under = 80
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",

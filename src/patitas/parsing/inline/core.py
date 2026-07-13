@@ -617,7 +617,7 @@ class InlineParsingCoreMixin:
                     idx += 1
 
                 case NodeToken(node=node):
-                    result.append(node)  # type: ignore[arg-type]
+                    result.append(node)
                     idx += 1
 
                 case HardBreakToken():

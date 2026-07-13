@@ -1,7 +1,7 @@
 # Patitas Development Makefile
 # =============================================================================
 
-.PHONY: help install dev test lint ty format clean build docs benchmark publish release gh-release
+.PHONY: help install dev test lint ty format check release-gate clean build docs benchmark publish release gh-release
 
 # Default target
 help:
@@ -26,6 +26,7 @@ help:
 	@echo ""
 	@echo "Build & Release:"
 	@echo "  make build       Build distribution packages"
+	@echo "  make release-gate Run lint, type, tests, and coverage before publishing"
 	@echo "  make publish     Publish to PyPI (uses .env for token)"
 	@echo "  make release     Build and publish in one step"
 	@echo "  make gh-release  Create GitHub release (triggers PyPI via workflow), uses site release notes"
@@ -78,6 +79,11 @@ format:
 
 check: lint ty
 
+release-gate: lint ty
+	uv run pytest -n auto -q --tb=short --dist worksteal -m "not slow"
+	uv run pytest -n 0 -q --tb=short -m "slow"
+	uv run pytest -n 0 -q --tb=short -m "not slow" --cov=patitas --cov-report=term --cov-fail-under=80
+
 # =============================================================================
 # Build & Release
 # =============================================================================
@@ -89,7 +95,7 @@ build:
 	@echo "✓ Built:"
 	@ls -la dist/
 
-publish:
+publish: release-gate
 	@echo "Publishing to PyPI..."
 	@if [ -f .env ]; then \
 		export $$(cat .env | xargs) && uv publish; \
