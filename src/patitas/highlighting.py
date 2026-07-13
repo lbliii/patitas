@@ -113,7 +113,7 @@ def _try_import_rosettes() -> bool:
     _tried_rosettes = True
 
     try:
-        import rosettes  # type: ignore[import-not-found]
+        import rosettes  # ty: ignore[unresolved-import]
 
         class RosettesHighlighter:
             """Rosettes-based syntax highlighter implementing Highlighter protocol."""

@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Restored a clean `ty` gate with the current checker by typing pre-parsed inline
+  tokens as `Inline` and using the current diagnostic code for the optional
+  Rosettes import.
+
+### Changed
+
+- CI now tests both standard Python 3.14 (GIL enabled) and free-threaded 3.14t,
+  raises the honest coverage floor from 67% to 80%, and runs a dual-interpreter
+  lint/type/test/coverage gate before release distributions can reach PyPI.
+
 ## [0.4.0] - 2026-06-15
 
 ### Fixed

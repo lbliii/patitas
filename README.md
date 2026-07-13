@@ -399,8 +399,11 @@ Python-native. Free-threading ready. No npm required.
 git clone https://github.com/lbliii/patitas.git
 cd patitas
 uv sync --group dev
-pytest
+make release-gate
 ```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for focused commands, the coverage/type
+ratchets, and the dual Python 3.14/3.14t CI contract.
 
 **Run benchmarks** (after `uv sync --group dev`):
 
